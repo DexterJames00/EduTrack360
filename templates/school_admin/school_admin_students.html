@@ -1,140 +1,526 @@
 {% extends 'school_admin/school_admin_base.html' %}
 {% block title %}Students | School Admin{% endblock %}
 {% block content %}
-<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-3xl font-extrabold text-blue-800 flex items-center gap-2">
-            <i class="fa-solid fa-user-graduate"></i> Students
+
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mt-4">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} bg-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-100 border border-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-400 text-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-700 px-4 py-3 rounded mb-4">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl shadow-xl p-8 mt-6 border border-slate-200">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
+            <i class="fa-solid fa-user-graduate text-blue-700"></i> Students Management
         </h1>
-        <button class="bg-blue-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-800 transition shadow" onclick="openStudentModal()">
-            <i class="fa-solid fa-plus"></i> Add Student
+        <button class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-800 hover:to-blue-900 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" onclick="openStudentModal()">
+            <i class="fa-solid fa-plus mr-2"></i> Add Student
         </button>
     </div>
-    <p class="text-gray-600 mb-6 text-lg">Manage student records and their guardian details.</p>
+    <p class="text-slate-600 mb-8 text-lg">Manage student details and Telegram integration status.</p>
 
-    <div class="overflow-x-auto">
-        <table class="min-w-full bg-white border border-blue-100 rounded-xl shadow">
+    <div class="overflow-x-auto bg-white rounded-xl shadow-lg">
+        <table class="min-w-full">
             <thead>
-                <tr class="bg-blue-100 text-blue-800 uppercase text-sm">
-                    <th class="py-3 px-4 text-left">Student Name</th>
-                    <th class="py-3 px-4 text-left">Gender</th>
-                    <th class="py-3 px-4 text-left">Date of Birth</th>
-                    <th class="py-3 px-4 text-left">Grade Level</th>
-                    <th class="py-3 px-4 text-left">Guardian</th>
-                    <th class="py-3 px-4 text-left">Contact No.</th>
-                    <th class="py-3 px-4 text-left">Address</th>
-                    <th class="py-3 px-4 text-center">Actions</th>
+                <tr class="bg-gradient-to-r from-blue-700 to-blue-800 text-white">
+                    <th class="py-4 px-6 text-left font-semibold">ID</th>
+                    <th class="py-4 px-6 text-left font-semibold">Name</th>
+                    <th class="py-4 px-6 text-left font-semibold">Grade Level</th>
+                    <th class="py-4 px-6 text-left font-semibold">Section</th>
+                    <th class="py-4 px-6 text-left font-semibold">Parent Contact</th>
+                    <th class="py-4 px-6 text-left font-semibold">Code</th>
+                    <th class="py-4 px-6 text-left font-semibold">Chat ID</th>
+                    <th class="py-4 px-6 text-left font-semibold">Telegram Status</th>
+                    <th class="py-4 px-6 text-center font-semibold">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                <tr class="hover:bg-blue-50 transition">
-                    <td class="py-3 px-4 font-semibold">Michael Reyes</td>
-                    <td class="py-3 px-4">Male</td>
-                    <td class="py-3 px-4">2007-03-12</td>
-                    <td class="py-3 px-4">Grade 10</td>
-                    <td class="py-3 px-4">Maria Reyes</td>
-                    <td class="py-3 px-4">09123456789</td>
-                    <td class="py-3 px-4">Butuan City</td>
-                    <td class="py-3 px-4 text-center">
-                        <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs mr-2"
-                            onclick="openStudentModal('Michael Reyes', 'Male', '2007-03-12', 'Grade 10', 'Maria Reyes', '09123456789', 'Butuan City')">
-                            <i class="fa-solid fa-edit"></i> Edit
-                        </button>
-                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
-                            <i class="fa-solid fa-trash"></i> Delete
-                        </button>
+                {% for student in students %}
+                <tr class="hover:bg-blue-50 transition-colors duration-200 border-b border-slate-100">
+                    <td class="py-4 px-6 font-medium text-slate-700">{{ student.id }}</td>
+                    <td class="py-4 px-6 font-semibold text-slate-800">{{ student.first_name }} {{ student.last_name }}</td>
+                    <td class="py-4 px-6 text-slate-600">{{ student.grade_level }}</td>
+                    <td class="py-4 px-6 text-slate-600">{{ student.section.name if student.section else 'No Section' }}</td>
+                    <td class="py-4 px-6 text-slate-600">{{ student.parent_contact }}</td>
+                    <td class="py-4 px-6 font-mono text-sm text-blue-600 bg-blue-50 rounded px-2 py-1">{{ student.code or '—' }}</td>
+                    <td class="py-4 px-6 font-mono text-xs text-slate-500">{{ student.telegram_chat_id or 'Not Linked' }}</td>
+                    <td class="py-4 px-6">
+                        {% if student.telegram_status %}
+                            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold border border-green-200">
+                                <i class="fa-solid fa-check-circle mr-1"></i>Connected
+                            </span>
+                        {% else %}
+                            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold border border-red-200">
+                                <i class="fa-solid fa-times-circle mr-1"></i>Not Connected
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-4 px-6 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors duration-200 shadow-sm"
+                                onclick="openStudentModal('{{ student.id }}','{{ student.first_name }}','{{ student.last_name }}','{{ student.grade_level }}','{{ student.section_id }}','{{ student.parent_contact }}','{{ student.code }}')">
+                                <i class="fa-solid fa-edit mr-1"></i> Edit
+                            </button>
+                            <button class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm transition-colors duration-200 shadow-sm"
+                                onclick="deleteStudent({{ student.id }}, '{{ student.first_name }} {{ student.last_name }}')">
+                                <i class="fa-solid fa-trash mr-1"></i> Delete
+                            </button>
+                        </div>
                     </td>
                 </tr>
-                <tr class="hover:bg-blue-50 transition">
-                    <td class="py-3 px-4 font-semibold">Anna Santos</td>
-                    <td class="py-3 px-4">Female</td>
-                    <td class="py-3 px-4">2008-08-25</td>
-                    <td class="py-3 px-4">Grade 9</td>
-                    <td class="py-3 px-4">Carlos Santos</td>
-                    <td class="py-3 px-4">09988776655</td>
-                    <td class="py-3 px-4">Davao City</td>
-                    <td class="py-3 px-4 text-center">
-                        <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs mr-2"
-                            onclick="openStudentModal('Anna Santos', 'Female', '2008-08-25', 'Grade 9', 'Carlos Santos', '09988776655', 'Davao City')">
-                            <i class="fa-solid fa-edit"></i> Edit
-                        </button>
-                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
-                            <i class="fa-solid fa-trash"></i> Delete
-                        </button>
+                {% else %}
+                <tr>
+                    <td colspan="9" class="py-8 px-6 text-center text-slate-500">
+                        <i class="fa-solid fa-user-graduate text-4xl mb-4 text-slate-300"></i>
+                        <p class="text-lg">No students found. Add your first student!</p>
                     </td>
                 </tr>
+                {% endfor %}
             </tbody>
         </table>
     </div>
 </div>
 
-<!-- Wide Modal -->
-<div id="studentModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl shadow-2xl p-10 w-full max-w-3xl relative">
-        <button class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl" onclick="closeStudentModal()">
+<!-- Modal -->
+<div id="studentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-4xl relative mx-4 max-h-[90vh] overflow-y-auto">
+        <button class="absolute top-4 right-4 text-slate-400 hover:text-slate-600 text-2xl transition-colors duration-200" onclick="closeStudentModal()">
             <i class="fa-solid fa-times"></i>
         </button>
-        <h2 class="text-3xl font-bold text-blue-800 mb-6"><i class="fa-solid fa-user-plus"></i> Add/Edit Student</h2>
-        <form id="studentForm" onsubmit="saveStudent(event)" class="grid grid-cols-2 gap-6">
+        <h2 class="text-3xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent mb-8 flex items-center gap-3">
+            <i class="fa-solid fa-user-plus text-blue-700"></i> 
+            <span id="modalTitle">Add Student</span>
+        </h2>
+        <form id="studentForm" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <input type="hidden" id="studentId" name="student_id" value="">
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Full Name</label>
-                <input type="text" id="modalStudentName" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+                <label class="block text-slate-700 font-semibold mb-2">First Name</label>
+                <input type="text" name="first_name" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
             </div>
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Gender</label>
-                <select id="modalStudentGender" class="w-full px-4 py-2 border border-blue-300 rounded">
-                    <option value="">Select Gender</option>
-                    <option>Male</option>
-                    <option>Female</option>
+                <label class="block text-slate-700 font-semibold mb-2">Last Name</label>
+                <input type="text" name="last_name" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+            </div>
+            <div>
+            <label class="block text-slate-700 font-semibold mb-2">Grade Level</label>
+            <select name="grade_level" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                <option value="">Select Grade Level</option>
+                <option value="Grade 7">Grade 7</option>
+                <option value="Grade 8">Grade 8</option>
+                <option value="Grade 9">Grade 9</option>
+                <option value="Grade 10">Grade 10</option>
+                <option value="Grade 11">Grade 11</option>
+                <option value="Grade 12">Grade 12</option>
+            </select>
+        </div>
+
+            <div>
+                <label class="block text-slate-700 font-semibold mb-2">Section</label>
+                <select name="section_id" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
+                    <option value="">Select Section</option>
+                    {% for section in sections %}
+                        <option value="{{ section.id }}">{{ section.name }} - {{ section.grade_level }}</option>
+                    {% endfor %}
                 </select>
             </div>
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Date of Birth</label>
-                <input type="date" id="modalStudentDob" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+                <label class="block text-slate-700 font-semibold mb-2">Parent Contact</label>
+                <input type="text" name="parent_contact" class="w-full px-4 py-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200" required>
             </div>
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Grade Level</label>
-                <input type="text" id="modalStudentGrade" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+                <label class="block text-slate-700 font-semibold mb-2">Verification Code</label>
+                <div class="flex gap-2">
+                    <input type="text" id="code" name="code" class="flex-1 px-4 py-3 border border-slate-300 rounded-xl bg-slate-50 text-slate-600 transition-all duration-200" readonly>
+                    <button type="button" class="bg-blue-600 text-white px-4 py-3 rounded-xl hover:bg-blue-700 transition-colors duration-200 whitespace-nowrap" onclick="generateCode()">
+                        <i class="fa-solid fa-refresh mr-1"></i> Generate
+                    </button>
+                </div>
             </div>
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">Guardian Name</label>
-                <input type="text" id="modalStudentGuardian" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            <div class="md:col-span-2">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <i class="fa-brands fa-telegram text-blue-600 text-xl"></i>
+                        <h4 class="font-semibold text-blue-800">Telegram Integration</h4>
+                    </div>
+                    <p class="text-sm text-blue-600 mb-2">
+                        <strong>Chat ID:</strong> <span id="displayChatId" class="font-mono">Not Connected</span>
+                    </p>
+                    <p class="text-xs text-blue-500">
+                        Students can connect their Telegram account using the verification code above through the school's Telegram bot.
+                    </p>
+                </div>
             </div>
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">Guardian Contact No.</label>
-                <input type="text" id="modalStudentContact" class="w-full px-4 py-2 border border-blue-300 rounded" required>
-            </div>
-            <div class="col-span-2">
-                <label class="block text-gray-700 font-semibold mb-2">Address</label>
-                <input type="text" id="modalStudentAddress" class="w-full px-4 py-2 border border-blue-300 rounded" required>
-            </div>
-            <div class="col-span-2">
-                <button type="submit" class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition">
-                    Save Student
+            <div class="md:col-span-2">
+                <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-800 text-white py-4 rounded-xl font-bold hover:from-blue-800 hover:to-blue-900 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1">
+                    <i class="fa-solid fa-save mr-2"></i> Save Student
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle"></i> Confirm Delete
+        </h3>
+        <p class="text-slate-600 mb-6">Are you sure you want to delete <strong id="deleteStudentName"></strong>? This action cannot be undone.</p>
+        <div class="flex gap-4">
+            <button onclick="closeDeleteModal()" class="flex-1 bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-colors duration-200">
+                Cancel
+            </button>
+            <form id="deleteForm" class="flex-1">
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
 <script>
-function openStudentModal(name='', gender='', dob='', grade='', guardian='', contact='', address='') {
-    document.getElementById('studentModal').style.display = 'flex';
-    document.getElementById('modalStudentName').value = name;
-    document.getElementById('modalStudentGender').value = gender;
-    document.getElementById('modalStudentDob').value = dob;
-    document.getElementById('modalStudentGrade').value = grade;
-    document.getElementById('modalStudentGuardian').value = guardian;
-    document.getElementById('modalStudentContact').value = contact;
-    document.getElementById('modalStudentAddress').value = address;
+let isEditMode = false;
+let currentStudentId = null;
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Student form submission
+    document.getElementById('studentForm').addEventListener('submit', handleStudentSubmit);
+    
+    // Delete form submission
+    document.getElementById('deleteForm').addEventListener('submit', handleDeleteSubmit);
+});
+
+function openStudentModal(id='', first='', last='', grade='', section='', contact='', code='') {
+    const modal = document.getElementById('studentModal');
+    const title = document.getElementById('modalTitle');
+    
+    if (id) {
+        // Edit mode
+        isEditMode = true;
+        currentStudentId = id;
+        title.textContent = 'Edit Student';
+        
+        // Set the hidden student_id field
+        document.querySelector('[name=student_id]').value = id;
+        
+        // Populate form fields
+        document.querySelector('[name=first_name]').value = first;
+        document.querySelector('[name=last_name]').value = last;
+        document.querySelector('[name=grade_level]').value = grade;
+        document.querySelector('[name=section_id]').value = section;
+        document.querySelector('[name=parent_contact]').value = contact;
+        document.querySelector('[name=code]').value = code;
+    } else {
+        // Add mode
+        isEditMode = false;
+        currentStudentId = null;
+        title.textContent = 'Add Student';
+        
+        // Clear form fields
+        document.getElementById('studentForm').reset();
+        document.querySelector('[name=student_id]').value = '';
+        generateCode(); // Auto-generate code for new students
+    }
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
+
 function closeStudentModal() {
-    document.getElementById('studentModal').style.display = 'none';
+    const modal = document.getElementById('studentModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
 }
-function saveStudent(event) {
-    event.preventDefault();
-    alert('Student saved: ' + document.getElementById('modalStudentName').value);
-    closeStudentModal();
+
+function generateCode() {
+    const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    let code = "";
+    for (let i = 0; i < 8; i++) {
+        code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    document.getElementById("code").value = code;
 }
+
+function deleteStudent(studentId, studentName) {
+    const modal = document.getElementById('deleteModal');
+    const nameElement = document.getElementById('deleteStudentName');
+    
+    currentStudentId = studentId;
+    nameElement.textContent = studentName;
+    
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentStudentId = null;
+}
+
+// AJAX form submission for student
+function handleStudentSubmit(e) {
+    e.preventDefault();
+    
+    const form = e.target;
+    const formData = new FormData(form);
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    console.log('Form submission - isEditMode:', isEditMode, 'currentStudentId:', currentStudentId);
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+    submitBtn.disabled = true;
+    
+    const url = isEditMode ? 
+        `{{ url_for('crud_student.edit_student', student_id=0) }}`.replace('0', currentStudentId) :
+        `{{ url_for('crud_student.add_student') }}`;
+    
+    console.log('Request URL:', url);
+    console.log('FormData entries:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+    
+    fetch(url, {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log('Response data:', data);
+        if (data.success) {
+            showAlert(data.message, 'success');
+            closeStudentModal();
+            
+            if (isEditMode) {
+                updateStudentRow(data.student);
+            } else {
+                addStudentRow(data.student);
+            }
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while saving the student.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// AJAX form submission for delete
+function handleDeleteSubmit(e) {
+    e.preventDefault();
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+    submitBtn.disabled = true;
+    
+    const url = `{{ url_for('crud_student.delete_student', student_id=0) }}`.replace('0', currentStudentId);
+    
+    fetch(url, {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showAlert(data.message, 'success');
+            closeDeleteModal();
+            removeStudentRow(data.student_id);
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while deleting the student.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
+    });
+}
+
+// DOM manipulation functions
+function addStudentRow(student) {
+    const tbody = document.querySelector('tbody');
+    const noStudentsRow = tbody.querySelector('td[colspan="9"]');
+    
+    // Remove "no students" message if it exists
+    if (noStudentsRow) {
+        noStudentsRow.parentElement.remove();
+    }
+    
+    const row = createStudentRow(student);
+    tbody.appendChild(row);
+}
+
+function updateStudentRow(student) {
+    const row = document.querySelector(`tr[data-student-id="${student.id}"]`);
+    if (row) {
+        const newRow = createStudentRow(student);
+        row.replaceWith(newRow);
+    }
+}
+
+function removeStudentRow(studentId) {
+    const row = document.querySelector(`tr[data-student-id="${studentId}"]`);
+    if (row) {
+        row.remove();
+        
+        // Check if there are no more students
+        const tbody = document.querySelector('tbody');
+        if (tbody.children.length === 0) {
+            const noStudentsRow = document.createElement('tr');
+            noStudentsRow.innerHTML = `
+                <td colspan="9" class="py-8 px-6 text-center text-slate-500">
+                    <i class="fa-solid fa-user-graduate text-4xl mb-4 text-slate-300"></i>
+                    <p class="text-lg">No students found. Add your first student!</p>
+                </td>
+            `;
+            tbody.appendChild(noStudentsRow);
+        }
+    }
+}
+
+function createStudentRow(student) {
+    const row = document.createElement('tr');
+    row.className = 'hover:bg-blue-50 transition-colors duration-200 border-b border-slate-100';
+    row.setAttribute('data-student-id', student.id);
+    
+    const telegramStatus = student.telegram_status ? 
+        '<span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-semibold border border-green-200"><i class="fa-solid fa-check-circle mr-1"></i>Connected</span>' :
+        '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold border border-red-200"><i class="fa-solid fa-times-circle mr-1"></i>Not Connected</span>';
+    
+    row.innerHTML = `
+        <td class="py-4 px-6 font-medium text-slate-700">${student.id}</td>
+        <td class="py-4 px-6 font-semibold text-slate-800">${student.first_name} ${student.last_name}</td>
+        <td class="py-4 px-6 text-slate-600">${student.grade_level}</td>
+        <td class="py-4 px-6 text-slate-600">${student.section_name}</td>
+        <td class="py-4 px-6 text-slate-600">${student.parent_contact}</td>
+        <td class="py-4 px-6 font-mono text-sm text-blue-600 bg-blue-50 rounded px-2 py-1">${student.code || '—'}</td>
+        <td class="py-4 px-6 font-mono text-xs text-slate-500">${student.telegram_chat_id || 'Not Linked'}</td>
+        <td class="py-4 px-6">${telegramStatus}</td>
+        <td class="py-4 px-6 text-center">
+            <div class="flex justify-center gap-2">
+                <button class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors duration-200 shadow-sm"
+                    onclick="openStudentModal('${student.id}','${student.first_name}','${student.last_name}','${student.grade_level}','${student.section_id}','${student.parent_contact}','${student.code}')">
+                    <i class="fa-solid fa-edit mr-1"></i> Edit
+                </button>
+                <button class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm transition-colors duration-200 shadow-sm"
+                    onclick="deleteStudent(${student.id}, '${student.first_name} ${student.last_name}')">
+                    <i class="fa-solid fa-trash mr-1"></i> Delete
+                </button>
+            </div>
+        </td>
+    `;
+    
+    return row;
+}
+
+// Alert system
+function showAlert(message, type) {
+    const alertContainer = document.querySelector('.mt-4') || createAlertContainer();
+    
+    const alertClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue';
+    
+    const alert = document.createElement('div');
+    alert.className = `alert bg-${alertClass}-100 border border-${alertClass}-400 text-${alertClass}-700 px-4 py-3 rounded mb-4 opacity-0 transform translate-y-2 transition-all duration-300`;
+    alert.textContent = message;
+    
+    alertContainer.appendChild(alert);
+    
+    // Trigger animation
+    setTimeout(() => {
+        alert.classList.remove('opacity-0', 'translate-y-2');
+    }, 100);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alert.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 300);
+    }, 5000);
+}
+
+function createAlertContainer() {
+    const container = document.createElement('div');
+    container.className = 'mt-4';
+    
+    const mainContent = document.querySelector('.bg-gradient-to-br');
+    mainContent.parentNode.insertBefore(container, mainContent);
+    
+    return container;
+}
+
+// Close modals when clicking outside
+document.getElementById('studentModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeStudentModal();
+    }
+});
+
+document.getElementById('deleteModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeDeleteModal();
+    }
+});
+
+// Close modals on Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+        closeStudentModal();
+        closeDeleteModal();
+    }
+});
+
+// Add data attributes to existing rows for easier manipulation
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('tbody tr').forEach((row, index) => {
+        const firstCell = row.querySelector('td');
+        if (firstCell && firstCell.textContent.trim() !== '') {
+            const studentId = firstCell.textContent.trim();
+            if (!isNaN(studentId)) {
+                row.setAttribute('data-student-id', studentId);
+            }
+        }
+    });
+});
 </script>
 {% endblock %}

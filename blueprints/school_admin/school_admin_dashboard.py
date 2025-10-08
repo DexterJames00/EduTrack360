@@ -8,12 +8,8 @@ school_admin_bp = Blueprint('school_admin', __name__, url_prefix='/school_admin'
 def dashboard():
     return render_template('school_admin/school_admin_dashboard.html')
 
-# Students
-@school_admin_bp.route('/students')
-def students():
-    return render_template('school_admin/school_admin_students.html')
 
-# Subjects
+
 @school_admin_bp.route('/subjects')
 def subjects():
     return render_template('school_admin/school_admin_subjects.html')

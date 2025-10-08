@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from database import db
-from models import Instructor
+from models import Instructor, SchoolAdmin
 
 school_admin_bp = Blueprint('crud_instructor', __name__, url_prefix='/school_admin')
 
@@ -17,10 +17,14 @@ def get_instructors():
     # Add creator name to each instructor
     for instructor in instructors:
         if instructor.created_by:
-            # You might want to fetch the creator's name from SchoolAdmin table
-            instructor.creator_name = f"Admin ID: {instructor.created_by}"
+            # Fetch the creator's actual username from SchoolAdmin table
+            creator = SchoolAdmin.query.filter_by(id=instructor.created_by).first()
+            if creator:
+                instructor.creator_name = creator.username
+            else:
+                instructor.creator_name = "Unknown Admin"
         else:
-            instructor.creator_name = "Unknown"
+            instructor.creator_name = "System"
     
     return render_template('school_admin/school_admin_instructors.html', instructors=instructors)
 
@@ -40,12 +44,45 @@ def create_instructor():
         if not data.get('name') or not data.get('gender') or not data.get('email') or not data.get('address'):
             return jsonify({'success': False, 'message': 'Missing required fields.'}), 400
 
+        # Check for duplicate email in the same school
+        existing_instructor_email = Instructor.query.filter_by(
+            email=data.get('email').strip().lower(), 
+            school_id=school_id
+        ).first()
+        
+        if existing_instructor_email:
+            return jsonify({
+                'success': False, 
+                'message': f'An instructor with email "{data.get("email")}" already exists in your school.'
+            }), 400
+
+        # Check for duplicate name in the same school
+        existing_instructor_name = Instructor.query.filter_by(
+            name=data.get('name').strip(), 
+            school_id=school_id
+        ).first()
+        
+        if existing_instructor_name:
+            return jsonify({
+                'success': False, 
+                'message': f'An instructor named "{data.get("name")}" already exists in your school.'
+            }), 400
+
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, data.get('email').strip()):
+            return jsonify({
+                'success': False, 
+                'message': 'Please enter a valid email address.'
+            }), 400
+
         # Create Instructor object
         new_instructor = Instructor(
-            name=data.get('name'),
+            name=data.get('name').strip(),
             gender=data.get('gender'),
-            email=data.get('email'),
-            address=data.get('address'),
+            email=data.get('email').strip().lower(),
+            address=data.get('address').strip(),
             school_id=school_id,
             created_by=created_by  # Using session['user_id']
         )
@@ -53,7 +90,22 @@ def create_instructor():
         db.session.add(new_instructor)
         db.session.commit()
 
-        return jsonify({'success': True, 'message': 'Instructor created successfully!'})
+        # Get creator name for response
+        creator = SchoolAdmin.query.filter_by(id=created_by).first()
+        creator_name = creator.username if creator else "Admin"
+
+        return jsonify({
+            'success': True, 
+            'message': 'Instructor created successfully!',
+            'instructor': {
+                'id': new_instructor.id,
+                'name': new_instructor.name,
+                'gender': new_instructor.gender,
+                'email': new_instructor.email,
+                'address': new_instructor.address,
+                'creator_name': creator_name
+            }
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Failed to create instructor: {str(e)}'}), 500
@@ -74,14 +126,69 @@ def update_instructor(id):
         
         data = request.get_json()
         
+        # Validate required fields
+        if not data.get('name') or not data.get('gender') or not data.get('email') or not data.get('address'):
+            return jsonify({'success': False, 'message': 'Missing required fields.'}), 400
+
+        # Check for duplicate email in the same school (excluding current instructor)
+        existing_instructor_email = Instructor.query.filter(
+            Instructor.email == data.get('email').strip().lower(),
+            Instructor.school_id == school_id,
+            Instructor.id != id
+        ).first()
+        
+        if existing_instructor_email:
+            return jsonify({
+                'success': False, 
+                'message': f'Another instructor with email "{data.get("email")}" already exists in your school.'
+            }), 400
+
+        # Check for duplicate name in the same school (excluding current instructor)
+        existing_instructor_name = Instructor.query.filter(
+            Instructor.name == data.get('name').strip(),
+            Instructor.school_id == school_id,
+            Instructor.id != id
+        ).first()
+        
+        if existing_instructor_name:
+            return jsonify({
+                'success': False, 
+                'message': f'Another instructor named "{data.get("name")}" already exists in your school.'
+            }), 400
+
+        # Validate email format
+        import re
+        email_pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
+        if not re.match(email_pattern, data.get('email').strip()):
+            return jsonify({
+                'success': False, 
+                'message': 'Please enter a valid email address.'
+            }), 400
+        
         # Update instructor fields
-        instructor.name = data.get('name', instructor.name)
-        instructor.gender = data.get('gender', instructor.gender)
-        instructor.email = data.get('email', instructor.email)
-        instructor.address = data.get('address', instructor.address)
+        instructor.name = data.get('name').strip()
+        instructor.gender = data.get('gender')
+        instructor.email = data.get('email').strip().lower()
+        instructor.address = data.get('address').strip()
         
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Instructor updated successfully!'})
+        
+        # Get creator name for response
+        creator = SchoolAdmin.query.filter_by(id=instructor.created_by).first()
+        creator_name = creator.username if creator else "Admin"
+        
+        return jsonify({
+            'success': True, 
+            'message': 'Instructor updated successfully!',
+            'instructor': {
+                'id': instructor.id,
+                'name': instructor.name,
+                'gender': instructor.gender,
+                'email': instructor.email,
+                'address': instructor.address,
+                'creator_name': creator_name
+            }
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Failed to update instructor: {str(e)}'}), 500
@@ -102,7 +209,11 @@ def delete_instructor(id):
         
         db.session.delete(instructor)
         db.session.commit()
-        return jsonify({'success': True, 'message': 'Instructor deleted successfully!'})
+        return jsonify({
+            'success': True, 
+            'message': 'Instructor deleted successfully!',
+            'instructor_id': id
+        })
     except Exception as e:
         db.session.rollback()
         return jsonify({'success': False, 'message': f'Failed to delete instructor: {str(e)}'}), 500
