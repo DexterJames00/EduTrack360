@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}School Admin | EduTrack360{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-gray-50 min-h-screen font-sans">
+
+    <!-- Navbar -->
+    <nav class="bg-blue-700 text-white shadow-lg">
+        <div class="container mx-auto flex justify-between items-center py-4 px-6 flex-wrap">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-school text-2xl"></i>
+                <span class="text-2xl font-bold tracking-wide">School Admin Portal</span>
+            </div>
+
+            <div class="flex gap-2 flex-wrap md:flex-nowrap mt-2 md:mt-0">
+                <a href="/school_admin" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-home"></i> Dashboard</a>
+                <a href="/school_admin/instructors" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-users"></i> Instructors</a>
+                <a href="/school_admin/students" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-user-graduate"></i> Students</a>
+                <a href="/school_admin/subjects" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-book"></i> Subjects</a>
+                <a href="/school_admin/sections" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Sections</a>
+                <a href="/school_admin/attendance" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-clipboard-check"></i> Attendance</a>
+                <a href="/school_admin/notifications" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-bell"></i> Notifications</a>
+                
+                <!-- Telegram Integration -->
+                <a href="/school_admin/telegram" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2">
+                    <i class="fa-brands fa-telegram"></i> Telegram
+                </a>
+                <a href="/school_admin/accounts" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2">
+                    <i class="fa-solid fa-user-cog"></i> Accounts
+                </a>
+
+            
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="container mx-auto py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-blue-700 text-white text-center py-4 mt-8 shadow-inner">
+        <span class="text-sm">&copy; 2025 EduTrack360 School Admin Portal. All rights reserved.</span>
+    </footer>
+
+</body>
+</html>

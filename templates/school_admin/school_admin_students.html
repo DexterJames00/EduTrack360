@@ -1,0 +1,140 @@
+{% extends 'school_admin/school_admin_base.html' %}
+{% block title %}Students | School Admin{% endblock %}
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-3xl font-extrabold text-blue-800 flex items-center gap-2">
+            <i class="fa-solid fa-user-graduate"></i> Students
+        </h1>
+        <button class="bg-blue-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-800 transition shadow" onclick="openStudentModal()">
+            <i class="fa-solid fa-plus"></i> Add Student
+        </button>
+    </div>
+    <p class="text-gray-600 mb-6 text-lg">Manage student records and their guardian details.</p>
+
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white border border-blue-100 rounded-xl shadow">
+            <thead>
+                <tr class="bg-blue-100 text-blue-800 uppercase text-sm">
+                    <th class="py-3 px-4 text-left">Student Name</th>
+                    <th class="py-3 px-4 text-left">Gender</th>
+                    <th class="py-3 px-4 text-left">Date of Birth</th>
+                    <th class="py-3 px-4 text-left">Grade Level</th>
+                    <th class="py-3 px-4 text-left">Guardian</th>
+                    <th class="py-3 px-4 text-left">Contact No.</th>
+                    <th class="py-3 px-4 text-left">Address</th>
+                    <th class="py-3 px-4 text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr class="hover:bg-blue-50 transition">
+                    <td class="py-3 px-4 font-semibold">Michael Reyes</td>
+                    <td class="py-3 px-4">Male</td>
+                    <td class="py-3 px-4">2007-03-12</td>
+                    <td class="py-3 px-4">Grade 10</td>
+                    <td class="py-3 px-4">Maria Reyes</td>
+                    <td class="py-3 px-4">09123456789</td>
+                    <td class="py-3 px-4">Butuan City</td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs mr-2"
+                            onclick="openStudentModal('Michael Reyes', 'Male', '2007-03-12', 'Grade 10', 'Maria Reyes', '09123456789', 'Butuan City')">
+                            <i class="fa-solid fa-edit"></i> Edit
+                        </button>
+                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+                <tr class="hover:bg-blue-50 transition">
+                    <td class="py-3 px-4 font-semibold">Anna Santos</td>
+                    <td class="py-3 px-4">Female</td>
+                    <td class="py-3 px-4">2008-08-25</td>
+                    <td class="py-3 px-4">Grade 9</td>
+                    <td class="py-3 px-4">Carlos Santos</td>
+                    <td class="py-3 px-4">09988776655</td>
+                    <td class="py-3 px-4">Davao City</td>
+                    <td class="py-3 px-4 text-center">
+                        <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs mr-2"
+                            onclick="openStudentModal('Anna Santos', 'Female', '2008-08-25', 'Grade 9', 'Carlos Santos', '09988776655', 'Davao City')">
+                            <i class="fa-solid fa-edit"></i> Edit
+                        </button>
+                        <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
+                            <i class="fa-solid fa-trash"></i> Delete
+                        </button>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Wide Modal -->
+<div id="studentModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl p-10 w-full max-w-3xl relative">
+        <button class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl" onclick="closeStudentModal()">
+            <i class="fa-solid fa-times"></i>
+        </button>
+        <h2 class="text-3xl font-bold text-blue-800 mb-6"><i class="fa-solid fa-user-plus"></i> Add/Edit Student</h2>
+        <form id="studentForm" onsubmit="saveStudent(event)" class="grid grid-cols-2 gap-6">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Full Name</label>
+                <input type="text" id="modalStudentName" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Gender</label>
+                <select id="modalStudentGender" class="w-full px-4 py-2 border border-blue-300 rounded">
+                    <option value="">Select Gender</option>
+                    <option>Male</option>
+                    <option>Female</option>
+                </select>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Date of Birth</label>
+                <input type="date" id="modalStudentDob" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Grade Level</label>
+                <input type="text" id="modalStudentGrade" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Guardian Name</label>
+                <input type="text" id="modalStudentGuardian" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Guardian Contact No.</label>
+                <input type="text" id="modalStudentContact" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-semibold mb-2">Address</label>
+                <input type="text" id="modalStudentAddress" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div class="col-span-2">
+                <button type="submit" class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition">
+                    Save Student
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openStudentModal(name='', gender='', dob='', grade='', guardian='', contact='', address='') {
+    document.getElementById('studentModal').style.display = 'flex';
+    document.getElementById('modalStudentName').value = name;
+    document.getElementById('modalStudentGender').value = gender;
+    document.getElementById('modalStudentDob').value = dob;
+    document.getElementById('modalStudentGrade').value = grade;
+    document.getElementById('modalStudentGuardian').value = guardian;
+    document.getElementById('modalStudentContact').value = contact;
+    document.getElementById('modalStudentAddress').value = address;
+}
+function closeStudentModal() {
+    document.getElementById('studentModal').style.display = 'none';
+}
+function saveStudent(event) {
+    event.preventDefault();
+    alert('Student saved: ' + document.getElementById('modalStudentName').value);
+    closeStudentModal();
+}
+</script>
+{% endblock %}

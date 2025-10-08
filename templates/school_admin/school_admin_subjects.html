@@ -1,0 +1,112 @@
+{% extends 'school_admin/school_admin_base.html' %}
+{% block title %}Subjects | School Admin{% endblock %}
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-3xl font-extrabold text-blue-800 flex items-center gap-2">
+            <i class="fa-solid fa-book"></i> Subjects
+        </h1>
+        <button class="bg-blue-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-800 transition shadow" onclick="openSubjectModal()">
+            <i class="fa-solid fa-plus"></i> Add Subject
+        </button>
+    </div>
+
+    <!-- Subject Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Example Card -->
+        <div class="bg-blue-50 rounded-xl shadow hover:shadow-lg transition p-6">
+            <div class="flex flex-col">
+                <h2 class="text-xl font-bold text-blue-800">Mathematics 101</h2>
+                <p class="text-gray-600 mt-1"><i class="fa-solid fa-hashtag"></i> Subject Code: MATH101</p>
+                <p class="text-gray-600"><i class="fa-solid fa-user"></i> Instructor: John Doe</p>
+                <p class="text-gray-600"><i class="fa-solid fa-clock"></i> Schedule: Mon & Wed, 10:00AM - 11:30AM</p>
+                <p class="text-gray-600"><i class="fa-solid fa-users"></i> Section: A</p>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
+                    onclick="openSubjectModal('Mathematics 101', 'MATH101', 'John Doe', 'Mon & Wed, 10:00AM - 11:30AM', 'A')">
+                    <i class="fa-solid fa-edit"></i> Edit
+                </button>
+                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+
+        <div class="bg-blue-50 rounded-xl shadow hover:shadow-lg transition p-6">
+            <div class="flex flex-col">
+                <h2 class="text-xl font-bold text-blue-800">English Literature</h2>
+                <p class="text-gray-600 mt-1"><i class="fa-solid fa-hashtag"></i> Subject Code: ENG102</p>
+                <p class="text-gray-600"><i class="fa-solid fa-user"></i> Instructor: Jane Smith</p>
+                <p class="text-gray-600"><i class="fa-solid fa-clock"></i> Schedule: Tue & Thu, 1:00PM - 2:30PM</p>
+                <p class="text-gray-600"><i class="fa-solid fa-users"></i> Section: B</p>
+            </div>
+            <div class="flex justify-end gap-2 mt-4">
+                <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
+                    onclick="openSubjectModal('English Literature', 'ENG102', 'Jane Smith', 'Tue & Thu, 1:00PM - 2:30PM', 'B')">
+                    <i class="fa-solid fa-edit"></i> Edit
+                </button>
+                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
+                    <i class="fa-solid fa-trash"></i> Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Wide Modal -->
+<div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-xl shadow-2xl p-10 w-full max-w-2xl relative">
+        <button class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl" onclick="closeSubjectModal()">
+            <i class="fa-solid fa-times"></i>
+        </button>
+        <h2 class="text-3xl font-bold text-blue-800 mb-6"><i class="fa-solid fa-book"></i> Add/Edit Subject</h2>
+        <form id="subjectForm" onsubmit="saveSubject(event)" class="grid grid-cols-2 gap-6">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Subject Name</label>
+                <input type="text" id="modalSubjectName" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Subject Code</label>
+                <input type="text" id="modalSubjectCode" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Instructor</label>
+                <input type="text" id="modalSubjectInstructor" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Section</label>
+                <input type="text" id="modalSubjectSection" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div class="col-span-2">
+                <label class="block text-gray-700 font-semibold mb-2">Schedule</label>
+                <input type="text" id="modalSubjectSchedule" placeholder="e.g., Mon & Wed, 10:00AM - 11:30AM" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+            </div>
+            <div class="col-span-2">
+                <button type="submit" class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition">
+                    Save Subject
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openSubjectModal(name='', code='', instructor='', schedule='', section='') {
+    document.getElementById('subjectModal').style.display = 'flex';
+    document.getElementById('modalSubjectName').value = name;
+    document.getElementById('modalSubjectCode').value = code;
+    document.getElementById('modalSubjectInstructor').value = instructor;
+    document.getElementById('modalSubjectSchedule').value = schedule;
+    document.getElementById('modalSubjectSection').value = section;
+}
+function closeSubjectModal() {
+    document.getElementById('subjectModal').style.display = 'none';
+}
+function saveSubject(event) {
+    event.preventDefault();
+    alert('Subject saved: ' + document.getElementById('modalSubjectName').value);
+    closeSubjectModal();
+}
+</script>
+{% endblock %}

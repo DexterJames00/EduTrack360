@@ -1,0 +1,74 @@
+
+{% extends 'school_admin/school_admin_base.html' %}
+{% block title %}School Admin Dashboard{% endblock %}
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
+    <h1 class="text-4xl font-extrabold text-blue-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-school"></i> School Admin Dashboard</h1>
+    <p class="text-gray-600 mb-8 text-lg">Welcome! Here’s a quick overview of your school’s operations.</p>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-chalkboard-teacher text-2xl text-blue-700 mb-2"></i>
+            <div class="text-lg font-bold">Instructors</div>
+            <div class="text-2xl text-blue-800 font-extrabold">12</div>
+        </div>
+        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-user-graduate text-2xl text-blue-700 mb-2"></i>
+            <div class="text-lg font-bold">Students</div>
+            <div class="text-2xl text-blue-800 font-extrabold">320</div>
+        </div>
+        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-book text-2xl text-blue-700 mb-2"></i>
+            <div class="text-lg font-bold">Subjects</div>
+            <div class="text-2xl text-blue-800 font-extrabold">18</div>
+        </div>
+        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-layer-group text-2xl text-blue-700 mb-2"></i>
+            <div class="text-lg font-bold">Sections</div>
+            <div class="text-2xl text-blue-800 font-extrabold">6</div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="mb-8">
+        <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-bell"></i> Recent Activity</h2>
+        <ul class="space-y-2">
+            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
+                <span><strong>Attendance submitted</strong> for Section A by Instructor John Doe</span>
+                <span class="text-gray-500 text-sm">Today, 08:45 AM</span>
+            </li>
+            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
+                <span><strong>New student added</strong>: Jane Smith (Section B)</span>
+                <span class="text-gray-500 text-sm">Yesterday, 03:20 PM</span>
+            </li>
+            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
+                <span><strong>Subject updated</strong>: Science 201</span>
+                <span class="text-gray-500 text-sm">Yesterday, 11:10 AM</span>
+            </li>
+        </ul>
+    </div>
+
+    <!-- Action Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-users text-3xl text-blue-700 mb-2"></i>
+            <h2 class="text-xl font-bold mb-1">Manage Instructors</h2>
+            <p class="text-gray-700 mb-2">Assign, add, or edit instructors.</p>
+            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Instructors</a>
+        </div>
+        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-user-graduate text-3xl text-blue-700 mb-2"></i>
+            <h2 class="text-xl font-bold mb-1">Manage Students</h2>
+            <p class="text-gray-700 mb-2">Manage student records and parent contacts.</p>
+            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Students</a>
+        </div>
+        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
+            <i class="fa-solid fa-book text-3xl text-blue-700 mb-2"></i>
+            <h2 class="text-xl font-bold mb-1">Manage Subjects & Sections</h2>
+            <p class="text-gray-700 mb-2">Set up subjects and sections.</p>
+            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Subjects</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
