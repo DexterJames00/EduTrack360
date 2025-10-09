@@ -1,112 +1,668 @@
 {% extends 'school_admin/school_admin_base.html' %}
 {% block title %}Subjects | School Admin{% endblock %}
 {% block content %}
-<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
-    <div class="flex justify-between items-center mb-8">
-        <h1 class="text-3xl font-extrabold text-blue-800 flex items-center gap-2">
-            <i class="fa-solid fa-book"></i> Subjects
-        </h1>
-        <button class="bg-blue-700 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-800 transition shadow" onclick="openSubjectModal()">
-            <i class="fa-solid fa-plus"></i> Add Subject
-        </button>
+
+<!-- Success/Error Alert -->
+<div id="alertContainer" class="fixed top-20 right-6 z-50"></div>
+
+<!-- Main Container -->
+<div class="bg-gray-50 min-h-screen p-6">
+    <!-- Header Section -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 mb-8 border border-gray-100">
+        <div class="flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center shadow-lg">
+                    <i class="fas fa-book text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-800">Subject Management</h1>
+                    <p class="text-gray-600">Organize and manage your school's curriculum</p>
+                </div>
+            </div>
+            <button id="addSubjectBtn" class="bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg">
+                <i class="fas fa-plus mr-2"></i> Add New Subject
+            </button>
+        </div>
     </div>
 
-    <!-- Subject Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <!-- Example Card -->
-        <div class="bg-blue-50 rounded-xl shadow hover:shadow-lg transition p-6">
-            <div class="flex flex-col">
-                <h2 class="text-xl font-bold text-blue-800">Mathematics 101</h2>
-                <p class="text-gray-600 mt-1"><i class="fa-solid fa-hashtag"></i> Subject Code: MATH101</p>
-                <p class="text-gray-600"><i class="fa-solid fa-user"></i> Instructor: John Doe</p>
-                <p class="text-gray-600"><i class="fa-solid fa-clock"></i> Schedule: Mon & Wed, 10:00AM - 11:30AM</p>
-                <p class="text-gray-600"><i class="fa-solid fa-users"></i> Section: A</p>
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Total Subjects</p>
+                    <p class="text-3xl font-bold text-purple-600">{{ subjects|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-book text-purple-600"></i>
+                </div>
             </div>
-            <div class="flex justify-end gap-2 mt-4">
-                <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
-                    onclick="openSubjectModal('Mathematics 101', 'MATH101', 'John Doe', 'Mon & Wed, 10:00AM - 11:30AM', 'A')">
-                    <i class="fa-solid fa-edit"></i> Edit
-                </button>
-                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
-                    <i class="fa-solid fa-trash"></i> Delete
-                </button>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Grade Levels</p>
+                    <p class="text-3xl font-bold text-blue-600">{{ subjects|map(attribute='grade_level')|unique|list|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-layer-group text-blue-600"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 hover:shadow-xl transition-all duration-300">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-600 text-sm font-medium">Active Programs</p>
+                    <p class="text-3xl font-bold text-emerald-600">{{ subjects|length }}</p>
+                </div>
+                <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                    <i class="fas fa-check-circle text-emerald-600"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subjects Grid -->
+    <div class="bg-white rounded-2xl shadow-lg p-8 border border-gray-100">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-gray-800">All Subjects</h2>
+            <div class="flex space-x-3">
+                <input type="text" id="searchInput" placeholder="Search subjects..." 
+                       class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                <select id="gradeFilter" class="px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                    <option value="">All Grades</option>
+                    {% for grade in subjects|map(attribute='grade_level')|unique %}
+                    <option value="{{ grade }}">{{ grade }}</option>
+                    {% endfor %}
+                </select>
             </div>
         </div>
 
-        <div class="bg-blue-50 rounded-xl shadow hover:shadow-lg transition p-6">
-            <div class="flex flex-col">
-                <h2 class="text-xl font-bold text-blue-800">English Literature</h2>
-                <p class="text-gray-600 mt-1"><i class="fa-solid fa-hashtag"></i> Subject Code: ENG102</p>
-                <p class="text-gray-600"><i class="fa-solid fa-user"></i> Instructor: Jane Smith</p>
-                <p class="text-gray-600"><i class="fa-solid fa-clock"></i> Schedule: Tue & Thu, 1:00PM - 2:30PM</p>
-                <p class="text-gray-600"><i class="fa-solid fa-users"></i> Section: B</p>
+        <div id="subjectsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for subject in subjects %}
+            <div class="subject-card bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 group" 
+                 data-subject-id="{{ subject.id }}" data-grade="{{ subject.grade_level }}" data-name="{{ subject.name.lower() }}">
+                
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-book text-white text-lg"></i>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="edit-btn w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                                data-subject-id="{{ subject.id }}" data-name="{{ subject.name }}" data-grade="{{ subject.grade_level }}">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button class="delete-btn w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                                data-subject-id="{{ subject.id }}" data-name="{{ subject.name }}">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                        {{ subject.name }}
+                    </h3>
+                    
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-layer-group text-purple-500 w-4"></i>
+                            <span>Grade Level: <span class="font-semibold">{{ subject.grade_level }}</span></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-hashtag text-blue-500 w-4"></i>
+                            <span>Subject ID: <span class="font-mono text-gray-800">#{{ subject.id }}</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+                            Active Program
+                        </span>
+                        <span class="flex items-center space-x-1">
+                            <i class="fas fa-clock"></i>
+                            <span>Updated Recently</span>
+                        </span>
+                    </div>
+                </div>
             </div>
-            <div class="flex justify-end gap-2 mt-4">
-                <button class="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 text-xs"
-                    onclick="openSubjectModal('English Literature', 'ENG102', 'Jane Smith', 'Tue & Thu, 1:00PM - 2:30PM', 'B')">
-                    <i class="fa-solid fa-edit"></i> Edit
-                </button>
-                <button class="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600 text-xs">
-                    <i class="fa-solid fa-trash"></i> Delete
-                </button>
-            </div>
+            {% endfor %}
         </div>
+
+        {% if not subjects %}
+        <div class="text-center py-12">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-book text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-xl font-semibold text-gray-600 mb-2">No Subjects Found</h3>
+            <p class="text-gray-500 mb-6">Start building your curriculum by adding your first subject.</p>
+            <button id="addFirstSubjectBtn" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300">
+                <i class="fas fa-plus mr-2"></i> Add First Subject
+            </button>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Wide Modal -->
-<div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl shadow-2xl p-10 w-full max-w-2xl relative">
-        <button class="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-2xl" onclick="closeSubjectModal()">
-            <i class="fa-solid fa-times"></i>
-        </button>
-        <h2 class="text-3xl font-bold text-blue-800 mb-6"><i class="fa-solid fa-book"></i> Add/Edit Subject</h2>
-        <form id="subjectForm" onsubmit="saveSubject(event)" class="grid grid-cols-2 gap-6">
+<!-- Subject Modal -->
+<div id="subjectModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300">
+        <div class="flex justify-between items-center mb-6">
+            <h3 id="modalTitle" class="text-2xl font-bold text-gray-800">Add New Subject</h3>
+            <button id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors duration-200">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <form id="subjectForm" class="space-y-6">
+            <input type="hidden" id="subjectId" value="">
+            
             <div>
                 <label class="block text-gray-700 font-semibold mb-2">Subject Name</label>
-                <input type="text" id="modalSubjectName" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+                <input type="text" id="subjectName" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200" 
+                       placeholder="e.g., Mathematics, Science, English" required>
+                <div id="nameError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
+
             <div>
-                <label class="block text-gray-700 font-semibold mb-2">Subject Code</label>
-                <input type="text" id="modalSubjectCode" class="w-full px-4 py-2 border border-blue-300 rounded" required>
+                <label class="block text-gray-700 font-semibold mb-2">Grade Level</label>
+                <input type="text" id="gradeLevel" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200" 
+                       placeholder="e.g., Grade 1, Grade 7, Senior High" required>
+                <div id="gradeError" class="text-red-500 text-sm mt-1 hidden"></div>
             </div>
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">Instructor</label>
-                <input type="text" id="modalSubjectInstructor" class="w-full px-4 py-2 border border-blue-300 rounded" required>
-            </div>
-            <div>
-                <label class="block text-gray-700 font-semibold mb-2">Section</label>
-                <input type="text" id="modalSubjectSection" class="w-full px-4 py-2 border border-blue-300 rounded" required>
-            </div>
-            <div class="col-span-2">
-                <label class="block text-gray-700 font-semibold mb-2">Schedule</label>
-                <input type="text" id="modalSubjectSchedule" placeholder="e.g., Mon & Wed, 10:00AM - 11:30AM" class="w-full px-4 py-2 border border-blue-300 rounded" required>
-            </div>
-            <div class="col-span-2">
-                <button type="submit" class="w-full bg-blue-700 text-white py-3 rounded-xl font-bold hover:bg-blue-800 transition">
-                    Save Subject
+
+            <div class="flex space-x-4 pt-4">
+                <button type="button" id="cancelBtn" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold">
+                    Cancel
+                </button>
+                <button type="submit" id="saveBtn" class="flex-1 px-6 py-3 bg-gradient-to-r from-purple-600 to-purple-700 text-white rounded-xl hover:from-purple-700 hover:to-purple-800 transition-all duration-200 font-semibold">
+                    <i class="fas fa-save mr-2"></i>Save Subject
                 </button>
             </div>
         </form>
     </div>
 </div>
 
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">Delete Subject</h3>
+            <p class="text-gray-600 mb-6">Are you sure you want to delete "<span id="deleteSubjectName" class="font-semibold text-red-600"></span>"? This action cannot be undone.</p>
+            
+            <div class="flex space-x-4">
+                <button id="cancelDeleteBtn" class="flex-1 px-6 py-3 border border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-all duration-200 font-semibold">
+                    Cancel
+                </button>
+                <button id="confirmDeleteBtn" class="flex-1 px-6 py-3 bg-red-600 text-white rounded-xl hover:bg-red-700 transition-all duration-200 font-semibold" data-subject-id="">
+                    <i class="fas fa-trash mr-2"></i>Delete
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
-function openSubjectModal(name='', code='', instructor='', schedule='', section='') {
-    document.getElementById('subjectModal').style.display = 'flex';
-    document.getElementById('modalSubjectName').value = name;
-    document.getElementById('modalSubjectCode').value = code;
-    document.getElementById('modalSubjectInstructor').value = instructor;
-    document.getElementById('modalSubjectSchedule').value = schedule;
-    document.getElementById('modalSubjectSection').value = section;
-}
-function closeSubjectModal() {
-    document.getElementById('subjectModal').style.display = 'none';
-}
-function saveSubject(event) {
-    event.preventDefault();
-    alert('Subject saved: ' + document.getElementById('modalSubjectName').value);
-    closeSubjectModal();
-}
+document.addEventListener('DOMContentLoaded', function() {
+    // Modal elements
+    const subjectModal = document.getElementById('subjectModal');
+    const deleteModal = document.getElementById('deleteModal');
+    const subjectForm = document.getElementById('subjectForm');
+    
+    // Form elements
+    const subjectId = document.getElementById('subjectId');
+    const subjectName = document.getElementById('subjectName');
+    const gradeLevel = document.getElementById('gradeLevel');
+    const modalTitle = document.getElementById('modalTitle');
+    const saveBtn = document.getElementById('saveBtn');
+    
+    // Search and filter
+    const searchInput = document.getElementById('searchInput');
+    const gradeFilter = document.getElementById('gradeFilter');
+    
+    // Show alert function
+    function showAlert(message, type = 'success') {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert-message p-4 rounded-xl shadow-lg transform transition-all duration-300 mb-4 ${
+            type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+        }`;
+        alertDiv.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+                    <span>${message}</span>
+                </div>
+                <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        `;
+        alertContainer.appendChild(alertDiv);
+        
+        setTimeout(() => {
+            if (alertDiv.parentNode) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+    
+    // Open modal for adding
+    document.getElementById('addSubjectBtn')?.addEventListener('click', () => {
+        openModal();
+    });
+    
+    document.getElementById('addFirstSubjectBtn')?.addEventListener('click', () => {
+        openModal();
+    });
+    
+    // Open modal function
+    function openModal(edit = false, id = '', name = '', grade = '') {
+        modalTitle.textContent = edit ? 'Edit Subject' : 'Add New Subject';
+        saveBtn.innerHTML = edit ? '<i class="fas fa-save mr-2"></i>Update Subject' : '<i class="fas fa-save mr-2"></i>Save Subject';
+        
+        subjectId.value = id;
+        subjectName.value = name;
+        gradeLevel.value = grade;
+        
+        clearErrors();
+        subjectModal.classList.remove('hidden');
+        subjectName.focus();
+    }
+    
+    // Close modal
+    function closeModal() {
+        subjectModal.classList.add('hidden');
+        subjectForm.reset();
+        clearErrors();
+    }
+    
+    document.getElementById('closeModalBtn').addEventListener('click', closeModal);
+    document.getElementById('cancelBtn').addEventListener('click', closeModal);
+    
+    // Clear errors
+    function clearErrors() {
+        document.getElementById('nameError').classList.add('hidden');
+        document.getElementById('gradeError').classList.add('hidden');
+        subjectName.classList.remove('border-red-500');
+        gradeLevel.classList.remove('border-red-500');
+    }
+    
+    // Form submission
+    subjectForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        clearErrors();
+        
+        const formData = new FormData();
+        formData.append('name', subjectName.value.trim());
+        formData.append('grade_level', gradeLevel.value.trim());
+        
+        const isEdit = subjectId.value !== '';
+        const url = isEdit ? `/school_admin/subjects/${subjectId.value}` : '/school_admin/subjects';
+        const method = isEdit ? 'PUT' : 'POST';
+        
+        try {
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
+            
+            const response = await fetch(url, {
+                method: method,
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: formData
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert(data.message, 'success');
+                closeModal();
+                
+                if (isEdit) {
+                    // Update existing card
+                    updateSubjectCard(data.subject);
+                } else {
+                    // Add new card
+                    addSubjectCard(data.subject);
+                }
+                updateStats();
+            } else {
+                showAlert(data.message, 'error');
+            }
+        } catch (error) {
+            showAlert('An error occurred. Please try again.', 'error');
+        } finally {
+            saveBtn.disabled = false;
+            saveBtn.innerHTML = isEdit ? '<i class="fas fa-save mr-2"></i>Update Subject' : '<i class="fas fa-save mr-2"></i>Save Subject';
+        }
+    });
+    
+    // Edit subject
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.edit-btn')) {
+            const btn = e.target.closest('.edit-btn');
+            const id = btn.dataset.subjectId;
+            const name = btn.dataset.name;
+            const grade = btn.dataset.grade;
+            
+            openModal(true, id, name, grade);
+        }
+    });
+    
+    // Delete subject
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.delete-btn')) {
+            const btn = e.target.closest('.delete-btn');
+            const id = btn.dataset.subjectId;
+            const name = btn.dataset.name;
+            
+            document.getElementById('deleteSubjectName').textContent = name;
+            document.getElementById('confirmDeleteBtn').dataset.subjectId = id;
+            deleteModal.classList.remove('hidden');
+        }
+    });
+    
+    // Close delete modal
+    document.getElementById('cancelDeleteBtn').addEventListener('click', () => {
+        deleteModal.classList.add('hidden');
+    });
+    
+    // Confirm delete
+    document.getElementById('confirmDeleteBtn').addEventListener('click', async function() {
+        const id = this.dataset.subjectId;
+        
+        try {
+            this.disabled = true;
+            this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+            
+            const response = await fetch(`/school_admin/subjects/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                showAlert(data.message, 'success');
+                deleteModal.classList.add('hidden');
+                
+                // Remove subject card from DOM
+                removeSubjectCard(id);
+                updateStats();
+            } else {
+                showAlert(data.message, 'error');
+            }
+        } catch (error) {
+            showAlert('An error occurred. Please try again.', 'error');
+        } finally {
+            this.disabled = false;
+            this.innerHTML = '<i class="fas fa-trash mr-2"></i>Delete';
+        }
+    });
+    
+    // Function to add new subject card
+    function addSubjectCard(subject) {
+        const container = document.getElementById('subjectsContainer');
+        const emptyState = container.querySelector('.text-center.py-12');
+        
+        // Remove empty state if it exists
+        if (emptyState) {
+            emptyState.remove();
+        }
+        
+        const cardHTML = `
+            <div class="subject-card bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 group" 
+                 data-subject-id="${subject.id}" data-grade="${subject.grade_level}" data-name="${subject.name.toLowerCase()}">
+                
+                <div class="flex items-start justify-between mb-4">
+                    <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                        <i class="fas fa-book text-white text-lg"></i>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button class="edit-btn w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                                data-subject-id="${subject.id}" data-name="${subject.name}" data-grade="${subject.grade_level}">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                        <button class="delete-btn w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                                data-subject-id="${subject.id}" data-name="${subject.name}">
+                            <i class="fas fa-trash text-xs"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <h3 class="text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                        ${subject.name}
+                    </h3>
+                    
+                    <div class="space-y-2 text-sm text-gray-600">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-layer-group text-purple-500 w-4"></i>
+                            <span>Grade Level: <span class="font-semibold">${subject.grade_level}</span></span>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-hashtag text-blue-500 w-4"></i>
+                            <span>Subject ID: <span class="font-mono text-gray-800">#${subject.id}</span></span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex items-center justify-between text-xs text-gray-500">
+                        <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+                            Active Program
+                        </span>
+                        <span class="flex items-center space-x-1">
+                            <i class="fas fa-clock"></i>
+                            <span>Just Added</span>
+                        </span>
+                    </div>
+                </div>
+            </div>
+        `;
+        
+        container.insertAdjacentHTML('beforeend', cardHTML);
+        
+        // Add animation to new card
+        const newCard = container.lastElementChild;
+        newCard.style.opacity = '0';
+        newCard.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            newCard.style.transition = 'all 0.3s ease';
+            newCard.style.opacity = '1';
+            newCard.style.transform = 'translateY(0)';
+        }, 100);
+        
+        // Update grade filter options
+        updateGradeFilter();
+    }
+    
+    // Function to update existing subject card
+    function updateSubjectCard(subject) {
+        const card = document.querySelector(`[data-subject-id="${subject.id}"]`);
+        if (card) {
+            // Update data attributes
+            card.dataset.grade = subject.grade_level;
+            card.dataset.name = subject.name.toLowerCase();
+            
+            // Update edit button data
+            const editBtn = card.querySelector('.edit-btn');
+            editBtn.dataset.name = subject.name;
+            editBtn.dataset.grade = subject.grade_level;
+            
+            // Update delete button data
+            const deleteBtn = card.querySelector('.delete-btn');
+            deleteBtn.dataset.name = subject.name;
+            
+            // Update card content
+            const titleElement = card.querySelector('h3');
+            titleElement.textContent = subject.name;
+            
+            const gradeElement = card.querySelector('.fas.fa-layer-group').parentElement.querySelector('.font-semibold');
+            gradeElement.textContent = subject.grade_level;
+            
+            const idElement = card.querySelector('.font-mono');
+            idElement.textContent = `#${subject.id}`;
+            
+            // Add updated animation
+            card.style.transform = 'scale(1.02)';
+            setTimeout(() => {
+                card.style.transform = 'scale(1)';
+            }, 200);
+            
+            // Update grade filter options
+            updateGradeFilter();
+        }
+    }
+    
+    // Function to remove subject card
+    function removeSubjectCard(subjectId) {
+        const card = document.querySelector(`[data-subject-id="${subjectId}"]`);
+        if (card) {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(-20px)';
+            
+            setTimeout(() => {
+                card.remove();
+                
+                // Check if no subjects left and show empty state
+                const container = document.getElementById('subjectsContainer');
+                if (container.children.length === 0) {
+                    showEmptyState();
+                }
+                
+                updateGradeFilter();
+            }, 300);
+        }
+    }
+    
+    // Function to show empty state
+    function showEmptyState() {
+        const container = document.getElementById('subjectsContainer');
+        const emptyStateHTML = `
+            <div class="text-center py-12 col-span-full">
+                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-book text-gray-400 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-600 mb-2">No Subjects Found</h3>
+                <p class="text-gray-500 mb-6">Start building your curriculum by adding your first subject.</p>
+                <button id="addFirstSubjectBtn" class="bg-gradient-to-r from-purple-600 to-purple-700 text-white px-6 py-3 rounded-xl font-semibold hover:from-purple-700 hover:to-purple-800 transition-all duration-300">
+                    <i class="fas fa-plus mr-2"></i> Add First Subject
+                </button>
+            </div>
+        `;
+        container.innerHTML = emptyStateHTML;
+        
+        // Re-attach event listener for the new button
+        document.getElementById('addFirstSubjectBtn').addEventListener('click', () => {
+            openModal();
+        });
+    }
+    
+    // Function to update stats
+    function updateStats() {
+        const cards = document.querySelectorAll('.subject-card');
+        const totalSubjects = cards.length;
+        
+        // Get unique grade levels
+        const grades = new Set();
+        cards.forEach(card => {
+            grades.add(card.dataset.grade);
+        });
+        
+        // Update stats display
+        const statsCards = document.querySelectorAll('.grid.grid-cols-1.md\\:grid-cols-3 .bg-white');
+        if (statsCards[0]) {
+            const totalElement = statsCards[0].querySelector('.text-3xl');
+            totalElement.textContent = totalSubjects;
+        }
+        
+        if (statsCards[1]) {
+            const gradesElement = statsCards[1].querySelector('.text-3xl');
+            gradesElement.textContent = grades.size;
+        }
+        
+        if (statsCards[2]) {
+            const activeElement = statsCards[2].querySelector('.text-3xl');
+            activeElement.textContent = totalSubjects;
+        }
+    }
+    
+    // Function to update grade filter options
+    function updateGradeFilter() {
+        const gradeFilter = document.getElementById('gradeFilter');
+        const cards = document.querySelectorAll('.subject-card');
+        const grades = new Set();
+        
+        cards.forEach(card => {
+            grades.add(card.dataset.grade);
+        });
+        
+        // Save current selection
+        const currentSelection = gradeFilter.value;
+        
+        // Clear and rebuild options
+        gradeFilter.innerHTML = '<option value="">All Grades</option>';
+        
+        Array.from(grades).sort().forEach(grade => {
+            const option = document.createElement('option');
+            option.value = grade;
+            option.textContent = grade;
+            gradeFilter.appendChild(option);
+        });
+        
+        // Restore selection if it still exists
+        if (Array.from(grades).includes(currentSelection)) {
+            gradeFilter.value = currentSelection;
+        }
+    }
+    
+    // Search and filter functionality
+    function filterSubjects() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedGrade = gradeFilter.value;
+        const subjectCards = document.querySelectorAll('.subject-card');
+        
+        subjectCards.forEach(card => {
+            const name = card.dataset.name;
+            const grade = card.dataset.grade;
+            
+            const matchesSearch = name.includes(searchTerm);
+            const matchesGrade = !selectedGrade || grade === selectedGrade;
+            
+            if (matchesSearch && matchesGrade) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput?.addEventListener('input', filterSubjects);
+    gradeFilter?.addEventListener('change', filterSubjects);
+    
+    // Close modals when clicking outside
+    window.addEventListener('click', function(e) {
+        if (e.target === subjectModal) {
+            closeModal();
+        }
+        if (e.target === deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+    });
+});
 </script>
+
 {% endblock %}

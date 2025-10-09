@@ -10,10 +10,6 @@ def dashboard():
 
 
 
-@school_admin_bp.route('/subjects')
-def subjects():
-    return render_template('school_admin/school_admin_subjects.html')
-
 # Sections
 @school_admin_bp.route('/sections')
 def sections():
@@ -32,29 +28,29 @@ def notifications():
 # ------------------------------
 # Telegram Bot Configuration
 # ------------------------------
+# NOTE: Telegram routes moved to crud_telegram.py
+# @school_admin_bp.route('/telegram', methods=['GET'])
+# def telegram_config():
+#     # Fetch stats from database (example placeholders)
+#     linked_parents_count = 42
+#     unlinked_parents_count = 18
+#     return render_template(
+#         'school_admin/telegram_config.html',
+#         linked_parents_count=linked_parents_count,
+#         unlinked_parents_count=unlinked_parents_count
+#     )
 
-@school_admin_bp.route('/telegram', methods=['GET'])
-def telegram_config():
-    # Fetch stats from database (example placeholders)
-    linked_parents_count = 42
-    unlinked_parents_count = 18
-    return render_template(
-        'school_admin/telegram_config.html',
-        linked_parents_count=linked_parents_count,
-        unlinked_parents_count=unlinked_parents_count
-    )
+# @school_admin_bp.route('/telegram/configure', methods=['POST'])
+# def configure_telegram():
+#     bot_token = request.form.get('bot_token')
+#     bot_username = request.form.get('bot_username')
+#     # TODO: Save these to the database
+#     flash(f'Telegram bot {bot_username} configured successfully!', 'success')
+#     return redirect(url_for('school_admin.telegram_config'))
 
-@school_admin_bp.route('/telegram/configure', methods=['POST'])
-def configure_telegram():
-    bot_token = request.form.get('bot_token')
-    bot_username = request.form.get('bot_username')
-    # TODO: Save these to the database
-    flash(f'Telegram bot {bot_username} configured successfully!', 'success')
-    return redirect(url_for('school_admin.telegram_config'))
-
-@school_admin_bp.route('/telegram/test', methods=['POST'])
-def test_telegram():
-    test_message = request.form.get('test_message')
-    # TODO: Send test message via Telegram API
-    flash('Test message sent successfully!', 'success')
-    return redirect(url_for('school_admin.telegram_config'))
+# @school_admin_bp.route('/telegram/test', methods=['POST'])
+# def test_telegram():
+#     test_message = request.form.get('test_message')
+#     # TODO: Send test message via Telegram API
+#     flash('Test message sent successfully!', 'success')
+#     return redirect(url_for('school_admin.telegram_config'))

@@ -2,73 +2,336 @@
 {% extends 'school_admin/school_admin_base.html' %}
 {% block title %}School Admin Dashboard{% endblock %}
 {% block content %}
-<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
-    <h1 class="text-4xl font-extrabold text-blue-800 mb-2 flex items-center gap-2"><i class="fa-solid fa-school"></i> School Admin Dashboard</h1>
-    <p class="text-gray-600 mb-8 text-lg">Welcome! Here’s a quick overview of your school’s operations.</p>
 
-    <!-- Quick Stats -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-chalkboard-teacher text-2xl text-blue-700 mb-2"></i>
-            <div class="text-lg font-bold">Instructors</div>
-            <div class="text-2xl text-blue-800 font-extrabold">12</div>
+<!-- Custom CSS for professional effects that match the base theme -->
+<style>
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-5px); }
+    }
+    
+    @keyframes pulse-soft {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.02); }
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    .professional-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid rgba(59, 130, 246, 0.1);
+        transition: all 0.3s ease;
+    }
+    
+    .professional-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 20px 40px rgba(59, 130, 246, 0.1);
+        border-color: rgba(59, 130, 246, 0.2);
+    }
+    
+    .gradient-text {
+        background: linear-gradient(135deg, #1e40af, #3b82f6, #06b6d4);
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    .stat-icon {
+        background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+        box-shadow: 0 8px 20px rgba(59, 130, 246, 0.3);
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #3b82f6, #06b6d4);
+        animation: shimmer 2s linear infinite;
+        background-size: 200% 100%;
+    }
+    
+    .activity-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
+        border-left: 4px solid #3b82f6;
+    }
+    
+    .metric-card {
+        background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%);
+    }
+</style>
+
+<!-- Main Dashboard Container -->
+<div class="bg-gray-50 min-h-screen p-6">
+    <!-- Professional Header -->
+    <div class="text-center mb-12">
+        <h1 class="text-5xl font-bold gradient-text mb-4 tracking-wide">
+            <i class="fas fa-tachometer-alt text-blue-600 mr-4"></i>
+            Dashboard Overview
+        </h1>
+        <div class="w-32 h-1 bg-gradient-to-r from-blue-600 to-cyan-500 mx-auto rounded-full mb-4"></div>
+        <p class="text-gray-600 text-xl font-light">
+            Welcome to your School Management Command Center
+        </p>
+    </div>
+
+    <!-- Professional Stats Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-8 mb-12">
+        <!-- Instructors Stat -->
+        <div class="professional-card rounded-2xl p-8 group">
+            <div class="flex items-center justify-between mb-6">
+                <div class="stat-icon w-16 h-16 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-chalkboard-teacher text-2xl"></i>
+                </div>
+                <div class="text-right">
+                    <div class="text-blue-600 text-sm font-semibold tracking-wide uppercase">Instructors</div>
+                    <div class="text-4xl font-bold text-gray-800">{{ instructors_count or 12 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center text-emerald-600 text-sm mb-4">
+                <i class="fas fa-trending-up mr-2"></i>
+                <span class="font-semibold">+2.5%</span>
+                <span class="text-gray-500 ml-2">from last month</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="progress-bar h-full rounded-full" style="width: 75%"></div>
+            </div>
         </div>
-        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-user-graduate text-2xl text-blue-700 mb-2"></i>
-            <div class="text-lg font-bold">Students</div>
-            <div class="text-2xl text-blue-800 font-extrabold">320</div>
+
+        <!-- Students Stat -->
+        <div class="professional-card rounded-2xl p-8 group">
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <i class="fas fa-user-graduate text-2xl"></i>
+                </div>
+                <div class="text-right">
+                    <div class="text-emerald-600 text-sm font-semibold tracking-wide uppercase">Students</div>
+                    <div class="text-4xl font-bold text-gray-800">{{ students_count or 320 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center text-emerald-600 text-sm mb-4">
+                <i class="fas fa-trending-up mr-2"></i>
+                <span class="font-semibold">+8.2%</span>
+                <span class="text-gray-500 ml-2">new enrollments</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: 85%"></div>
+            </div>
         </div>
-        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-book text-2xl text-blue-700 mb-2"></i>
-            <div class="text-lg font-bold">Subjects</div>
-            <div class="text-2xl text-blue-800 font-extrabold">18</div>
+
+        <!-- Subjects Stat -->
+        <div class="professional-card rounded-2xl p-8 group">
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <i class="fas fa-book text-2xl"></i>
+                </div>
+                <div class="text-right">
+                    <div class="text-purple-600 text-sm font-semibold tracking-wide uppercase">Subjects</div>
+                    <div class="text-4xl font-bold text-gray-800">{{ subjects_count or 18 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center text-emerald-600 text-sm mb-4">
+                <i class="fas fa-trending-up mr-2"></i>
+                <span class="font-semibold">+1.1%</span>
+                <span class="text-gray-500 ml-2">active programs</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-purple-500 to-pink-500 rounded-full" style="width: 67%"></div>
+            </div>
         </div>
-        <div class="bg-blue-100 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-layer-group text-2xl text-blue-700 mb-2"></i>
-            <div class="text-lg font-bold">Sections</div>
-            <div class="text-2xl text-blue-800 font-extrabold">6</div>
+
+        <!-- Sections Stat -->
+        <div class="professional-card rounded-2xl p-8 group">
+            <div class="flex items-center justify-between mb-6">
+                <div class="w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-lg">
+                    <i class="fas fa-layer-group text-2xl"></i>
+                </div>
+                <div class="text-right">
+                    <div class="text-orange-600 text-sm font-semibold tracking-wide uppercase">Sections</div>
+                    <div class="text-4xl font-bold text-gray-800">{{ sections_count or 6 }}</div>
+                </div>
+            </div>
+            <div class="flex items-center text-gray-500 text-sm mb-4">
+                <i class="fas fa-minus mr-2"></i>
+                <span class="font-semibold">0.0%</span>
+                <span class="text-gray-500 ml-2">stable</span>
+            </div>
+            <div class="h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-orange-500 to-red-500 rounded-full" style="width: 60%"></div>
+            </div>
         </div>
     </div>
 
-    <!-- Recent Activity -->
-    <div class="mb-8">
-        <h2 class="text-xl font-bold text-blue-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-bell"></i> Recent Activity</h2>
-        <ul class="space-y-2">
-            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
-                <span><strong>Attendance submitted</strong> for Section A by Instructor John Doe</span>
-                <span class="text-gray-500 text-sm">Today, 08:45 AM</span>
-            </li>
-            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
-                <span><strong>New student added</strong>: Jane Smith (Section B)</span>
-                <span class="text-gray-500 text-sm">Yesterday, 03:20 PM</span>
-            </li>
-            <li class="bg-blue-50 p-4 rounded flex justify-between items-center">
-                <span><strong>Subject updated</strong>: Science 201</span>
-                <span class="text-gray-500 text-sm">Yesterday, 11:10 AM</span>
-            </li>
-        </ul>
-    </div>
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 xl:grid-cols-3 gap-8">
+        <!-- Activity Feed -->
+        <div class="xl:col-span-2">
+            <div class="professional-card rounded-2xl p-8">
+                <div class="flex items-center justify-between mb-8">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center shadow-lg">
+                            <i class="fas fa-activity text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-2xl font-bold text-gray-800">Recent Activity</h3>
+                            <p class="text-gray-600">Latest system updates and notifications</p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <div class="w-3 h-3 bg-blue-500 rounded-full animate-pulse" style="animation-delay: 0.2s"></div>
+                        <div class="w-3 h-3 bg-purple-500 rounded-full animate-pulse" style="animation-delay: 0.4s"></div>
+                    </div>
+                </div>
 
-    <!-- Action Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-users text-3xl text-blue-700 mb-2"></i>
-            <h2 class="text-xl font-bold mb-1">Manage Instructors</h2>
-            <p class="text-gray-700 mb-2">Assign, add, or edit instructors.</p>
-            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Instructors</a>
+                <div class="space-y-6">
+                    <div class="activity-card p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <i class="fas fa-check-circle text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-bold text-gray-800">Attendance Successfully Recorded</p>
+                                    <span class="text-xs text-blue-700 bg-blue-100 px-3 py-1 rounded-full font-medium">COMPLETED</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mt-1">Section A • Instructor: John Doe</p>
+                                <p class="text-blue-600 text-xs font-medium mt-2">Today, 08:45 AM</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="activity-card p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <i class="fas fa-user-plus text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-bold text-gray-800">New Student Enrolled</p>
+                                    <span class="text-xs text-emerald-700 bg-emerald-100 px-3 py-1 rounded-full font-medium">NEW</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mt-1">Jane Smith • Section B</p>
+                                <p class="text-emerald-600 text-xs font-medium mt-2">Yesterday, 03:20 PM</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="activity-card p-6 rounded-xl border border-gray-100 hover:shadow-lg transition-all duration-300">
+                        <div class="flex items-start space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                                <i class="fas fa-edit text-white"></i>
+                            </div>
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between">
+                                    <p class="font-bold text-gray-800">Curriculum Updated</p>
+                                    <span class="text-xs text-purple-700 bg-purple-100 px-3 py-1 rounded-full font-medium">MODIFIED</span>
+                                </div>
+                                <p class="text-gray-600 text-sm mt-1">Science 201 • New learning objectives added</p>
+                                <p class="text-purple-600 text-xs font-medium mt-2">Yesterday, 11:10 AM</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-8 text-center">
+                    <button class="px-8 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:scale-105 shadow-lg">
+                        <i class="fas fa-list mr-2"></i>
+                        View All Activities
+                    </button>
+                </div>
+            </div>
         </div>
-        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-user-graduate text-3xl text-blue-700 mb-2"></i>
-            <h2 class="text-xl font-bold mb-1">Manage Students</h2>
-            <p class="text-gray-700 mb-2">Manage student records and parent contacts.</p>
-            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Students</a>
-        </div>
-        <div class="bg-gradient-to-br from-blue-100 to-blue-300 p-6 rounded-xl shadow flex flex-col items-center">
-            <i class="fa-solid fa-book text-3xl text-blue-700 mb-2"></i>
-            <h2 class="text-xl font-bold mb-1">Manage Subjects & Sections</h2>
-            <p class="text-gray-700 mb-2">Set up subjects and sections.</p>
-            <a href="#" class="text-blue-700 hover:underline font-semibold">Go to Subjects</a>
+
+        <!-- Control Panel -->
+        <div class="space-y-8">
+            <!-- Quick Actions -->
+            <div class="professional-card rounded-2xl p-6">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Quick Actions</h3>
+                    <p class="text-gray-600 text-sm">Access primary management functions</p>
+                </div>
+
+                <div class="space-y-4">
+                    <a href="{{ url_for('crud_instructor.get_instructors') }}" 
+                       class="block p-4 bg-gradient-to-r from-blue-50 to-blue-100 hover:from-blue-100 hover:to-blue-200 rounded-xl border border-blue-200 hover:border-blue-300 transition-all duration-300 group">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-700 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-users"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-800">Manage Instructors</p>
+                                <p class="text-gray-600 text-sm">Add, edit, and organize faculty</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-blue-600 group-hover:translate-x-1 transition-transform duration-300"></i>
+                        </div>
+                    </a>
+
+                    <a href="{{ url_for('crud_student.students_page') }}" 
+                       class="block p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 hover:from-emerald-100 hover:to-emerald-200 rounded-xl border border-emerald-200 hover:border-emerald-300 transition-all duration-300 group">
+                        <div class="flex items-center space-x-4">
+                            <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-emerald-700 rounded-xl flex items-center justify-center text-white group-hover:scale-110 transition-transform duration-300 shadow-md">
+                                <i class="fas fa-user-graduate"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="font-bold text-gray-800">Manage Students</p>
+                                <p class="text-emerald-600 text-sm">Student records and enrollment</p>
+                            </div>
+                            <i class="fas fa-chevron-right text-emerald-600 group-hover:translate-x-1 transition-transform duration-300"></i>
+                        </div>
+                    </a>
+                </div>
+            </div>
+
+            <!-- System Metrics -->
+            <div class="metric-card rounded-2xl p-6 border border-blue-100">
+                <div class="text-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">System Performance</h3>
+                    <p class="text-gray-600 text-sm">Real-time analytics and insights</p>
+                </div>
+
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-700 font-medium">Attendance Rate</span>
+                            <span class="text-emerald-600 font-bold text-lg">94.5%</span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-full transition-all duration-1000" style="width: 94.5%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-700 font-medium">Active Classes</span>
+                            <span class="text-blue-600 font-bold text-lg">28</span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-blue-500 to-blue-600 rounded-full transition-all duration-1000" style="width: 70%"></div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-gray-700 font-medium">Weekly Hours</span>
+                            <span class="text-purple-600 font-bold text-lg">142h</span>
+                        </div>
+                        <div class="h-3 bg-gray-200 rounded-full overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-purple-500 to-purple-600 rounded-full transition-all duration-1000" style="width: 85%"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-6 p-4 bg-gradient-to-r from-emerald-50 to-emerald-100 rounded-xl border border-emerald-200">
+                    <div class="flex items-center justify-center space-x-3 text-emerald-700">
+                        <div class="w-3 h-3 bg-emerald-500 rounded-full animate-pulse"></div>
+                        <span class="font-semibold">All Systems Running Smoothly</span>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
+
 {% endblock %}

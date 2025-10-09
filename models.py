@@ -1,4 +1,5 @@
 from database import db
+import datetime
 
 
 class School(db.Model):
@@ -133,10 +134,29 @@ class SectionAdviser(db.Model):
     section_id = db.Column(db.Integer, db.ForeignKey('sections.id'), nullable=False)
     instructor_id = db.Column('intsructor_id', db.Integer, db.ForeignKey('instructors.id'), nullable=False)
 
-class GenCode(db.Model):
-    __tablename__ = 'gen_code'
+
+class TelegramConfig(db.Model):
+    __tablename__ = 'telegram_config'
+
     id = db.Column(db.Integer, primary_key=True)
-    gen_code = db.Column(db.String(255), nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    bot_token = db.Column(db.String(255), nullable=False)
+    bot_username = db.Column(db.String(100), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.utcnow)
+
+    # Relationship with school
+    school = db.relationship('School', backref=db.backref('telegram_config', uselist=False))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "school_id": self.school_id,
+            "bot_token": self.bot_token,
+            "bot_username": self.bot_username,
+            "created_at": self.created_at,
+            "updated_at": self.updated_at
+        }
 
     
 
