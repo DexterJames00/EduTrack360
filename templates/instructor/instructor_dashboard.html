@@ -42,7 +42,7 @@
                     {% if data.todays_schedule %}
                         {% for schedule in data.todays_schedule %}
                         <tr class="hover:bg-blue-50 transition">
-                            <td class="py-2 px-4">{{ schedule.time }}</td>
+                            <td class="py-2 px-4">{{ schedule.start_time }} - {{ schedule.end_time }}</td>
                             <td class="py-2 px-4 font-semibold">{{ schedule.subject }}</td>
                             <td class="py-2 px-4">{{ schedule.section }}</td>
                             <td class="py-2 px-4">{{ schedule.grade_level }}</td>

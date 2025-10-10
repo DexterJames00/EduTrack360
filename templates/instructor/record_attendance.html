@@ -14,7 +14,7 @@
                 <div class="mt-2 text-gray-700 space-y-1">
                     <p class="text-lg font-semibold text-blue-700">{{ schedule.subject }}</p>
                     <p class="text-sm text-gray-600">Section: {{ schedule.section }}</p>
-                    <p class="text-sm text-gray-500">Scheduled: {{ schedule.time }}</p>
+                    <p class="text-sm text-gray-500">Scheduled: {{ schedule.start_time }} - {{ schedule.end_time }}</p>
                 </div>
                 {% endif %}
             </div>
@@ -25,7 +25,7 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" class="bg-white rounded-2xl shadow-lg p-8">
+        <form id="attendanceForm" method="POST" class="bg-white rounded-2xl shadow-lg p-8">
             <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
                 <!-- Date -->
                 <div>
@@ -82,12 +82,126 @@
             </div>
 
             <div class="mt-8 text-right">
-                <button type="submit"
-                    class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg hover:shadow-xl">
-                    <i class="fa-solid fa-paper-plane mr-2"></i> Submit Attendance
+                <button type="submit" id="submitBtn"
+                    class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
+                    <span id="submitText">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Submit Attendance
+                    </span>
+                    <span id="loadingText" class="hidden">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...
+                    </span>
                 </button>
             </div>
         </form>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300 scale-95">
+        <div class="text-center">
+            <!-- Success Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Attendance Submitted!</h3>
+            <p id="successMessage" class="text-gray-600 mb-6">
+                Attendance has been recorded successfully.
+            </p>
+            
+            <!-- Notification Info -->
+            <div id="notificationInfo" class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fa-brands fa-telegram text-blue-500 text-lg mr-2"></i>
+                    <span class="text-blue-700 font-semibold">Telegram Notifications</span>
+                </div>
+                <div id="notificationDetails" class="text-blue-600 text-sm space-y-1">
+                    <p id="notificationText">Sending notifications to students...</p>
+                </div>
+            </div>
+            
+            <!-- Students Without Telegram Info -->
+            <div id="studentsWithoutTelegram" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 hidden">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-exclamation-triangle text-yellow-500 text-lg mr-2"></i>
+                    <span class="text-yellow-700 font-semibold">Students Without Telegram</span>
+                </div>
+                <div id="studentsWithoutTelegramDetails" class="text-yellow-600 text-sm">
+                    <p id="studentsWithoutTelegramText">Some students haven't registered for Telegram notifications.</p>
+                    <div id="studentsWithoutTelegramList" class="mt-2 text-xs bg-yellow-100 rounded p-2 hidden"></div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="goToSchedules()" 
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-calendar mr-2"></i> Back to Schedules
+                </button>
+                <button onclick="recordAnother()" 
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-plus mr-2"></i> Record Another
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300 scale-95">
+        <div class="text-center">
+            <!-- Error Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fa-solid fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            
+            <!-- Error Message -->
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Submission Failed</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">
+                An error occurred while submitting attendance.
+            </p>
+            
+            <!-- Error Details -->
+            <div id="errorDetails" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 hidden">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-info-circle text-red-500 text-lg mr-2"></i>
+                    <span class="text-red-700 font-semibold">Error Details</span>
+                </div>
+                <p id="errorDetailsText" class="text-red-600 text-sm">
+                    Additional error information...
+                </p>
+            </div>
+            
+            <!-- Error Type Specific Content -->
+            <div id="duplicateErrorContent" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6 hidden">
+                <div class="flex items-center justify-center mb-2">
+                    <i class="fa-solid fa-calendar-times text-yellow-500 text-lg mr-2"></i>
+                    <span class="text-yellow-700 font-semibold">Duplicate Attendance</span>
+                </div>
+                <p class="text-yellow-600 text-sm mb-3">
+                    Attendance has already been recorded for this date.
+                </p>
+                <button onclick="suggestNewDate()" 
+                    class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded-lg transition text-sm">
+                    <i class="fa-solid fa-calendar-plus mr-1"></i> Use Today's Date
+                </button>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeErrorModal()" 
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-times mr-2"></i> Close
+                </button>
+                <button onclick="retrySubmission()" 
+                    class="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-redo mr-2"></i> Try Again
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 <!-- Message Modal -->
@@ -109,11 +223,304 @@
     </div>
 </div>
 <script>
+// Attendance Form Submission
+document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const submitBtn = document.getElementById('submitBtn');
+    const submitText = document.getElementById('submitText');
+    const loadingText = document.getElementById('loadingText');
+    
+    // Show loading state
+    submitBtn.disabled = true;
+    submitText.classList.add('hidden');
+    loadingText.classList.remove('hidden');
+    
+    // Collect form data
+    const formData = new FormData(this);
+    
+    // Debug: Log form data
+    console.log('Form data being sent:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`${key}: ${value}`);
+    }
+    
+    // Submit attendance
+    fetch(window.location.href + '?ajax=1', {
+        method: 'POST',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest',
+            'Accept': 'application/json'
+        },
+        body: formData
+    })
+    .then(response => {
+        console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
+        console.log('Response URL:', response.url);
+        
+        if (!response.ok) {
+            // Try to get error details from the response
+            return response.json().then(errorData => {
+                throw {
+                    message: errorData.error || `HTTP error! status: ${response.status}`,
+                    data: errorData,
+                    status: response.status
+                };
+            }).catch(jsonError => {
+                // If JSON parsing fails, create a basic error object
+                if (jsonError.message) {
+                    throw jsonError; // Re-throw if it's our custom error
+                }
+                throw {
+                    message: `HTTP error! status: ${response.status}`,
+                    data: {},
+                    status: response.status
+                };
+            });
+        }
+        
+        const contentType = response.headers.get('content-type');
+        if (contentType && contentType.includes('application/json')) {
+            return response.json();
+        } else {
+            // If we get HTML back, it means the server didn't recognize this as AJAX
+            throw new Error('Server returned HTML instead of JSON. Please refresh and try again.');
+        }
+    })
+    .then(data => {
+        console.log('Success data:', data);
+        if (data.success) {
+            showSuccessModal(data);
+        } else {
+            showErrorModal(data);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        
+        // Handle different error types
+        let errorData = {
+            error: 'An unexpected error occurred',
+            type: 'unknown'
+        };
+        
+        if (error.data) {
+            // Server returned structured error data
+            errorData = {
+                error: error.message,
+                duplicate: error.data.duplicate || false,
+                existing_date: error.data.existing_date || null,
+                type: error.data.duplicate ? 'duplicate' : 'server',
+                status: error.status
+            };
+        } else if (error.message) {
+            // Network or parsing error
+            errorData = {
+                error: error.message,
+                type: error.message.includes('Network') ? 'network' : 'client'
+            };
+        }
+        
+        showErrorModal(errorData);
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.disabled = false;
+        submitText.classList.remove('hidden');
+        loadingText.classList.add('hidden');
+    });
+});
+
+function showSuccessModal(data) {
+    const modal = document.getElementById('successModal');
+    const messageEl = document.getElementById('successMessage');
+    const notificationTextEl = document.getElementById('notificationText');
+    const notificationDetailsEl = document.getElementById('notificationDetails');
+    const studentsWithoutTelegramEl = document.getElementById('studentsWithoutTelegram');
+    const studentsWithoutTelegramTextEl = document.getElementById('studentsWithoutTelegramText');
+    const studentsWithoutTelegramListEl = document.getElementById('studentsWithoutTelegramList');
+    
+    // Update success message
+    messageEl.textContent = data.message || 'Attendance has been recorded successfully.';
+    
+    // Create detailed notification info
+    const totalStudents = data.students_recorded || 0;
+    const notificationsSent = data.notifications_sent || 0;
+    const studentsWithTelegram = data.students_with_telegram || 0;
+    const studentsWithoutTelegram = data.students_without_telegram || 0;
+    const failedNotifications = data.failed_notifications || 0;
+    
+    let notificationHtml = '';
+    
+    if (notificationsSent > 0) {
+        notificationHtml += `
+            <div class="flex items-center justify-between">
+                <span><i class="fa-solid fa-check-circle text-green-500 mr-1"></i> Sent successfully:</span>
+                <span class="font-semibold">${notificationsSent}</span>
+            </div>
+        `;
+    }
+    
+    if (studentsWithTelegram > 0) {
+        notificationHtml += `
+            <div class="flex items-center justify-between">
+                <span><i class="fa-solid fa-users text-blue-500 mr-1"></i> Students with Telegram:</span>
+                <span class="font-semibold">${studentsWithTelegram}</span>
+            </div>
+        `;
+    }
+    
+    if (failedNotifications > 0) {
+        notificationHtml += `
+            <div class="flex items-center justify-between">
+                <span><i class="fa-solid fa-exclamation-circle text-red-500 mr-1"></i> Failed to send:</span>
+                <span class="font-semibold">${failedNotifications}</span>
+            </div>
+        `;
+    }
+    
+    if (notificationHtml === '') {
+        notificationHtml = '<p class="text-blue-600">No Telegram notifications sent - no students have registered.</p>';
+    }
+    
+    notificationDetailsEl.innerHTML = notificationHtml;
+    
+    // Handle students without Telegram
+    if (studentsWithoutTelegram > 0) {
+        studentsWithoutTelegramEl.classList.remove('hidden');
+        studentsWithoutTelegramTextEl.innerHTML = `
+            <strong>${studentsWithoutTelegram}</strong> student${studentsWithoutTelegram > 1 ? 's' : ''} 
+            ${studentsWithoutTelegram > 1 ? 'haven\'t' : 'hasn\'t'} registered for Telegram notifications yet.
+        `;
+        
+        // Show list of students without Telegram if provided
+        if (data.students_without_chat_list && data.students_without_chat_list.length > 0) {
+            studentsWithoutTelegramListEl.classList.remove('hidden');
+            studentsWithoutTelegramListEl.innerHTML = `
+                <strong>Students without Telegram:</strong><br>
+                ${data.students_without_chat_list.join(', ')}
+            `;
+        }
+    } else {
+        studentsWithoutTelegramEl.classList.add('hidden');
+    }
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function showErrorAlert(message) {
+    // Deprecated - now using showErrorModal
+    showErrorModal({ error: message });
+}
+
+function showErrorModal(data) {
+    const modal = document.getElementById('errorModal');
+    const messageEl = document.getElementById('errorMessage');
+    const detailsEl = document.getElementById('errorDetails');
+    const detailsTextEl = document.getElementById('errorDetailsText');
+    const duplicateContentEl = document.getElementById('duplicateErrorContent');
+    
+    // Set main error message
+    messageEl.textContent = data.error || 'An error occurred while submitting attendance.';
+    
+    // Handle different error types
+    if (data.duplicate) {
+        // Show duplicate-specific content
+        duplicateContentEl.classList.remove('hidden');
+        detailsEl.classList.add('hidden');
+    } else if (data.type === 'network') {
+        // Show network error details
+        detailsEl.classList.remove('hidden');
+        detailsTextEl.textContent = 'Please check your internet connection and try again.';
+        duplicateContentEl.classList.add('hidden');
+    } else {
+        // Show general error details if available
+        if (data.details || data.type) {
+            detailsEl.classList.remove('hidden');
+            detailsTextEl.textContent = data.details || `Error type: ${data.type}`;
+        } else {
+            detailsEl.classList.add('hidden');
+        }
+        duplicateContentEl.classList.add('hidden');
+    }
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function closeErrorModal() {
+    const modal = document.getElementById('errorModal');
+    modal.querySelector('.transform').classList.remove('scale-100');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function retrySubmission() {
+    closeErrorModal();
+    // Trigger form submission again
+    document.getElementById('attendanceForm').dispatchEvent(new Event('submit'));
+}
+
+function suggestNewDate() {
+    closeErrorModal();
+    // Set today's date
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+    document.getElementById('date').focus();
+    
+    // Show a brief success message
+    setTimeout(() => {
+        alert('✅ Date changed to today. You can now submit attendance.');
+    }, 300);
+}
+
+function showDuplicateError(data) {
+    // Deprecated - now using showErrorModal
+    showErrorModal(data);
+}
+
+function goToSchedules() {
+    window.location.href = '/instructor/attendance';
+}
+
+function recordAnother() {
+    // Close modal and reset form
+    const modal = document.getElementById('successModal');
+    modal.classList.add('hidden');
+    
+    // Reset form
+    document.getElementById('attendanceForm').reset();
+    
+    // Reset date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('date').value = today;
+    
+    // Reset all status dropdowns to "Present"
+    const statusSelects = document.querySelectorAll('select[name^="status_"]');
+    statusSelects.forEach(select => {
+        select.value = 'Present';
+    });
+}
+
+// Message Modal Functions
 function openMessageModal(studentId, studentName) {
     document.getElementById('messageModal').style.display = 'flex';
     document.getElementById('modalStudentName').value = studentName;
     document.getElementById('messageForm').setAttribute('data-student-id', studentId);
 }
+
 function closeMessageModal() {
     document.getElementById('messageModal').style.display = 'none';
 }

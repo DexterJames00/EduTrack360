@@ -19,7 +19,7 @@ def view_schedule():
     # Get all schedules for the instructor
     schedules = db.session.query(
         InstructorSchedule.id,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
         InstructorSchedule.day,
         Subject.name.label('subject'),
         Subject.grade_level.label('subject_grade'),
@@ -29,7 +29,7 @@ def view_schedule():
      .join(Section, InstructorSchedule.section_id == Section.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
      .filter(Subject.school_id == school_id)\
-     .order_by(InstructorSchedule.day, InstructorSchedule.time)\
+     .order_by(InstructorSchedule.day, InstructorSchedule.start_time)\
      .all()
     
     # Organize schedules by day
@@ -54,7 +54,7 @@ def todays_schedule():
     # Get today's schedules
     schedules = db.session.query(
         InstructorSchedule.id,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
         Subject.name.label('subject'),
         Section.name.label('section'),
         Section.grade_level
@@ -62,7 +62,7 @@ def todays_schedule():
      .join(Section, InstructorSchedule.section_id == Section.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
      .filter(InstructorSchedule.day == today)\
-     .order_by(InstructorSchedule.time)\
+     .order_by(InstructorSchedule.start_time)\
      .all()
     
     schedule_list = []
@@ -91,15 +91,15 @@ def upcoming_classes():
     # Get today's remaining schedules
     todays_remaining = db.session.query(
         InstructorSchedule.id,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
         Subject.name.label('subject'),
         Section.name.label('section')
     ).join(Subject, InstructorSchedule.subject_id == Subject.id)\
      .join(Section, InstructorSchedule.section_id == Section.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
      .filter(InstructorSchedule.day == current_day)\
-     .filter(InstructorSchedule.time >= current_time_str)\
-     .order_by(InstructorSchedule.time)\
+     .filter(InstructorSchedule.start_time >= current_time_str)\
+     .order_by(InstructorSchedule.start_time)\
      .limit(3)\
      .all()
     
@@ -126,12 +126,12 @@ def check_conflicts():
     # Find overlapping schedules (same day and time)
     conflicts = db.session.query(
         InstructorSchedule.day,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
         func.count(InstructorSchedule.id).label('conflict_count'),
         func.group_concat(Subject.name).label('subjects')
     ).join(Subject, InstructorSchedule.subject_id == Subject.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
-     .group_by(InstructorSchedule.day, InstructorSchedule.time)\
+     .group_by(InstructorSchedule.day, InstructorSchedule.start_time)\
      .having(func.count(InstructorSchedule.id) > 1)\
      .all()
     
@@ -158,8 +158,8 @@ def schedule_summary():
     summary = db.session.query(
         InstructorSchedule.day,
         func.count(InstructorSchedule.id).label('class_count'),
-        func.min(InstructorSchedule.time).label('first_class'),
-        func.max(InstructorSchedule.time).label('last_class')
+        func.min(InstructorSchedule.start_time).label('first_class'),
+        func.max(InstructorSchedule.start_time).label('last_class')
     ).filter(InstructorSchedule.instructor_id == instructor_id)\
      .group_by(InstructorSchedule.day)\
      .all()

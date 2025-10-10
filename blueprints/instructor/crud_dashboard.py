@@ -38,7 +38,8 @@ def get_dashboard_data(instructor_id, school_id):
     # Today's schedule
     todays_schedule = db.session.query(
         InstructorSchedule.id,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
+        InstructorSchedule.end_time,
         Subject.name.label('subject'),
         Section.name.label('section'),
         Section.grade_level
@@ -46,7 +47,7 @@ def get_dashboard_data(instructor_id, school_id):
      .join(Section, InstructorSchedule.section_id == Section.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
      .filter(InstructorSchedule.day == today.strftime('%A'))\
-     .order_by(InstructorSchedule.time)\
+     .order_by(InstructorSchedule.start_time)\
      .all()
     
     # Attendance submitted today
@@ -112,15 +113,16 @@ def get_dashboard_data(instructor_id, school_id):
     
     upcoming_classes = db.session.query(
         InstructorSchedule.id,
-        InstructorSchedule.time,
+        InstructorSchedule.start_time,
+        InstructorSchedule.end_time,
         Subject.name.label('subject'),
         Section.name.label('section')
     ).join(Subject, InstructorSchedule.subject_id == Subject.id)\
      .join(Section, InstructorSchedule.section_id == Section.id)\
      .filter(InstructorSchedule.instructor_id == instructor_id)\
      .filter(InstructorSchedule.day == current_day)\
-     .filter(InstructorSchedule.time >= current_time_str)\
-     .order_by(InstructorSchedule.time)\
+     .filter(InstructorSchedule.start_time >= current_time_str)\
+     .order_by(InstructorSchedule.start_time)\
      .limit(3)\
      .all()
     

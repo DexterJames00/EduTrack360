@@ -383,3 +383,58 @@ def test_bot_connection(school_id):
             
     except Exception as e:
         return {'status': 'error', 'message': str(e)}
+
+def send_attendance_notification(student_id, subject_name, date, status, start_time, end_time, school_id):
+    """Send attendance notification to student via Telegram"""
+    try:
+        # Get student information including telegram_chat_id
+        student = Student.query.get(student_id)
+        if not student or not student.telegram_chat_id:
+            print(f"Student {student_id} not found or no telegram_chat_id")
+            return False
+        
+        # Get bot configuration
+        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        if not bot_config:
+            print(f"No bot configuration found for school {school_id}")
+            return False
+        
+        bot = TelegramBot(bot_config.bot_token, school_id)
+        
+        # Create attendance notification message
+        status_emoji = {
+            'Present': '✅',
+            'Absent': '❌',
+            'Late': '🕐',
+            'Excused': '📝'
+        }
+        
+        emoji = status_emoji.get(status, '📝')
+        student_name = f"{student.first_name} {student.last_name}"
+        
+        message = f"""
+📚 <b>Attendance Notification</b>
+
+👤 <b>Name:</b> {student_name}
+📖 <b>Subject:</b> {subject_name}
+📅 <b>Date:</b> {date}
+🕐 <b>Time:</b> {start_time} - {end_time}
+{emoji} <b>Status:</b> {status}
+
+---
+This is an automated message from your school attendance system.
+        """.strip()
+        
+        # Send the message
+        success = bot.send_message(student.telegram_chat_id, message, parse_mode='HTML')
+        
+        if success:
+            print(f"Attendance notification sent to {student_name} (ID: {student_id})")
+        else:
+            print(f"Failed to send notification to {student_name} (ID: {student_id})")
+            
+        return success
+        
+    except Exception as e:
+        print(f"Error sending attendance notification: {str(e)}")
+        return False

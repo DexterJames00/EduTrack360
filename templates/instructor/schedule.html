@@ -29,7 +29,7 @@
                         {% if weekly_schedule[day] %}
                             {% for schedule in weekly_schedule[day] %}
                             <div class="bg-white rounded-lg p-3 shadow-sm border border-blue-200">
-                                <div class="text-sm font-bold text-blue-700">{{ schedule.time }}</div>
+                                <div class="text-sm font-bold text-blue-700">{{ schedule.start_time }} - {{ schedule.end_time }}</div>
                                 <div class="font-semibold text-gray-800">{{ schedule.subject }}</div>
                                 <div class="text-sm text-gray-600">Section: {{ schedule.section }}</div>
                                 <div class="text-xs text-gray-500">Grade: {{ schedule.section_grade }}</div>
