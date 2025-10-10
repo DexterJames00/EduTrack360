@@ -119,12 +119,34 @@ function closeMessageModal() {
 }
 function sendMessage(event) {
     event.preventDefault();
-    // Placeholder: Implement AJAX to send message to backend
     const studentId = event.target.getAttribute('data-student-id');
     const studentName = document.getElementById('modalStudentName').value;
     const message = document.getElementById('modalMessage').value;
-    alert('Message sent to parent of ' + studentName + ':\n' + message);
-    closeMessageModal();
+    
+    // Send AJAX request to backend
+    fetch('/instructor/message/send', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+            student_id: studentId,
+            message: message
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('✅ ' + data.message);
+        } else {
+            alert('❌ Error: ' + (data.error || 'Failed to send message'));
+        }
+        closeMessageModal();
+    })
+    .catch(error => {
+        alert('❌ Network error: ' + error.message);
+        closeMessageModal();
+    });
 }
 </script>
 

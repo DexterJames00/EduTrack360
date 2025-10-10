@@ -1,0 +1,93 @@
+{% extends 'instructor/base.html' %}
+{% block title %}Schedule{% endblock %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-4xl font-extrabold text-blue-800 flex items-center gap-3">
+                    <i class="fa-solid fa-calendar-week text-blue-600"></i> Weekly Schedule
+                </h1>
+                <p class="text-gray-600 mt-2">Your complete teaching schedule for the week</p>
+            </div>
+            <a href="/instructor/dashboard" class="bg-blue-700 text-white px-6 py-3 rounded-xl hover:bg-blue-800 transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <!-- Schedule Grid -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-7 gap-4 p-6">
+                {% for day in days %}
+                <div class="bg-blue-50 rounded-xl p-4">
+                    <h3 class="text-lg font-bold text-blue-800 mb-4 text-center border-b border-blue-200 pb-2">
+                        {{ day }}
+                    </h3>
+                    <div class="space-y-3">
+                        {% if weekly_schedule[day] %}
+                            {% for schedule in weekly_schedule[day] %}
+                            <div class="bg-white rounded-lg p-3 shadow-sm border border-blue-200">
+                                <div class="text-sm font-bold text-blue-700">{{ schedule.time }}</div>
+                                <div class="font-semibold text-gray-800">{{ schedule.subject }}</div>
+                                <div class="text-sm text-gray-600">Section: {{ schedule.section }}</div>
+                                <div class="text-xs text-gray-500">Grade: {{ schedule.section_grade }}</div>
+                                <a href="/instructor/attendance/{{ schedule.id }}" 
+                                   class="inline-block mt-2 text-xs bg-blue-600 text-white px-2 py-1 rounded hover:bg-blue-700 transition">
+                                    Record Attendance
+                                </a>
+                            </div>
+                            {% endfor %}
+                        {% else %}
+                            <div class="text-center text-gray-500 py-8">
+                                <i class="fa-solid fa-calendar-xmark text-2xl mb-2"></i>
+                                <p>No classes scheduled</p>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Schedule Summary -->
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-book-open text-3xl text-blue-600 mb-3"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Total Classes</h3>
+                <p class="text-2xl font-extrabold text-blue-700">
+                    {% set total_classes = 0 %}
+                    {% for day in days %}
+                        {% set total_classes = total_classes + weekly_schedule[day]|length %}
+                    {% endfor %}
+                    {{ total_classes }}
+                </p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-users text-3xl text-green-600 mb-3"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Subjects</h3>
+                <p class="text-2xl font-extrabold text-green-700">
+                    {% set subjects = [] %}
+                    {% for day in days %}
+                        {% for schedule in weekly_schedule[day] %}
+                            {% if schedule.subject not in subjects %}
+                                {% set _ = subjects.append(schedule.subject) %}
+                            {% endif %}
+                        {% endfor %}
+                    {% endfor %}
+                    {{ subjects|length }}
+                </p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-clock text-3xl text-purple-600 mb-3"></i>
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Teaching Hours</h3>
+                <p class="text-2xl font-extrabold text-purple-700">{{ total_classes * 1 }}h</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

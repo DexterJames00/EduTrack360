@@ -1,7 +1,22 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash
 
+# Import all CRUD modules with correct blueprint names
+from .crud_accounts import school_admin_bp as crud_accounts_bp
+from .crud_intructor import school_admin_bp as crud_instructors_bp
+from .crud_section import school_admin_bp as crud_sections_bp
+from .crud_student import school_admin_bp as crud_students_bp
+from .crud_subject import school_admin_bp as crud_subjects_bp
+from .crud_assignment import assignment_bp as crud_assignment_bp
 
 school_admin_bp = Blueprint('school_admin', __name__, url_prefix='/school_admin')
+
+# Register all CRUD blueprints
+school_admin_bp.register_blueprint(crud_accounts_bp)
+school_admin_bp.register_blueprint(crud_instructors_bp)
+school_admin_bp.register_blueprint(crud_sections_bp)
+school_admin_bp.register_blueprint(crud_students_bp)
+school_admin_bp.register_blueprint(crud_subjects_bp)
+school_admin_bp.register_blueprint(crud_assignment_bp)
 
 # Dashboard
 @school_admin_bp.route('/')

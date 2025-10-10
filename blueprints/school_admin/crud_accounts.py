@@ -95,7 +95,8 @@ def create_account():
             account = SchoolInstructorAccount(
                 instructor_id=instructor.id,
                 school_admin_id=school_admin_id,
-                school_id=school_id
+                school_id=school_id,
+                password=hashed_password  # Now we store the password
             )
             db.session.add(account)
 
@@ -135,10 +136,14 @@ def update_account(id):
             if not account:
                 return jsonify({"success": False, "message": "Account not found."}), 404
 
+            # Update instructor account password
+            if data.get('password'):
+                account.password = generate_password_hash(data['password'])
+            
+            # Update instructor email if provided
             instructor = account.instructor
-            if instructor:
-                instructor.email = data.get('username', instructor.email)
-            # No password field here, since SchoolInstructorAccount uses link only
+            if instructor and data.get('username'):
+                instructor.email = data['username']
 
         db.session.commit()
         return jsonify({"success": True, "message": "Account updated successfully!"})

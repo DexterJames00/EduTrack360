@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import SchoolAdmin as school_admin
+from models import SchoolAdmin, SchoolInstructorAccount, Instructor
+from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
 
@@ -9,16 +10,50 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        user = school_admin.query.filter_by(username=username).first() 
-
-        if user and user.password == password:
-            session['user_id'] = user.id
-            session['username'] = user.username
-            session['role'] = user.role
-            session['school_id'] = user.school_id
-            return redirect(url_for('school_admin.dashboard'))
-        else:
-            flash('Invalid username or password', 'danger')
+        # Try to authenticate as SchoolAdmin first
+        school_admin_user = SchoolAdmin.query.filter_by(username=username).first()
+        
+        if school_admin_user:
+            # Check if password is hashed or plain text (for backward compatibility)
+            password_valid = False
+            if school_admin_user.password.startswith('scrypt:') or school_admin_user.password.startswith('pbkdf2:'):
+                # Hashed password
+                password_valid = check_password_hash(school_admin_user.password, password)
+            else:
+                # Plain text password (legacy)
+                password_valid = (school_admin_user.password == password)
+            
+            if password_valid:
+                # School Admin login
+                session['user_id'] = school_admin_user.id
+                session['username'] = school_admin_user.username
+                session['role'] = school_admin_user.role
+                session['school_id'] = school_admin_user.school_id
+                session['user_type'] = 'school_admin'
+                flash(f'Welcome back, {school_admin_user.username}!', 'success')
+                return redirect(url_for('school_admin.dashboard'))
+        
+        # Try to authenticate as Instructor (via email)
+        instructor = Instructor.query.filter_by(email=username).first()
+        if instructor:
+            # Check if this instructor has an account
+            instructor_account = SchoolInstructorAccount.query.filter_by(instructor_id=instructor.id).first()
+            
+            if instructor_account and instructor_account.password:
+                # Check password against stored hash
+                if check_password_hash(instructor_account.password, password):
+                    session['user_id'] = instructor_account.id
+                    session['username'] = instructor.email
+                    session['role'] = 'school_instructor'
+                    session['school_id'] = instructor_account.school_id
+                    session['instructor_id'] = instructor.id
+                    session['instructor_name'] = instructor.name
+                    session['user_type'] = 'school_instructor'
+                    flash(f'Welcome back, {instructor.name}!', 'success')
+                    return redirect(url_for('instructor.instructor_dashboard.dashboard'))
+        
+        # If no valid authentication found
+        flash('Invalid username or password', 'danger')
 
     return render_template('landing.html')
 

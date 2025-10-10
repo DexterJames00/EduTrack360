@@ -127,6 +127,8 @@ class SchoolInstructorAccount(db.Model):
     instructor_id = db.Column(db.Integer, db.ForeignKey('instructors.id'), nullable=False)
     school_admin_id = db.Column(db.Integer, db.ForeignKey('school_admin.id'), nullable=False)
     school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    password = db.Column(db.String(255), nullable=True)  # Password for instructor login
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
 class SectionAdviser(db.Model):
     __tablename__ = 'section_adviser'

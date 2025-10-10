@@ -1,0 +1,119 @@
+{% extends 'instructor/base.html' %}
+{% block title %}Attendance History{% endblock %}
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-between items-center mb-6">
+            <div>
+                <h1 class="text-4xl font-extrabold text-blue-800 flex items-center gap-3">
+                    <i class="fa-solid fa-history text-blue-600"></i> Attendance History
+                </h1>
+                <p class="text-gray-600 mt-2">View your past attendance records</p>
+            </div>
+            <a href="/instructor/dashboard" class="bg-blue-700 text-white px-6 py-3 rounded-xl hover:bg-blue-800 transition">
+                <i class="fa-solid fa-arrow-left mr-2"></i>Back to Dashboard
+            </a>
+        </div>
+
+        <!-- History Table -->
+        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead class="bg-blue-700 text-white">
+                        <tr>
+                            <th class="py-4 px-6 text-left">Date</th>
+                            <th class="py-4 px-6 text-left">Subject</th>
+                            <th class="py-4 px-6 text-left">Section</th>
+                            <th class="py-4 px-6 text-center">Total Students</th>
+                            <th class="py-4 px-6 text-center">Present</th>
+                            <th class="py-4 px-6 text-center">Absent</th>
+                            <th class="py-4 px-6 text-center">Late</th>
+                            <th class="py-4 px-6 text-center">Attendance Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for record in history %}
+                        <tr class="hover:bg-blue-50 transition">
+                            <td class="py-4 px-6 font-medium">{{ record.date.strftime('%B %d, %Y') }}</td>
+                            <td class="py-4 px-6">{{ record.subject }}</td>
+                            <td class="py-4 px-6">{{ record.section }}</td>
+                            <td class="py-4 px-6 text-center font-bold">{{ record.total_students }}</td>
+                            <td class="py-4 px-6 text-center">
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-semibold">
+                                    {{ record.present_count or 0 }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-semibold">
+                                    {{ record.absent_count or 0 }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-semibold">
+                                    {{ record.late_count or 0 }}
+                                </span>
+                            </td>
+                            <td class="py-4 px-6 text-center">
+                                {% set rate = ((record.present_count or 0) / record.total_students * 100) if record.total_students > 0 else 0 %}
+                                <span class="font-bold {% if rate >= 90 %}text-green-600{% elif rate >= 80 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                                    {{ "%.1f"|format(rate) }}%
+                                </span>
+                            </td>
+                        </tr>
+                        {% else %}
+                        <tr>
+                            <td colspan="8" class="py-12 text-center text-gray-500">
+                                <i class="fa-solid fa-clipboard-list text-4xl mb-4"></i>
+                                <p class="text-lg">No attendance records found</p>
+                                <a href="/instructor/attendance" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
+                                    Record Your First Attendance
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        {% if history %}
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
+            {% set total_classes = history|length %}
+            {% set total_students = history|sum(attribute='total_students') %}
+            {% set total_present = history|sum(attribute='present_count') %}
+            {% set overall_rate = (total_present / total_students * 100) if total_students > 0 else 0 %}
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-calendar-check text-3xl text-blue-600 mb-3"></i>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Classes Recorded</h3>
+                <p class="text-2xl font-extrabold text-blue-700">{{ total_classes }}</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-users text-3xl text-gray-600 mb-3"></i>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Total Students</h3>
+                <p class="text-2xl font-extrabold text-gray-700">{{ total_students }}</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-user-check text-3xl text-green-600 mb-3"></i>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Present</h3>
+                <p class="text-2xl font-extrabold text-green-700">{{ total_present }}</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+                <i class="fa-solid fa-chart-line text-3xl text-purple-600 mb-3"></i>
+                <h3 class="text-lg font-bold text-gray-800 mb-2">Overall Rate</h3>
+                <p class="text-2xl font-extrabold {% if overall_rate >= 90 %}text-green-600{% elif overall_rate >= 80 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                    {{ "%.1f"|format(overall_rate) }}%
+                </p>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

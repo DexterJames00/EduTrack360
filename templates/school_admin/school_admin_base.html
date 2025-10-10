@@ -11,30 +11,175 @@
 
     <!-- Navbar -->
     <nav class="bg-blue-700 text-white shadow-lg">
-        <div class="container mx-auto flex justify-between items-center py-4 px-6 flex-wrap">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-school text-2xl"></i>
-                <span class="text-2xl font-bold tracking-wide">School Admin Portal</span>
+        <div class="container mx-auto px-4">
+            <div class="flex items-center justify-between py-3">
+                <!-- Logo and Brand (Left) -->
+                <div class="flex items-center gap-3 flex-shrink-0">
+                    <i class="fa-solid fa-school text-xl"></i>
+                    <div>
+                        <h1 class="text-lg font-bold tracking-wide">School Admin Portal</h1>
+                    </div>
+                </div>
+
+                <!-- Navigation Links (Center) -->
+                <div class="hidden lg:flex items-center gap-2 flex-1 justify-center mx-8">
+                    <a href="/school_admin" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/school_admin/instructors" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-users"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="/school_admin/students" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-user-graduate"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="/school_admin/subjects" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-book"></i>
+                        <span>Subjects</span>
+                    </a>
+                    <a href="/school_admin/sections" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-layer-group"></i>
+                        <span>Sections</span>
+                    </a>
+                    <a href="/school_admin/assignments" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-calendar-alt"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="/school_admin/attendance" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-clipboard-check"></i>
+                        <span>Attendance</span>
+                    </a>
+                    <a href="/school_admin/notifications" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-bell"></i>
+                        <span>Notifications</span>
+                    </a>
+                    <a href="/school_admin/telegram" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-brands fa-telegram"></i>
+                        <span>Telegram</span>
+                    </a>
+                    <a href="/school_admin/accounts" class="hover:bg-blue-600 px-3 py-2 rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium">
+                        <i class="fa-solid fa-user-cog"></i>
+                        <span>Accounts</span>
+                    </a>
+                </div>
+
+                <!-- Right Side Controls -->
+                <div class="flex items-center gap-3">
+                    <!-- Mobile Menu Button -->
+                    <button id="mobileMenuBtn" class="lg:hidden hover:bg-blue-600 p-2 rounded-lg transition-all duration-200">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+
+                    <!-- Settings Dropdown -->
+                    <div class="relative">
+                        <button id="settingsDropdownBtn" class="hover:bg-blue-600 p-2 rounded-full transition-all duration-200 flex items-center justify-center group">
+                            <i class="fa-solid fa-ellipsis-vertical text-lg group-hover:rotate-90 transition-transform duration-200"></i>
+                        </button>
+                        
+                        <!-- Dropdown Menu -->
+                        <div id="settingsDropdown" class="absolute right-0 mt-3 w-64 bg-white rounded-xl shadow-2xl border border-gray-100 z-50 hidden transform opacity-0 scale-95 transition-all duration-200">
+                            <!-- User Info -->
+                            <div class="px-4 py-4 border-b border-gray-100 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-t-xl">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                        <i class="fa-solid fa-user text-white text-lg"></i>
+                                    </div>
+                                    <div class="min-w-0 flex-1">
+                                        <p class="text-sm font-semibold text-gray-800 truncate">{{ session.username or 'Administrator' }}</p>
+                                        <p class="text-xs text-gray-500">School Administrator</p>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Menu Items -->
+                            <div class="py-2">
+                                <a href="#" onclick="openChangePasswordModal()" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150 group">
+                                    <i class="fa-solid fa-key text-gray-400 group-hover:text-blue-600 mr-3 w-5 flex-shrink-0"></i>
+                                    <div>
+                                        <p class="text-sm font-medium">Change Password</p>
+                                        <p class="text-xs text-gray-500">Update your account password</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="#" onclick="openProfileModal()" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150 group">
+                                    <i class="fa-solid fa-user-edit text-gray-400 group-hover:text-blue-600 mr-3 w-5 flex-shrink-0"></i>
+                                    <div>
+                                        <p class="text-sm font-medium">Profile Settings</p>
+                                        <p class="text-xs text-gray-500">Manage your account details</p>
+                                    </div>
+                                </a>
+                                
+                                <a href="#" onclick="openPreferencesModal()" class="flex items-center px-4 py-3 text-gray-700 hover:bg-blue-50 hover:text-blue-700 transition-colors duration-150 group">
+                                    <i class="fa-solid fa-cog text-gray-400 group-hover:text-blue-600 mr-3 w-5 flex-shrink-0"></i>
+                                    <div>
+                                        <p class="text-sm font-medium">Preferences</p>
+                                        <p class="text-xs text-gray-500">App settings and preferences</p>
+                                    </div>
+                                </a>
+                                
+                                <div class="border-t border-gray-100 mt-2 pt-2">
+                                    <a href="/auth/logout" class="flex items-center px-4 py-3 text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors duration-150 group">
+                                        <i class="fa-solid fa-sign-out-alt mr-3 w-5 flex-shrink-0"></i>
+                                        <div>
+                                            <p class="text-sm font-medium">Sign Out</p>
+                                            <p class="text-xs text-red-400">Log out of your account</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+        </div>
 
-            <div class="flex gap-2 flex-wrap md:flex-nowrap mt-2 md:mt-0">
-                <a href="/school_admin" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-home"></i> Dashboard</a>
-                <a href="/school_admin/instructors" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-users"></i> Instructors</a>
-                <a href="/school_admin/students" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-user-graduate"></i> Students</a>
-                <a href="/school_admin/subjects" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-book"></i> Subjects</a>
-                <a href="/school_admin/sections" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-layer-group"></i> Sections</a>
-                <a href="/school_admin/attendance" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-clipboard-check"></i> Attendance</a>
-                <a href="/school_admin/notifications" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2"><i class="fa-solid fa-bell"></i> Notifications</a>
-                
-                <!-- Telegram Integration -->
-                <a href="/school_admin/telegram" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2">
-                    <i class="fa-brands fa-telegram"></i> Telegram
-                </a>
-                <a href="/school_admin/accounts" class="hover:bg-blue-600 px-3 py-2 rounded transition flex items-center gap-2">
-                    <i class="fa-solid fa-user-cog"></i> Accounts
-                </a>
-
-            
+        <!-- Mobile Navigation Menu -->
+        <div id="mobileMenu" class="lg:hidden hidden bg-blue-800 border-t border-blue-600">
+            <div class="container mx-auto px-4 py-4">
+                <div class="grid grid-cols-2 gap-2">
+                    <a href="/school_admin" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-home w-5"></i>
+                        <span>Dashboard</span>
+                    </a>
+                    <a href="/school_admin/instructors" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-users w-5"></i>
+                        <span>Instructors</span>
+                    </a>
+                    <a href="/school_admin/students" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-user-graduate w-5"></i>
+                        <span>Students</span>
+                    </a>
+                    <a href="/school_admin/subjects" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-book w-5"></i>
+                        <span>Subjects</span>
+                    </a>
+                    <a href="/school_admin/sections" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-layer-group w-5"></i>
+                        <span>Sections</span>
+                    </a>
+                    <a href="/school_admin/assignments" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-calendar-alt w-5"></i>
+                        <span>Assignments</span>
+                    </a>
+                    <a href="/school_admin/attendance" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-clipboard-check w-5"></i>
+                        <span>Attendance</span>
+                    </a>
+                    <a href="/school_admin/notifications" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-bell w-5"></i>
+                        <span>Notifications</span>
+                    </a>
+                    <a href="/school_admin/telegram" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-brands fa-telegram w-5"></i>
+                        <span>Telegram</span>
+                    </a>
+                    <a href="/school_admin/accounts" class="block hover:bg-blue-700 px-3 py-3 rounded-lg transition-all duration-200 flex items-center gap-3">
+                        <i class="fa-solid fa-user-cog w-5"></i>
+                        <span>Accounts</span>
+                    </a>
+                </div>
             </div>
         </div>
     </nav>
@@ -48,6 +193,266 @@
     <footer class="bg-blue-700 text-white text-center py-4 mt-8 shadow-inner">
         <span class="text-sm">&copy; 2025 EduTrack360 School Admin Portal. All rights reserved.</span>
     </footer>
+
+    <!-- Change Password Modal -->
+    <div id="changePasswordModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <i class="fa-solid fa-key text-blue-600"></i> Change Password
+                </h3>
+                <button onclick="closeChangePasswordModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="changePasswordForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Current Password</label>
+                    <input type="password" name="current_password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">New Password</label>
+                    <input type="password" name="new_password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Confirm New Password</label>
+                    <input type="password" name="confirm_password" required 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeChangePasswordModal()" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                        Update Password
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Profile Settings Modal -->
+    <div id="profileModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <i class="fa-solid fa-user-edit text-blue-600"></i> Profile Settings
+                </h3>
+                <button onclick="closeProfileModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <form id="profileForm" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Username</label>
+                    <input type="text" name="username" value="{{ session.username or '' }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Email</label>
+                    <input type="email" name="email" placeholder="admin@school.com"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
+                    <input type="text" name="full_name" placeholder="John Doe"
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closeProfileModal()" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" 
+                            class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Preferences Modal -->
+    <div id="preferencesModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-2xl font-bold text-gray-800 flex items-center gap-3">
+                    <i class="fa-solid fa-cog text-blue-600"></i> Preferences
+                </h3>
+                <button onclick="closePreferencesModal()" class="text-gray-400 hover:text-gray-600 text-xl">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-6">
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Theme</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="radio" name="theme" value="light" checked class="mr-3">
+                            <span>Light Theme</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="radio" name="theme" value="dark" class="mr-3">
+                            <span>Dark Theme</span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-semibold text-gray-700 mb-3">Notifications</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center justify-between">
+                            <span>Email Notifications</span>
+                            <input type="checkbox" checked class="toggle-checkbox">
+                        </label>
+                        <label class="flex items-center justify-between">
+                            <span>Push Notifications</span>
+                            <input type="checkbox" checked class="toggle-checkbox">
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 pt-4">
+                    <button type="button" onclick="closePreferencesModal()" 
+                            class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold hover:bg-gray-400 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="button" onclick="savePreferences()" 
+                            class="flex-1 bg-blue-600 text-white py-3 rounded-xl font-semibold hover:bg-blue-700 transition-colors">
+                        Save Preferences
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Settings Dropdown Toggle
+        document.addEventListener('DOMContentLoaded', function() {
+            const settingsBtn = document.getElementById('settingsDropdownBtn');
+            const settingsDropdown = document.getElementById('settingsDropdown');
+            const mobileMenuBtn = document.getElementById('mobileMenuBtn');
+            const mobileMenu = document.getElementById('mobileMenu');
+
+            // Settings dropdown toggle
+            settingsBtn.addEventListener('click', function(e) {
+                e.stopPropagation();
+                const isHidden = settingsDropdown.classList.contains('hidden');
+                
+                if (isHidden) {
+                    settingsDropdown.classList.remove('hidden');
+                    setTimeout(() => {
+                        settingsDropdown.classList.remove('opacity-0', 'scale-95');
+                        settingsDropdown.classList.add('opacity-100', 'scale-100');
+                    }, 10);
+                } else {
+                    settingsDropdown.classList.remove('opacity-100', 'scale-100');
+                    settingsDropdown.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        settingsDropdown.classList.add('hidden');
+                    }, 200);
+                }
+            });
+
+            // Mobile menu toggle
+            mobileMenuBtn.addEventListener('click', function() {
+                mobileMenu.classList.toggle('hidden');
+            });
+
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!settingsDropdown.contains(e.target) && !settingsBtn.contains(e.target)) {
+                    settingsDropdown.classList.remove('opacity-100', 'scale-100');
+                    settingsDropdown.classList.add('opacity-0', 'scale-95');
+                    setTimeout(() => {
+                        settingsDropdown.classList.add('hidden');
+                    }, 200);
+                }
+            });
+        });
+
+        // Modal Functions
+        function openChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('changePasswordModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openProfileModal() {
+            document.getElementById('profileModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeProfileModal() {
+            document.getElementById('profileModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function openPreferencesModal() {
+            document.getElementById('preferencesModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closePreferencesModal() {
+            document.getElementById('preferencesModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Form Handlers
+        document.getElementById('changePasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Validate passwords match
+            if (formData.get('new_password') !== formData.get('confirm_password')) {
+                alert('New passwords do not match!');
+                return;
+            }
+            
+            // Here you would typically send the data to your backend
+            alert('Password change functionality would be implemented here');
+            closeChangePasswordModal();
+        });
+
+        document.getElementById('profileForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            // Handle profile update
+            alert('Profile update functionality would be implemented here');
+            closeProfileModal();
+        });
+
+        function savePreferences() {
+            // Handle preferences save
+            alert('Preferences save functionality would be implemented here');
+            closePreferencesModal();
+        }
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeChangePasswordModal();
+                closeProfileModal();
+                closePreferencesModal();
+            }
+        });
+    </script>
 
 </body>
 </html>
