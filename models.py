@@ -118,7 +118,8 @@ class InstructorSchedule(db.Model):
     instructor_id = db.Column(db.Integer, db.ForeignKey('instructors.id'))
     subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'))
     section_id = db.Column(db.Integer, db.ForeignKey('sections.id'))
-    time = db.Column(db.String(20), nullable=False)
+    start_time = db.Column(db.String(20), nullable=False)
+    end_time = db.Column(db.String(20), nullable=False)
     day = db.Column(db.String(20), nullable=False)
 
 class SchoolInstructorAccount(db.Model):

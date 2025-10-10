@@ -57,6 +57,10 @@
                 
                 <!-- Action Buttons -->
                 <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    <button onclick="openAssignmentModal('{{ instructor.id }}', '{{ instructor.name }}')" 
+                            class="w-8 h-8 bg-green-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" title="Assign Schedule">
+                        <i class="fas fa-calendar-plus text-xs"></i>
+                    </button>
                     <button onclick="openInstructorModal('{{ instructor.id }}','{{ instructor.name }}','{{ instructor.gender }}','{{ instructor.email }}','{{ instructor.address }}')" 
                             class="w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
                         <i class="fas fa-edit text-xs"></i>
@@ -283,6 +287,208 @@
     </div>
 </div>
 
+<!-- Assignment Modal -->
+<div id="assignmentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative mx-4 max-h-[95vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="relative bg-gradient-to-r from-blue-700 to-blue-800 text-white p-8 rounded-t-3xl">
+            <button class="absolute top-6 right-6 w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl flex items-center justify-center text-white text-xl transition-all z-10" onclick="closeAssignmentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="flex items-center space-x-6">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white border-opacity-30">
+                    <i class="fas fa-calendar-plus text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold mb-2">Assign Schedule</h2>
+                    <p class="text-blue-100 text-lg">Manage class assignments for <span id="assignmentInstructorName" class="font-semibold"></span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-8">
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Left Column: Assignment Form -->
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-plus text-blue-600"></i>
+                        </div>
+                        <span>Create New Assignment</span>
+                    </h3>
+                    
+                    <form id="assignmentForm" class="space-y-6">
+                        <input type="hidden" id="assignmentInstructorId" name="instructor_id" value="">
+                        
+                        <!-- Subject Selection -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">
+                                Subject <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="fas fa-book text-blue-600"></i>
+                                </div>
+                                <select name="subject_id" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select subject</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Section Selection -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">
+                                Section <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="fas fa-users text-blue-600"></i>
+                                </div>
+                                <select name="section_id" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select section</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Day Selection -->
+                        <div class="space-y-2">
+                            <label class="block text-sm font-semibold text-gray-700">
+                                Day <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                    <i class="fas fa-calendar-day text-blue-600"></i>
+                                </div>
+                                <select name="day" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Time Selection -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">
+                                    Start Time <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i class="fas fa-clock text-blue-600"></i>
+                                    </div>
+                                    <input type="time" name="start_time" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" required>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">
+                                    End Time <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i class="fas fa-clock text-blue-600"></i>
+                                    </div>
+                                    <input type="time" name="end_time" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center space-x-3">
+                            <i class="fas fa-save"></i>
+                            <span>Create Assignment</span>
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- Right Column: Current Assignments -->
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-list text-blue-600"></i>
+                        </div>
+                        <span>Current Assignments</span>
+                    </h3>
+                    
+                    <div id="currentAssignments" class="min-h-[100px] bg-gray-50 rounded-xl p-4">
+                        <!-- Assignments will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Success Modal -->
+<div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-600 text-2xl"></i>
+            </div>
+            <h3 id="successTitle" class="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
+            <p id="successMessage" class="text-gray-600 mb-6">Operation completed successfully.</p>
+            <button onclick="closeSuccessModal()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <h3 id="errorTitle" class="text-2xl font-bold text-gray-800 mb-2">Error</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">Something went wrong.</p>
+            <button onclick="closeErrorModal()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Assignment Confirmation Modal -->
+<div id="deleteAssignmentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle"></i> Confirm Delete
+        </h3>
+        <div id="deleteAssignmentDetails" class="text-slate-600 mb-6">
+            <!-- Assignment details will be populated here -->
+        </div>
+        <div class="flex gap-4">
+            <button onclick="closeDeleteAssignmentModal()" class="flex-1 bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-colors duration-200">
+                Cancel
+            </button>
+            <button onclick="confirmDeleteAssignment()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                Delete
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
 let isEditMode = false;
 let currentInstructorId = null;
@@ -440,31 +646,21 @@ function handleInstructorSubmit(e) {
             if (isEditMode) {
                 updateInstructorCard(data.instructor || {
                     id: currentInstructorId,
-                    name: document.querySelector('[name=name]').value.trim(),
+                    name: document.querySelector('[name=name]').value,
                     gender: document.querySelector('[name=gender]').value,
-                    email: document.querySelector('[name=email]').value.trim(),
-                    address: document.querySelector('[name=address]').value.trim()
+                    email: document.querySelector('[name=email]').value,
+                    address: document.querySelector('[name=address]').value
                 });
             } else {
                 addInstructorCard(data.instructor);
             }
         } else {
-            // Show specific error message from server
-            showAlert(data.message || 'Failed to save instructor. Please try again.', 'error');
+            showAlert(data.message, 'error');
         }
     })
     .catch(error => {
-        console.error('Error details:', error);
-        // More helpful error messages
-        if (error.message.includes('400')) {
-            showAlert('Please check your input data and try again.', 'error');
-        } else if (error.message.includes('500')) {
-            showAlert('Server error occurred. Please try again later.', 'error');
-        } else if (error.message.includes('network') || error.message.includes('fetch')) {
-            showAlert('Network error. Please check your connection and try again.', 'error');
-        } else {
-            showAlert('An unexpected error occurred. Please try again.', 'error');
-        }
+        console.error('Error:', error);
+        showAlert('An error occurred while saving the instructor.', 'error');
     })
     .finally(() => {
         // Reset button state
@@ -620,6 +816,10 @@ function createInstructorCard(instructor) {
             
             <!-- Action Buttons -->
             <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <button onclick="openAssignmentModal('${instructor.id}', '${instructor.name}')" 
+                        class="w-8 h-8 bg-green-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" title="Assign Schedule">
+                    <i class="fas fa-calendar-plus text-xs"></i>
+                </button>
                 <button onclick="openInstructorModal('${instructor.id}','${instructor.name}','${instructor.gender}','${instructor.email}','${instructor.address}')" 
                         class="w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
                     <i class="fas fa-edit text-xs"></i>
@@ -747,5 +947,345 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 });
+
+// Assignment Management Functions
+let currentAssignmentInstructorId = null;
+let currentDeleteAssignmentId = null;
+
+// Assignment Modal Functions
+function openAssignmentModal(instructorId, instructorName) {
+    console.log('Opening assignment modal for instructor:', instructorId, instructorName);
+    currentAssignmentInstructorId = instructorId;
+    document.getElementById('assignmentInstructorId').value = instructorId;
+    document.getElementById('assignmentInstructorName').textContent = instructorName;
+    
+    // Load subjects and sections
+    console.log('About to load subjects and sections...');
+    loadSubjects();
+    loadSections();
+    loadCurrentAssignments(instructorId);
+    
+    document.getElementById('assignmentModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    console.log('Assignment modal opened successfully');
+}
+
+function closeAssignmentModal() {
+    document.getElementById('assignmentModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.getElementById('assignmentForm').reset();
+    currentAssignmentInstructorId = null;
+}
+
+// Load subjects for dropdown
+function loadSubjects() {
+    console.log('Loading subjects...');
+    fetch('/school_admin/subjects/api')
+        .then(response => {
+            console.log('Subjects response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Subjects data received:', data);
+            const select = document.querySelector('select[name="subject_id"]');
+            select.innerHTML = '<option value="">Select subject</option>';
+            
+            if (data.subjects && data.subjects.length > 0) {
+                data.subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    select.appendChild(option);
+                });
+                console.log(`Loaded ${data.subjects.length} subjects`);
+            } else {
+                console.log('No subjects found in response');
+                select.innerHTML = '<option value="">No subjects available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading subjects:', error);
+            const select = document.querySelector('select[name="subject_id"]');
+            select.innerHTML = '<option value="">Error loading subjects</option>';
+        });
+}
+
+// Load sections for dropdown
+function loadSections() {
+    console.log('Loading sections...');
+    fetch('/school_admin/sections/api')
+        .then(response => {
+            console.log('Sections response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Sections data received:', data);
+            const select = document.querySelector('select[name="section_id"]');
+            select.innerHTML = '<option value="">Select section</option>';
+            
+            if (data.sections && data.sections.length > 0) {
+                data.sections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = `${section.grade_level} - ${section.name}`;
+                    select.appendChild(option);
+                });
+                console.log(`Loaded ${data.sections.length} sections`);
+            } else {
+                console.log('No sections found in response');
+                select.innerHTML = '<option value="">No sections available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sections:', error);
+            const select = document.querySelector('select[name="section_id"]');
+            select.innerHTML = '<option value="">Error loading sections</option>';
+        });
+}
+
+// Load current assignments for instructor
+function loadCurrentAssignments(instructorId) {
+    const currentAssignmentsDiv = document.getElementById('currentAssignments');
+    currentAssignmentsDiv.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading assignments...</p>
+        </div>
+    `;
+    
+    fetch(`/school_admin/assignments/instructor/${instructorId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.assignments && data.assignments.length > 0) {
+                let html = '<div class="space-y-3">';
+                
+                data.assignments.forEach(assignment => {
+                    html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <i class="fas fa-book mr-1"></i>
+                                            ${assignment.subject_code}
+                                        </span>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <i class="fas fa-users mr-1"></i>
+                                            ${assignment.grade_level} - ${assignment.section_name}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-calendar-day mr-2 text-gray-400"></i>
+                                            ${assignment.day}
+                                        </span>
+                                        <span class="flex items-center">
+                                            <i class="fas fa-clock mr-2 text-gray-400"></i>
+                                            ${assignment.start_time} - ${assignment.end_time}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onclick="openDeleteAssignmentModal(${assignment.id}, '${assignment.subject_code}', '${assignment.grade_level} - ${assignment.section_name}', '${assignment.day}', '${assignment.start_time} - ${assignment.end_time}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                currentAssignmentsDiv.innerHTML = html;
+            } else {
+                currentAssignmentsDiv.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-calendar-times text-3xl mb-3"></i>
+                        <p class="text-lg font-medium">No assignments yet</p>
+                        <p class="text-sm">Create the first assignment for this instructor</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading assignments:', error);
+            currentAssignmentsDiv.innerHTML = `
+                <div class="text-center text-red-500 py-8">
+                    <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                    <p>Failed to load assignments</p>
+                </div>
+            `;
+        });
+}
+
+// Delete Assignment Modal Functions
+function openDeleteAssignmentModal(assignmentId, subjectName, sectionInfo, day, timeRange) {
+    currentDeleteAssignmentId = assignmentId;
+    
+    const detailsDiv = document.getElementById('deleteAssignmentDetails');
+    detailsDiv.innerHTML = `
+        <p>Are you sure you want to delete this assignment?</p>
+        <div class="bg-gray-50 rounded-lg p-4 mt-4">
+            <div class="space-y-2 text-sm">
+                <div><strong>Subject:</strong> ${subjectName}</div>
+                <div><strong>Section:</strong> ${sectionInfo}</div>
+                <div><strong>Day:</strong> ${day}</div>
+                <div><strong>Time:</strong> ${timeRange}</div>
+            </div>
+        </div>
+        <p class="mt-4 text-sm text-red-600">This action cannot be undone.</p>
+    `;
+    
+    document.getElementById('deleteAssignmentModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteAssignmentModal() {
+    document.getElementById('deleteAssignmentModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentDeleteAssignmentId = null;
+}
+
+function confirmDeleteAssignment() {
+    if (!currentDeleteAssignmentId) return;
+    
+    fetch(`/school_admin/assignments/${currentDeleteAssignmentId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessModal('Assignment Deleted', data.message);
+            closeDeleteAssignmentModal();
+            loadCurrentAssignments(currentAssignmentInstructorId);
+        } else {
+            showErrorModal('Delete Failed', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting assignment:', error);
+        showErrorModal('Error', 'Failed to delete assignment. Please try again.');
+    });
+}
+
+// Success Modal Functions
+function showSuccessModal(title, message) {
+    document.getElementById('successTitle').textContent = title;
+    document.getElementById('successMessage').textContent = message;
+    document.getElementById('successModal').classList.remove('hidden');
+}
+
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.add('hidden');
+}
+
+// Error Modal Functions  
+function showErrorModal(title, message) {
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').classList.remove('hidden');
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.add('hidden');
+}
+
+// Make functions globally available
+window.showSuccessModal = showSuccessModal;
+window.showErrorModal = showErrorModal;
+
+// Initialize assignment form when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Assignment form submission
+    const assignmentForm = document.getElementById('assignmentForm');
+    if (assignmentForm) {
+        assignmentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Frontend validation
+            const startTime = formData.get('start_time');
+            const endTime = formData.get('end_time');
+            const subjectId = formData.get('subject_id');
+            const sectionId = formData.get('section_id');
+            const day = formData.get('day');
+            
+            console.log('Form validation - startTime:', startTime, 'endTime:', endTime);
+            console.log('Other fields - subject:', subjectId, 'section:', sectionId, 'day:', day);
+            
+            // Check if all required fields are filled
+            if (!startTime || !endTime || startTime.trim() === '' || endTime.trim() === '') {
+                console.log('Time validation failed');
+                showErrorModal('Missing Information', 'Please fill in both start time and end time.');
+                return;
+            }
+            
+            if (!subjectId || !sectionId || !day) {
+                console.log('Other field validation failed');
+                showErrorModal('Missing Information', 'Please fill in all required fields.');
+                return;
+            }
+            
+            if (startTime >= endTime) {
+                console.log('Time range validation failed');
+                showErrorModal('Invalid Time Range', 'End time must be after start time.');
+                return;
+            }
+            
+            console.log('All validation passed');
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+            submitBtn.disabled = true;
+            
+            // Convert FormData to JSON
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/school_admin/assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Assignment Created', data.message);
+                    assignmentForm.reset();
+                    loadCurrentAssignments(currentAssignmentInstructorId);
+                } else {
+                    showErrorModal('Assignment Failed', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating assignment:', error);
+                showErrorModal('Error', 'Failed to create assignment. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+});
+
+// Include external assignment form handler for additional functionality
 </script>
+
+<!-- Include external assignment form handler -->
+<!-- <script src="{{ url_for('static', filename='assignment_form_handler.js') }}"></script> -->
 {% endblock %}

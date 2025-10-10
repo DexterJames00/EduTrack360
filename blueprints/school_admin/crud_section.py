@@ -4,9 +4,9 @@ from models import Section
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 
-school_admin_bp = Blueprint('crud_section', __name__, url_prefix='/school_admin/api')
+sections_bp = Blueprint('crud_section', __name__, url_prefix='/school_admin')
 # Get all sections for the school
-@school_admin_bp.route('/sections', methods=['GET'])
+@sections_bp.route('/sections', methods=['GET'])
 def get_sections():
     school_id = session.get('school_id')
     if not school_id:
@@ -24,7 +24,7 @@ def get_sections():
 
 
 # Create a new section
-@school_admin_bp.route('/create/section', methods=['POST'])
+@sections_bp.route('/create/section', methods=['POST'])
 def create_section():
     try:
         data = request.get_json()
@@ -60,7 +60,7 @@ def create_section():
         return jsonify({"success": False, "message": "Error creating section. Please try again."}), 500 
 
 # Update an existing section
-@school_admin_bp.route('/update/section/<int:section_id>', methods=['PUT'])
+@sections_bp.route('/update/section/<int:section_id>', methods=['PUT'])
 def update_section(section_id): 
     try:
         data = request.get_json()
@@ -95,7 +95,7 @@ def update_section(section_id):
         return jsonify({"success": False, "message": "Error updating section. Please try again."}), 500 
 
 #delete a section (using raw SQL to avoid column mapping issues)
-@school_admin_bp.route('/delete/section/<int:section_id>', methods=['DELETE'])
+@sections_bp.route('/delete/section/<int:section_id>', methods=['DELETE'])
 def delete_section(section_id):
     try:
         print(f"Attempting to delete section with ID: {section_id}")
@@ -178,3 +178,27 @@ def delete_section(section_id):
             "success": False, 
             "message": "Error deleting section. Please try again."
         }), 500
+
+@sections_bp.route('/sections/api', methods=['GET'])
+def get_sections_api():
+    """API endpoint to get all sections for dropdown"""
+    if 'school_id' not in session:
+        return jsonify({'error': 'Session expired'}), 401
+    
+    school_id = session['school_id']
+    
+    try:
+        sections = Section.query.filter_by(school_id=school_id).all()
+        
+        sections_list = []
+        for section in sections:
+            sections_list.append({
+                'id': section.id,
+                'name': section.name,
+                'grade_level': section.grade_level
+            })
+        
+        return jsonify({'sections': sections_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500

@@ -3,10 +3,10 @@ from database import db
 from models import Subject, Instructor, Section, SchoolAdmin
 import re
 
-school_admin_bp = Blueprint('crud_subject', __name__, url_prefix='/school_admin')
+subjects_bp = Blueprint('subjects', __name__, url_prefix='/school_admin')
 
 # Get all subjects for the school
-@school_admin_bp.route('/subjects', methods=['GET'])
+@subjects_bp.route('/subjects', methods=['GET'])
 def get_subjects():
     # Get school_id from session
     if 'school_id' not in session:
@@ -28,7 +28,7 @@ def get_subjects():
                          subjects=subjects, instructors=instructors, sections=sections)
 
 # Create new subject
-@school_admin_bp.route('/subjects', methods=['POST'])
+@subjects_bp.route('/subjects', methods=['POST'])
 def create_subject():
     if 'school_id' not in session:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -92,7 +92,7 @@ def create_subject():
         }), 500
 
 # Update subject
-@school_admin_bp.route('/subjects/<int:subject_id>', methods=['PUT'])
+@subjects_bp.route('/subjects/<int:subject_id>', methods=['PUT'])
 def update_subject(subject_id):
     if 'school_id' not in session:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -157,7 +157,7 @@ def update_subject(subject_id):
         }), 500
 
 # Delete subject
-@school_admin_bp.route('/subjects/<int:subject_id>', methods=['DELETE'])
+@subjects_bp.route('/subjects/<int:subject_id>', methods=['DELETE'])
 def delete_subject(subject_id):
     if 'school_id' not in session:
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
@@ -190,3 +190,27 @@ def delete_subject(subject_id):
             'success': False, 
             'message': f'Error deleting subject: {str(e)}'
         }), 500
+
+@subjects_bp.route('/subjects/api', methods=['GET'])
+def get_subjects_api():
+    """API endpoint to get all subjects for dropdown"""
+    if 'school_id' not in session:
+        return jsonify({'error': 'Session expired'}), 401
+    
+    school_id = session['school_id']
+    
+    try:
+        subjects = Subject.query.filter_by(school_id=school_id).all()
+        
+        subjects_list = []
+        for subject in subjects:
+            subjects_list.append({
+                'id': subject.id,
+                'name': subject.name,
+                'grade_level': subject.grade_level
+            })
+        
+        return jsonify({'subjects': subjects_list}), 200
+        
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
