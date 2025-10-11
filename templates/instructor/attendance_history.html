@@ -1,119 +1,258 @@
 {% extends 'instructor/base.html' %}
-{% block title %}Attendance History{% endblock %}
+{% block title %}Attendance Analytics{% endblock %}
 {% block content %}
 
-<div class="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 p-6">
+<div class="min-h-screen bg-gray-50 p-6">
     <div class="max-w-7xl mx-auto">
-        <!-- Header -->
-        <div class="bg-white rounded-2xl shadow-lg p-6 flex justify-between items-center mb-6">
-            <div>
-                <h1 class="text-4xl font-extrabold text-blue-800 flex items-center gap-3">
-                    <i class="fa-solid fa-history text-blue-600"></i> Attendance History
-                </h1>
-                <p class="text-gray-600 mt-2">View your past attendance records</p>
+        
+        <!-- Header Section -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div class="mb-4 lg:mb-0">
+                    <h1 class="text-3xl font-bold text-gray-900">Attendance Analytics</h1>
+                    <p class="text-gray-600 mt-1">Comprehensive view of your class attendance data</p>
+                </div>
+                <div class="flex flex-wrap gap-3">
+                    <a href="/instructor/attendance" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                        <i class="fa-solid fa-plus w-4 h-4 mr-2"></i>
+                        New Attendance
+                    </a>
+                    <a href="/instructor/attendance/monthly-report" class="inline-flex items-center px-4 py-2 bg-green-600 text-white text-sm font-medium rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fa-solid fa-chart-line w-4 h-4 mr-2"></i>
+                        Monthly Report
+                    </a>
+                    <a href="/instructor" class="inline-flex items-center px-4 py-2 bg-gray-600 text-white text-sm font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fa-solid fa-arrow-left w-4 h-4 mr-2"></i>
+                        Dashboard
+                    </a>
+                </div>
             </div>
-            <a href="/instructor/dashboard" class="bg-blue-700 text-white px-6 py-3 rounded-xl hover:bg-blue-800 transition">
-                <i class="fa-solid fa-arrow-left mr-2"></i>Back to Dashboard
+        </div>
+
+        {% if subjects_data %}
+        <!-- Quick Stats Overview -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            {% set total_subjects = subjects_data|length %}
+            {% set total_classes = subjects_data.values()|sum(attribute='total_classes') %}
+            {% set avg_attendance = subjects_data.values()|map(attribute='overall_rate')|sum / total_subjects if total_subjects > 0 else 0 %}
+            
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-book text-blue-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">Total Subjects</h3>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_subjects }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-calendar-check text-green-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">Classes Recorded</h3>
+                        <p class="text-2xl font-semibold text-gray-900">{{ total_classes }}</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-chart-pie text-purple-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">Average Attendance</h3>
+                        <p class="text-2xl font-semibold text-gray-900">{{ "%.1f"|format(avg_attendance) }}%</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-white rounded-lg p-6 border border-gray-200">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                            <i class="fa-solid fa-clock text-yellow-600 text-sm"></i>
+                        </div>
+                    </div>
+                    <div class="ml-4">
+                        <h3 class="text-sm font-medium text-gray-500">Last Updated</h3>
+                        <p class="text-sm font-medium text-gray-900">Today</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Subject Cards Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+            {% for subject_name, subject_info in subjects_data.items() %}
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <!-- Subject Header -->
+                <div class="px-6 py-4 bg-gray-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900">{{ subject_name }}</h3>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                {% if subject_info.overall_rate >= 90 %}bg-green-100 text-green-800
+                                {% elif subject_info.overall_rate >= 75 %}bg-yellow-100 text-yellow-800
+                                {% else %}bg-red-100 text-red-800{% endif %}">
+                                {{ subject_info.overall_rate }}% Attendance
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Subject Stats -->
+                <div class="px-6 py-4">
+                    <div class="grid grid-cols-2 gap-4 mb-4">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900">{{ subject_info.total_classes }}</p>
+                            <p class="text-sm text-gray-500">Classes Held</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900">{{ subject_info.total_present }}</p>
+                            <p class="text-sm text-gray-500">Students Present</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Progress Bar -->
+                    <div class="mb-4">
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>Attendance Rate</span>
+                            <span>{{ subject_info.overall_rate }}%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="h-2 rounded-full {% if subject_info.overall_rate >= 90 %}bg-green-500{% elif subject_info.overall_rate >= 75 %}bg-yellow-500{% else %}bg-red-500{% endif %}" 
+                                 style="width: {{ subject_info.overall_rate }}%"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Action Button -->
+                    <button onclick="toggleSubjectDetails('{{ subject_name|replace(' ', '_') }}')" 
+                            class="w-full bg-blue-50 hover:bg-blue-100 text-blue-700 font-medium py-2 px-4 rounded-lg transition-colors">
+                        <i class="fa-solid fa-eye mr-2"></i>View Detailed Records
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Detailed Records Sections (Initially Hidden) -->
+        {% for subject_name, subject_info in subjects_data.items() %}
+        <div id="details_{{ subject_name|replace(' ', '_') }}" class="hidden mb-8">
+            <div class="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                <!-- Detailed Header -->
+                <div class="px-6 py-4 bg-blue-50 border-b border-gray-200">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <h3 class="text-xl font-semibold text-blue-900">{{ subject_name }} - Detailed Records</h3>
+                            <p class="text-blue-700 text-sm mt-1">{{ subject_info.total_classes }} classes • {{ subject_info.overall_rate }}% average attendance</p>
+                        </div>
+                        <button onclick="toggleSubjectDetails('{{ subject_name|replace(' ', '_') }}')" 
+                                class="text-blue-600 hover:text-blue-800">
+                            <i class="fa-solid fa-times w-5 h-5"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Records Table -->
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Section</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Present</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Absent</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Late</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Excused</th>
+                                <th class="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Rate</th>
+                            </tr>
+                        </thead>
+                        <tbody class="bg-white divide-y divide-gray-200">
+                            {% for record in subject_info.records %}
+                            <tr class="hover:bg-gray-50">
+                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                    {{ record.date.strftime('%b %d, %Y') }}
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{{ record.section }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 text-center">{{ record.total_students }}</td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        {{ record.present_count }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                        {{ record.absent_count }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                        {{ record.late_count }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                        {{ record.excused_count }}
+                                    </span>
+                                </td>
+                                <td class="px-6 py-4 whitespace-nowrap text-center">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                        {% if record.attendance_rate >= 90 %}bg-green-100 text-green-800
+                                        {% elif record.attendance_rate >= 75 %}bg-yellow-100 text-yellow-800
+                                        {% else %}bg-red-100 text-red-800{% endif %}">
+                                        {{ record.attendance_rate }}%
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+
+        {% else %}
+        <!-- Empty State -->
+        <div class="text-center py-12">
+            <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fa-solid fa-chart-bar text-gray-400 text-2xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">No Attendance Records</h3>
+            <p class="text-gray-500 mb-6">You haven't recorded any attendance yet. Start by taking attendance for your classes.</p>
+            <a href="/instructor/attendance" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700">
+                <i class="fa-solid fa-plus w-4 h-4 mr-2"></i>
+                Record Attendance
             </a>
-        </div>
-
-        <!-- History Table -->
-        <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
-            <div class="overflow-x-auto">
-                <table class="w-full">
-                    <thead class="bg-blue-700 text-white">
-                        <tr>
-                            <th class="py-4 px-6 text-left">Date</th>
-                            <th class="py-4 px-6 text-left">Subject</th>
-                            <th class="py-4 px-6 text-left">Section</th>
-                            <th class="py-4 px-6 text-center">Total Students</th>
-                            <th class="py-4 px-6 text-center">Present</th>
-                            <th class="py-4 px-6 text-center">Absent</th>
-                            <th class="py-4 px-6 text-center">Late</th>
-                            <th class="py-4 px-6 text-center">Attendance Rate</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        {% for record in history %}
-                        <tr class="hover:bg-blue-50 transition">
-                            <td class="py-4 px-6 font-medium">{{ record.date.strftime('%B %d, %Y') }}</td>
-                            <td class="py-4 px-6">{{ record.subject }}</td>
-                            <td class="py-4 px-6">{{ record.section }}</td>
-                            <td class="py-4 px-6 text-center font-bold">{{ record.total_students }}</td>
-                            <td class="py-4 px-6 text-center">
-                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-sm font-semibold">
-                                    {{ record.present_count or 0 }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-sm font-semibold">
-                                    {{ record.absent_count or 0 }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                <span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-sm font-semibold">
-                                    {{ record.late_count or 0 }}
-                                </span>
-                            </td>
-                            <td class="py-4 px-6 text-center">
-                                {% set rate = ((record.present_count or 0) / record.total_students * 100) if record.total_students > 0 else 0 %}
-                                <span class="font-bold {% if rate >= 90 %}text-green-600{% elif rate >= 80 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                                    {{ "%.1f"|format(rate) }}%
-                                </span>
-                            </td>
-                        </tr>
-                        {% else %}
-                        <tr>
-                            <td colspan="8" class="py-12 text-center text-gray-500">
-                                <i class="fa-solid fa-clipboard-list text-4xl mb-4"></i>
-                                <p class="text-lg">No attendance records found</p>
-                                <a href="/instructor/attendance" class="inline-block mt-4 bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition">
-                                    Record Your First Attendance
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Summary Cards -->
-        {% if history %}
-        <div class="mt-6 grid grid-cols-1 md:grid-cols-4 gap-6">
-            {% set total_classes = history|length %}
-            {% set total_students = history|sum(attribute='total_students') %}
-            {% set total_present = history|sum(attribute='present_count') %}
-            {% set overall_rate = (total_present / total_students * 100) if total_students > 0 else 0 %}
-            
-            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                <i class="fa-solid fa-calendar-check text-3xl text-blue-600 mb-3"></i>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Classes Recorded</h3>
-                <p class="text-2xl font-extrabold text-blue-700">{{ total_classes }}</p>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                <i class="fa-solid fa-users text-3xl text-gray-600 mb-3"></i>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Total Students</h3>
-                <p class="text-2xl font-extrabold text-gray-700">{{ total_students }}</p>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                <i class="fa-solid fa-user-check text-3xl text-green-600 mb-3"></i>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Present</h3>
-                <p class="text-2xl font-extrabold text-green-700">{{ total_present }}</p>
-            </div>
-            
-            <div class="bg-white rounded-xl shadow-lg p-6 text-center">
-                <i class="fa-solid fa-chart-line text-3xl text-purple-600 mb-3"></i>
-                <h3 class="text-lg font-bold text-gray-800 mb-2">Overall Rate</h3>
-                <p class="text-2xl font-extrabold {% if overall_rate >= 90 %}text-green-600{% elif overall_rate >= 80 %}text-yellow-600{% else %}text-red-600{% endif %}">
-                    {{ "%.1f"|format(overall_rate) }}%
-                </p>
-            </div>
         </div>
         {% endif %}
     </div>
 </div>
+
+<!-- JavaScript for Toggle Functionality -->
+<script>
+function toggleSubjectDetails(subjectId) {
+    const detailsDiv = document.getElementById('details_' + subjectId);
+    if (detailsDiv.classList.contains('hidden')) {
+        detailsDiv.classList.remove('hidden');
+        detailsDiv.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } else {
+        detailsDiv.classList.add('hidden');
+    }
+}
+</script>
 
 {% endblock %}

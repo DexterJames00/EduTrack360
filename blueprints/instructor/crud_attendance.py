@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, session, render_template, redirec
 from database import db
 from models import Attendance, Student, Subject, InstructorSchedule, Section, Instructor
 from datetime import datetime, date
-from sqlalchemy import func
+from sqlalchemy import func, case
 from telegram_bot import send_attendance_notification
 
 attendance_bp = Blueprint('instructor_attendance', __name__)
@@ -257,24 +257,183 @@ def attendance_history():
     
     instructor_id = session['instructor_id']
     
-    # Get attendance history with student and subject details
-    history = db.session.query(
+    # Get attendance history with detailed statistics, organized by subject
+    history_query = db.session.query(
         Attendance.date,
-        Attendance.status,
         Subject.name.label('subject'),
         Section.name.label('section'),
-        func.concat(Student.first_name, ' ', Student.last_name).label('student_name'),
-        func.count(Attendance.id).label('total_students')
+        func.count(Attendance.id).label('total_students'),
+        func.sum(case((Attendance.status == 'Present', 1), else_=0)).label('present_count'),
+        func.sum(case((Attendance.status == 'Absent', 1), else_=0)).label('absent_count'),
+        func.sum(case((Attendance.status == 'Late', 1), else_=0)).label('late_count'),
+        func.sum(case((Attendance.status == 'Excused', 1), else_=0)).label('excused_count')
     ).join(Student, Attendance.student_id == Student.id)\
      .join(Subject, Attendance.subject_id == Subject.id)\
      .join(Section, Student.section_id == Section.id)\
      .filter(Attendance.instructor_id == instructor_id)\
      .group_by(Attendance.date, Subject.name, Section.name)\
-     .order_by(Attendance.date.desc())\
-     .limit(50)\
+     .order_by(Subject.name, Attendance.date.desc())\
+     .limit(100)\
      .all()
     
-    return render_template('instructor/attendance_history.html', history=history)
+    # Organize data by subject for cleaner display
+    subjects_data = {}
+    for record in history_query:
+        subject_name = record.subject
+        if subject_name not in subjects_data:
+            subjects_data[subject_name] = {
+                'subject': subject_name,
+                'records': [],
+                'total_classes': 0,
+                'total_students': 0,
+                'total_present': 0,
+                'total_absent': 0,
+                'overall_rate': 0
+            }
+        
+        total = int(record.total_students or 0)
+        present = int(record.present_count or 0)
+        late = int(record.late_count or 0)
+        excused = int(record.excused_count or 0)
+        
+        # Calculate attendance rate (Present + Late + Excused considered as attended)
+        attended = present + late + excused
+        attendance_rate = float(attended / total * 100) if total > 0 else 0.0
+        
+        record_data = {
+            'date': record.date,
+            'subject': record.subject,
+            'section': record.section,
+            'total_students': total,
+            'present_count': present,
+            'absent_count': record.absent_count or 0,
+            'late_count': late,
+            'excused_count': excused,
+            'attendance_rate': round(attendance_rate, 1)
+        }
+        
+        subjects_data[subject_name]['records'].append(record_data)
+        subjects_data[subject_name]['total_classes'] += 1
+        subjects_data[subject_name]['total_students'] += total
+        subjects_data[subject_name]['total_present'] += present
+        subjects_data[subject_name]['total_absent'] += int(record.absent_count or 0)
+    
+    # Calculate overall rates for each subject
+    for subject_name, subject_data in subjects_data.items():
+        if subject_data['total_students'] > 0:
+            subject_data['overall_rate'] = round(
+                float(subject_data['total_present'] / subject_data['total_students'] * 100), 1
+            )
+    
+    return render_template('instructor/attendance_history.html', subjects_data=subjects_data)
+
+@attendance_bp.route('/attendance/monthly-report', methods=['GET'])
+def monthly_report():
+    """View monthly attendance report for instructor"""
+    if 'instructor_id' not in session:
+        flash('Please log in as an instructor', 'error')
+        return redirect(url_for('auth.login'))
+    
+    instructor_id = session['instructor_id']
+    
+    # Get month and year from query params, default to current month
+    from datetime import datetime
+    now = datetime.now()
+    month = int(request.args.get('month', now.month))
+    year = int(request.args.get('year', now.year))
+    
+    # Get monthly attendance data, organized by subject
+    monthly_data = db.session.query(
+        Student.id,
+        func.concat(Student.first_name, ' ', Student.last_name).label('student_name'),
+        Subject.name.label('subject'),
+        Section.name.label('section'),
+        func.count(Attendance.id).label('total_classes'),
+        func.sum(case((Attendance.status == 'Present', 1), else_=0)).label('present_count'),
+        func.sum(case((Attendance.status == 'Absent', 1), else_=0)).label('absent_count'),
+        func.sum(case((Attendance.status == 'Late', 1), else_=0)).label('late_count'),
+        func.sum(case((Attendance.status == 'Excused', 1), else_=0)).label('excused_count')
+    ).join(Student, Attendance.student_id == Student.id)\
+     .join(Subject, Attendance.subject_id == Subject.id)\
+     .join(Section, Student.section_id == Section.id)\
+     .filter(Attendance.instructor_id == instructor_id)\
+     .filter(func.extract('month', Attendance.date) == month)\
+     .filter(func.extract('year', Attendance.date) == year)\
+     .group_by(Student.id, Student.first_name, Student.last_name, Subject.name, Section.name)\
+     .order_by(Subject.name, Section.name, Student.first_name, Student.last_name)\
+     .all()
+    
+    # Organize data by subject for cleaner display
+    subjects_data = {}
+    for record in monthly_data:
+        subject_name = record.subject
+        if subject_name not in subjects_data:
+            subjects_data[subject_name] = {
+                'subject': subject_name,
+                'students': [],
+                'total_students': 0,
+                'excellent_count': 0,
+                'good_count': 0,
+                'needs_improvement_count': 0,
+                'poor_count': 0,
+                'average_rate': 0
+            }
+        
+        total = int(record.total_classes or 0)
+        present = int(record.present_count or 0)
+        late = int(record.late_count or 0)
+        excused = int(record.excused_count or 0)
+        
+        # Calculate attendance rate (Present + Late + Excused considered as attended)
+        attended = present + late + excused
+        attendance_rate = float(attended / total * 100) if total > 0 else 0.0
+        
+        # Determine performance status
+        if attendance_rate >= 95:
+            status = 'Excellent'
+            subjects_data[subject_name]['excellent_count'] += 1
+        elif attendance_rate >= 85:
+            status = 'Good'
+            subjects_data[subject_name]['good_count'] += 1
+        elif attendance_rate >= 75:
+            status = 'Needs Improvement'
+            subjects_data[subject_name]['needs_improvement_count'] += 1
+        else:
+            status = 'Poor'
+            subjects_data[subject_name]['poor_count'] += 1
+        
+        student_data = {
+            'student_id': record.id,
+            'student_name': record.student_name,
+            'section': record.section,
+            'total_classes': total,
+            'present_count': present,
+            'absent_count': record.absent_count or 0,
+            'late_count': late,
+            'excused_count': excused,
+            'attendance_rate': round(attendance_rate, 1),
+            'status': status
+        }
+        
+        subjects_data[subject_name]['students'].append(student_data)
+        subjects_data[subject_name]['total_students'] += 1
+    
+    # Calculate average rates for each subject
+    for subject_name, subject_data in subjects_data.items():
+        if subject_data['students']:
+            total_rate = sum(float(student['attendance_rate']) for student in subject_data['students'])
+            subject_data['average_rate'] = round(total_rate / len(subject_data['students']), 1)
+    
+    # Generate month name for display
+    month_names = ['', 'January', 'February', 'March', 'April', 'May', 'June',
+                   'July', 'August', 'September', 'October', 'November', 'December']
+    month_name = month_names[month] if 1 <= month <= 12 else 'Unknown'
+    
+    return render_template('instructor/monthly_report.html', 
+                         subjects_data=subjects_data,
+                         month=month,
+                         year=year,
+                         month_name=month_name)
 
 @attendance_bp.route('/attendance/stats', methods=['GET'])
 def attendance_stats():

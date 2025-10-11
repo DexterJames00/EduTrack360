@@ -205,21 +205,175 @@
     </div>
 </div>
 <!-- Message Modal -->
-<div id="messageModal" class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-xl shadow-lg p-8 w-full max-w-md relative">
-        <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl" onclick="closeMessageModal()"><i class="fa-solid fa-times"></i></button>
-        <h2 class="text-2xl font-bold text-blue-800 mb-4"><i class="fa-solid fa-envelope"></i> Send Message to Parent</h2>
+<div id="messageModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-lg mx-4 transform transition-all duration-300 scale-95">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-blue-800 flex items-center gap-3">
+                <i class="fa-solid fa-envelope text-blue-600"></i> 
+                Send Message to Parent
+            </h2>
+            <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="closeMessageModal()">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+        
         <form id="messageForm" onsubmit="sendMessage(event)">
             <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Student</label>
-                <input type="text" id="modalStudentName" class="w-full px-4 py-2 border border-blue-300 rounded bg-gray-100" readonly>
+                <label class="block text-gray-700 font-semibold mb-2">
+                    <i class="fa-solid fa-user text-blue-600 mr-1"></i> Student
+                </label>
+                <input type="text" id="modalStudentName" 
+                    class="w-full px-4 py-3 border border-blue-300 rounded-lg bg-gray-50 text-gray-700 font-medium" readonly>
             </div>
+            
             <div class="mb-4">
-                <label class="block text-gray-700 font-semibold mb-2">Message</label>
-                <textarea id="modalMessage" class="w-full px-4 py-2 border border-blue-300 rounded" rows="4" placeholder="Type your message here..." required>Dear Parent, your child is a candidate for dropping due to attendance issues.</textarea>
+                <label class="block text-gray-700 font-semibold mb-2">
+                    <i class="fa-solid fa-book text-blue-600 mr-1"></i> Subject
+                </label>
+                <input type="text" id="modalSubjectName" value="{{ schedule.subject if schedule else 'N/A' }}" 
+                    class="w-full px-4 py-3 border border-blue-300 rounded-lg bg-gray-50 text-gray-700 font-medium" readonly>
             </div>
-            <button type="submit" class="w-full bg-blue-700 text-white py-2 rounded-xl font-bold hover:bg-blue-800 transition">Send</button>
+            
+            <div class="mb-6">
+                <label class="block text-gray-700 font-semibold mb-2">
+                    <i class="fa-solid fa-comment-dots text-blue-600 mr-1"></i> Message
+                </label>
+                <textarea id="modalMessage" 
+                    class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none" 
+                    rows="4" 
+                    placeholder="Type your message here..." 
+                    required>Dear Parent, your child is a candidate for dropping due to attendance issues.</textarea>
+                
+                <!-- Quick Message Templates -->
+                <div class="mt-3">
+                    <p class="text-sm text-gray-600 mb-2">Quick templates:</p>
+                    <div class="flex flex-wrap gap-2">
+                        <button type="button" onclick="setMessageTemplate('dropping')" 
+                            class="px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 text-xs rounded-full transition">
+                            Dropping Candidate
+                        </button>
+                        <button type="button" onclick="setMessageTemplate('warning')" 
+                            class="px-3 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-700 text-xs rounded-full transition">
+                            Attendance Warning
+                        </button>
+                        <button type="button" onclick="setMessageTemplate('improvement')" 
+                            class="px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs rounded-full transition">
+                            Needs Improvement
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button type="button" onclick="closeMessageModal()" 
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-times mr-2"></i> Cancel
+                </button>
+                <button type="submit" id="sendMessageBtn"
+                    class="flex-1 bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg disabled:opacity-50">
+                    <span id="sendMessageText">
+                        <i class="fa-solid fa-paper-plane mr-2"></i> Send Message
+                    </span>
+                    <span id="sendingMessageText" class="hidden">
+                        <i class="fa-solid fa-spinner fa-spin mr-2"></i> Sending...
+                    </span>
+                </button>
+            </div>
         </form>
+    </div>
+</div>
+
+<!-- Message Success Modal -->
+<div id="messageSuccessModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300 scale-95">
+        <div class="text-center">
+            <!-- Success Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-green-100 mb-4">
+                <i class="fa-solid fa-check text-green-600 text-2xl"></i>
+            </div>
+            
+            <!-- Success Message -->
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Message Sent Successfully!</h3>
+            <p id="messageSuccessText" class="text-gray-600 mb-4">
+                Your message has been sent to the parent via Telegram.
+            </p>
+            
+            <!-- Message Details -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">
+                            <i class="fa-solid fa-user text-blue-500 mr-2"></i>Student:
+                        </span>
+                        <span id="successStudentName" class="font-semibold text-gray-800"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">
+                            <i class="fa-solid fa-book text-blue-500 mr-2"></i>Subject:
+                        </span>
+                        <span id="successSubjectName" class="font-semibold text-gray-800"></span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">
+                            <i class="fa-solid fa-clock text-blue-500 mr-2"></i>Sent:
+                        </span>
+                        <span id="successSentTime" class="font-semibold text-gray-800"></span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Button -->
+            <button onclick="closeMessageSuccessModal()" 
+                class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition">
+                <i class="fa-solid fa-check mr-2"></i> Great!
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Message Error Modal -->
+<div id="messageErrorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md mx-4 transform transition-all duration-300 scale-95">
+        <div class="text-center">
+            <!-- Error Icon -->
+            <div class="mx-auto flex items-center justify-center h-16 w-16 rounded-full bg-red-100 mb-4">
+                <i class="fa-solid fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            
+            <!-- Error Message -->
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Message Failed</h3>
+            <p id="messageErrorText" class="text-gray-600 mb-4">
+                There was an error sending your message.
+            </p>
+            
+            <!-- Error Details -->
+            <div id="messageErrorDetails" class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="space-y-2 text-sm">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">
+                            <i class="fa-solid fa-user text-red-500 mr-2"></i>Student:
+                        </span>
+                        <span id="errorStudentName" class="font-semibold text-gray-800"></span>
+                    </div>
+                    <div class="mt-3 p-3 bg-red-100 rounded text-red-700 text-xs">
+                        <i class="fa-solid fa-info-circle mr-1"></i>
+                        <span id="messageErrorDetailsText">Error details will appear here</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex gap-3">
+                <button onclick="closeMessageErrorModal()" 
+                    class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-times mr-2"></i> Close
+                </button>
+                <button onclick="retryMessage()" 
+                    class="flex-1 bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-4 rounded-xl transition">
+                    <i class="fa-solid fa-redo mr-2"></i> Try Again
+                </button>
+            </div>
+        </div>
     </div>
 </div>
 <script>
@@ -516,19 +670,57 @@ function recordAnother() {
 
 // Message Modal Functions
 function openMessageModal(studentId, studentName) {
-    document.getElementById('messageModal').style.display = 'flex';
+    const modal = document.getElementById('messageModal');
     document.getElementById('modalStudentName').value = studentName;
     document.getElementById('messageForm').setAttribute('data-student-id', studentId);
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
 }
 
 function closeMessageModal() {
-    document.getElementById('messageModal').style.display = 'none';
+    const modal = document.getElementById('messageModal');
+    modal.querySelector('.transform').classList.remove('scale-100');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
 }
+
+function setMessageTemplate(type) {
+    const messageTextarea = document.getElementById('modalMessage');
+    const subjectName = document.getElementById('modalSubjectName').value;
+    
+    const templates = {
+        dropping: `Dear Parent, your child is a candidate for dropping due to attendance issues in ${subjectName}. Immediate action is required to improve attendance.`,
+        warning: `Dear Parent, your child is showing concerning attendance patterns in ${subjectName}. Please ensure regular attendance to avoid academic issues.`,
+        improvement: `Dear Parent, your child needs to improve their attendance in ${subjectName}. Please discuss the importance of regular class attendance with them.`
+    };
+    
+    messageTextarea.value = templates[type] || messageTextarea.value;
+    messageTextarea.focus();
+}
+
 function sendMessage(event) {
     event.preventDefault();
+    
     const studentId = event.target.getAttribute('data-student-id');
     const studentName = document.getElementById('modalStudentName').value;
     const message = document.getElementById('modalMessage').value;
+    const subjectName = document.getElementById('modalSubjectName').value;
+    
+    const sendBtn = document.getElementById('sendMessageBtn');
+    const sendText = document.getElementById('sendMessageText');
+    const sendingText = document.getElementById('sendingMessageText');
+    
+    // Show loading state
+    sendBtn.disabled = true;
+    sendText.classList.add('hidden');
+    sendingText.classList.remove('hidden');
     
     // Send AJAX request to backend
     fetch('/instructor/message/send', {
@@ -538,22 +730,109 @@ function sendMessage(event) {
         },
         body: JSON.stringify({
             student_id: studentId,
-            message: message
+            message: message,
+            subject_name: subjectName
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            alert('✅ ' + data.message);
+            closeMessageModal();
+            showMessageSuccessModal(data);
         } else {
-            alert('❌ Error: ' + (data.error || 'Failed to send message'));
+            closeMessageModal();
+            showMessageErrorModal(data, studentName);
         }
-        closeMessageModal();
     })
     .catch(error => {
-        alert('❌ Network error: ' + error.message);
+        console.error('Message sending error:', error);
         closeMessageModal();
+        showMessageErrorModal({
+            error: 'Network error: ' + error.message,
+            no_telegram: false
+        }, studentName);
+    })
+    .finally(() => {
+        // Reset button state
+        sendBtn.disabled = false;
+        sendText.classList.remove('hidden');
+        sendingText.classList.add('hidden');
     });
+}
+
+function showMessageSuccessModal(data) {
+    const modal = document.getElementById('messageSuccessModal');
+    const messageEl = document.getElementById('messageSuccessText');
+    const studentNameEl = document.getElementById('successStudentName');
+    const subjectNameEl = document.getElementById('successSubjectName');
+    const sentTimeEl = document.getElementById('successSentTime');
+    
+    // Update modal content
+    messageEl.textContent = data.message || 'Your message has been sent successfully!';
+    studentNameEl.textContent = data.student_name || 'Student';
+    subjectNameEl.textContent = data.subject_name || 'Subject';
+    sentTimeEl.textContent = data.sent_at || new Date().toLocaleString();
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function closeMessageSuccessModal() {
+    const modal = document.getElementById('messageSuccessModal');
+    modal.querySelector('.transform').classList.remove('scale-100');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function showMessageErrorModal(data, studentName) {
+    const modal = document.getElementById('messageErrorModal');
+    const messageEl = document.getElementById('messageErrorText');
+    const studentNameEl = document.getElementById('errorStudentName');
+    const errorDetailsEl = document.getElementById('messageErrorDetailsText');
+    
+    // Update modal content
+    let errorMessage = data.error || 'There was an error sending your message.';
+    
+    if (data.no_telegram) {
+        errorMessage = `${studentName} does not have Telegram connected. Please ask them to register first.`;
+        errorDetailsEl.textContent = 'Students need to connect their Telegram account to receive messages.';
+    } else {
+        errorDetailsEl.textContent = data.error || 'Unknown error occurred';
+    }
+    
+    messageEl.textContent = errorMessage;
+    studentNameEl.textContent = studentName || 'Student';
+    
+    // Show modal with animation
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function closeMessageErrorModal() {
+    const modal = document.getElementById('messageErrorModal');
+    modal.querySelector('.transform').classList.remove('scale-100');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => {
+        modal.classList.add('hidden');
+    }, 300);
+}
+
+function retryMessage() {
+    closeMessageErrorModal();
+    // Re-open the message modal with the same data
+    const form = document.getElementById('messageForm');
+    const studentId = form.getAttribute('data-student-id');
+    const studentName = document.getElementById('modalStudentName').value;
+    openMessageModal(studentId, studentName);
 }
 </script>
 
