@@ -82,7 +82,7 @@ async function fetchSections() {
     const container = document.getElementById('sectionsContainer');
     container.innerHTML = '<p class="text-gray-500 text-center col-span-3">Loading sections...</p>';
     try {
-        const res = await fetch('/school_admin/api/sections');
+        const res = await fetch('/school_admin/sections/api');
         const data = await res.json();
 
         if (!data.success || !data.sections.length) {
@@ -206,8 +206,8 @@ async function saveSection(event) {
     if (!name || !grade_level) return;
 
     const url = editingSectionId
-        ? `/school_admin/api/update/section/${editingSectionId}`
-        : '/school_admin/api/create/section';
+        ? `/school_admin/update/section/${editingSectionId}`
+        : '/school_admin/create/section';
     const method = editingSectionId ? 'PUT' : 'POST';
 
     try {
@@ -246,7 +246,7 @@ async function saveSection(event) {
 async function deleteSection(id) {
     if (!confirm('Are you sure you want to delete this section?')) return;
     try {
-        const res = await fetch(`/school_admin/api/delete/section/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/school_admin/delete/section/${id}`, { method: 'DELETE' });
         const data = await res.json();
         
         if (data.success) {

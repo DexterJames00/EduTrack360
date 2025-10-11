@@ -14,6 +14,9 @@ def get_sections():
 
     try:
         sections = Section.query.filter_by(school_id=school_id).all()
+        print(f"DEBUG: Fetching sections for school {school_id}, found {len(sections)} sections")
+        for section in sections:
+            print(f"  - Section: {section.id}, {section.name}, {section.grade_level}")
         return jsonify({
             "success": True,
             "sections": [section.to_dict() for section in sections]
@@ -48,6 +51,8 @@ def create_section():
 
         db.session.add(new_section)
         db.session.commit()
+        
+        print(f"DEBUG: Section created - ID: {new_section.id}, Name: {new_section.name}, School: {new_section.school_id}")
 
         return jsonify({
             "success": True, 
@@ -183,12 +188,15 @@ def delete_section(section_id):
 def get_sections_api():
     """API endpoint to get all sections for dropdown"""
     if 'school_id' not in session:
-        return jsonify({'error': 'Session expired'}), 401
+        return jsonify({"success": False, "message": "Session expired. Please login again."}), 401
     
     school_id = session['school_id']
     
     try:
         sections = Section.query.filter_by(school_id=school_id).all()
+        print(f"DEBUG: API Fetching sections for school {school_id}, found {len(sections)} sections")
+        for section in sections:
+            print(f"  - API Section: {section.id}, {section.name}, {section.grade_level}")
         
         sections_list = []
         for section in sections:
@@ -198,7 +206,11 @@ def get_sections_api():
                 'grade_level': section.grade_level
             })
         
-        return jsonify({'sections': sections_list}), 200
+        return jsonify({
+            "success": True,
+            "sections": sections_list
+        }), 200
         
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        print("Error fetching sections API:", e)
+        return jsonify({"success": False, "message": "Error fetching sections."}), 500

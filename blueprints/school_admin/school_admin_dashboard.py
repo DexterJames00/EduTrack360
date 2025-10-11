@@ -27,7 +27,12 @@ def dashboard():
     """School Admin Dashboard with real-time statistics"""
     
     # Get school_id from session
-    school_id = session.get('school_id', 1)  # Default to 1 if not set
+    school_id = session.get('school_id')
+    if not school_id:
+        flash("Session expired. Please login again.", "error")
+        return redirect(url_for('auth.login'))
+    
+    print(f"DEBUG: Dashboard loading for school_id: {school_id}")
     
     # Fetch real statistics from database
     try:
@@ -43,20 +48,40 @@ def dashboard():
         # Count sections
         sections_count = Section.query.filter_by(school_id=school_id).count()
         
-        # Calculate attendance rate for today
+        # Calculate attendance rate for today (filtered by school)
         from datetime import date
         today = date.today()
         
-        # Get total attendance records for today
-        total_today = Attendance.query.filter_by(date=today).count()
-        present_today = Attendance.query.filter_by(date=today, status='Present').count()
+        # Get total attendance records for today for this school
+        # We need to join with students to filter by school_id
+        total_today = db.session.query(Attendance).join(Student).filter(
+            Attendance.date == today,
+            Student.school_id == school_id
+        ).count()
+        
+        present_today = db.session.query(Attendance).join(Student).filter(
+            Attendance.date == today,
+            Attendance.status == 'Present',
+            Student.school_id == school_id
+        ).count()
         
         # Calculate attendance rate
         attendance_rate = (present_today / total_today * 100) if total_today > 0 else 0
         
-        # Get active classes today
+        # Get active classes today for this school
         today_weekday = today.strftime('%A')
-        active_classes = InstructorSchedule.query.filter_by(day=today_weekday).count()
+        active_classes = db.session.query(InstructorSchedule).join(Instructor).filter(
+            InstructorSchedule.day == today_weekday,
+            Instructor.school_id == school_id
+        ).count()
+        
+        print(f"DEBUG: School {school_id} metrics:")
+        print(f"  - Instructors: {instructors_count}")
+        print(f"  - Students: {students_count}")
+        print(f"  - Subjects: {subjects_count}")
+        print(f"  - Sections: {sections_count}")
+        print(f"  - Attendance rate: {attendance_rate:.1f}% ({present_today}/{total_today})")
+        print(f"  - Active classes ({today_weekday}): {active_classes}")
         
         # Recent activity data (mock data for now - can be enhanced later)
         recent_activities = [
