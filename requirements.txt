@@ -1,0 +1,45 @@
+# Core Flask Framework
+Flask==3.0.0
+Flask-SQLAlchemy==3.1.1
+
+# Database
+PyMySQL==1.1.0
+SQLAlchemy==2.0.23
+
+# Security & Authentication
+Werkzeug==3.0.1
+
+# HTTP Requests & API Integration
+requests==2.31.0
+
+# Telegram Bot & Webhook Support
+pyngrok==7.0.0
+
+# Development & Utilities
+python-dotenv==1.0.0
+
+# Additional utilities (if needed)
+cryptography==41.0.7
+six==1.16.0
+
+# Date/Time handling (usually built-in, but listing for clarity)
+# datetime - built-in Python module
+# json - built-in Python module  
+# os - built-in Python module
+# sys - built-in Python module
+# threading - built-in Python module
+# signal - built-in Python module
+# subprocess - built-in Python module
+# pathlib - built-in Python module
+# hashlib - built-in Python module
+# re - built-in Python module
+# time - built-in Python module
+# atexit - built-in Python module
+
+# Optional: Production Server (uncomment if deploying)
+# gunicorn==21.2.0
+# gevent==23.9.1
+
+# Optional: Testing (uncomment if using tests)
+# pytest==7.4.3
+# pytest-flask==1.3.0
