@@ -1,5 +1,5 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
-from models import SchoolAdmin, SchoolInstructorAccount, Instructor
+from models import MainAdmin, SchoolAdmin, SchoolInstructorAccount, Instructor
 from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -10,7 +10,28 @@ def login():
         username = request.form['username']
         password = request.form['password']
 
-        # Try to authenticate as SchoolAdmin first
+        # Try to authenticate as MainAdmin first
+        main_admin_user = MainAdmin.query.filter_by(username=username).first()
+        
+        if main_admin_user:
+            # Check if password is hashed or plain text (for backward compatibility)
+            password_valid = False
+            if main_admin_user.password.startswith('scrypt:') or main_admin_user.password.startswith('pbkdf2:'):
+                # Hashed password
+                password_valid = check_password_hash(main_admin_user.password, password)
+            else:
+                # Plain text password (legacy)
+                password_valid = (main_admin_user.password == password)
+            
+            if password_valid:
+                # Main Admin login
+                session['user_id'] = main_admin_user.id
+                session['username'] = main_admin_user.username
+                session['user_type'] = 'main_admin'
+                flash(f'Welcome back, Main Admin {main_admin_user.username}!', 'success')
+                return redirect(url_for('main_admin.dashboard'))
+
+        # Try to authenticate as SchoolAdmin
         school_admin_user = SchoolAdmin.query.filter_by(username=username).first()
         
         if school_admin_user:
@@ -24,11 +45,16 @@ def login():
                 password_valid = (school_admin_user.password == password)
             
             if password_valid:
-                # School Admin login
+                # School Admin login - get school code
+                from models import School
+                school = School.query.get(school_admin_user.school_id)
+                school_code = school.school_code if school else None
+                
                 session['user_id'] = school_admin_user.id
                 session['username'] = school_admin_user.username
                 session['role'] = school_admin_user.role
                 session['school_id'] = school_admin_user.school_id
+                session['school_code'] = school_code
                 session['user_type'] = 'school_admin'
                 flash(f'Welcome back, {school_admin_user.username}!', 'success')
                 return redirect(url_for('school_admin.dashboard'))

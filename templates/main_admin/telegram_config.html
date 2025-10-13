@@ -1,0 +1,823 @@
+{% extends 'main_admin/main_admin_base.html' %}
+{% block title %}Global Telegram Bot Management | Main Admin{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-10 mt-6">
+    <h1 class="text-3xl font-extrabold text-blue-800 mb-4 flex items-center gap-2">
+        <i class="fa-solid fa-robot"></i> Global Telegram Bot Management
+    </h1>
+    <p class="text-gray-600 mb-8 text-lg">Manage the global Telegram bot system that serves all schools across the platform.</p>
+    
+    <!-- Global Bot Status -->
+    <div class="bg-gradient-to-r from-purple-500 to-blue-600 text-white p-6 rounded-xl shadow-lg mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h3 class="text-lg font-semibold flex items-center gap-2">
+                    <i class="fa-solid fa-globe"></i> Global Bot System Status
+                </h3>
+                <p id="auto-setup-status" class="text-xl font-bold">Checking...</p>
+                <p id="public-url" class="text-sm opacity-90">Public URL: Loading...</p>
+                <p class="text-sm opacity-90 mt-1">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    One bot serving all schools with unique school codes
+                </p>
+            </div>
+            <div class="text-right">
+                <button onclick="checkAutoSetupStatus()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition duration-200">
+                    <i class="fa-solid fa-refresh mr-2"></i>Refresh Status
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- System-wide Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+        <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">Total Schools</h3>
+                    <p class="text-3xl font-bold" id="total-schools">0</p>
+                    <p class="text-sm opacity-80">Using bot system</p>
+                </div>
+                <i class="fa-solid fa-school text-4xl opacity-70"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-indigo-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">Total Students</h3>
+                    <p class="text-3xl font-bold" id="total-students">0</p>
+                    <p class="text-sm opacity-80">Across all schools</p>
+                </div>
+                <i class="fa-solid fa-graduation-cap text-4xl opacity-70"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-green-500 to-green-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">Connected Parents</h3>
+                    <p class="text-3xl font-bold" id="connected-parents">0</p>
+                    <p class="text-sm opacity-80">Using global bot</p>
+                </div>
+                <i class="fa-solid fa-link text-4xl opacity-70"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-red-500 to-red-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">Not Connected</h3>
+                    <p class="text-3xl font-bold" id="not-connected">0</p>
+                    <p class="text-sm opacity-80">Need registration</p>
+                </div>
+                <i class="fa-solid fa-unlink text-4xl opacity-70"></i>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-r from-purple-500 to-purple-600 text-white p-6 rounded-xl shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold">Connection Rate</h3>
+                    <p class="text-3xl font-bold" id="connection-rate">0%</p>
+                    <p class="text-sm opacity-80">System-wide</p>
+                </div>
+                <i class="fa-solid fa-chart-pie text-4xl opacity-70"></i>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bot Configuration Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Configure Global Bot -->
+        <div class="bg-blue-50 p-6 rounded-xl">
+            <h2 class="font-semibold text-xl mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-cog"></i> Global Bot Configuration
+            </h2>
+            <div class="bg-blue-100 p-4 rounded-lg mb-4">
+                <h4 class="font-semibold text-blue-800 mb-2">
+                    <i class="fa-solid fa-info-circle mr-2"></i>Single Bot System
+                </h4>
+                <p class="text-sm text-blue-700 mb-2">
+                    This bot serves all schools. Students register using: 
+                    <code class="bg-white px-2 py-1 rounded">SCHOOLCODE STUDENTCODE</code>
+                </p>
+                <div class="mt-2 text-sm text-blue-600" id="school-codes-list">
+                    <!-- School codes will be loaded dynamically -->
+                </div>
+            </div>
+            <form id="add-bot-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Bot Token</label>
+                    <input type="text" id="bot_token" placeholder="Enter Bot Token (e.g., 123456:ABC-DEF1234...)" 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Bot Username</label>
+                    <input type="text" id="bot_username" placeholder="Enter Bot Username (without @)" 
+                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                </div>
+                <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold">
+                    <i class="fa-solid fa-save mr-2"></i>Save Global Bot Configuration
+                </button>
+            </form>
+        </div>
+        
+        <!-- Global Bot Status -->
+        <div class="bg-gray-50 p-6 rounded-xl">
+            <h2 class="font-semibold text-xl mb-4 flex items-center gap-2">
+                <i class="fa-solid fa-robot"></i> Active Bot Status
+            </h2>
+            <div id="bot-status" class="space-y-3">
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <span class="font-medium">Bot Status:</span>
+                    <span id="bot-status-indicator" class="px-3 py-1 rounded-full text-sm font-semibold">
+                        <i class="fa-solid fa-circle-question"></i> Unknown
+                    </span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <span class="font-medium">Active Bot:</span>
+                    <span id="current-bot-name" class="text-gray-600">Not configured</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <span class="font-medium">Serving Schools:</span>
+                    <span id="serving-schools" class="text-gray-600">0 schools</span>
+                </div>
+                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
+                    <span class="font-medium">Last Updated:</span>
+                    <span id="last-updated" class="text-gray-600">Never</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- School-wise Statistics -->
+    <div class="bg-white border rounded-xl p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-semibold text-xl flex items-center gap-2">
+                <i class="fa-solid fa-chart-bar"></i> School-wise Connection Statistics
+            </h2>
+            <button onclick="refreshSchoolStats()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition duration-200">
+                <i class="fa-solid fa-refresh mr-2"></i>Refresh
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto border-collapse border border-gray-300">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-4 py-3 text-left">School Name</th>
+                        <th class="border px-4 py-3 text-center">School Code</th>
+                        <th class="border px-4 py-3 text-center">Total Students</th>
+                        <th class="border px-4 py-3 text-center">Connected</th>
+                        <th class="border px-4 py-3 text-center">Not Connected</th>
+                        <th class="border px-4 py-3 text-center">Connection Rate</th>
+                        <th class="border px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="school-stats-table">
+                    <!-- School statistics will be loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- All Students Connection Details -->
+    <div class="bg-white border rounded-xl p-6 mb-8">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="font-semibold text-xl flex items-center gap-2">
+                <i class="fa-solid fa-users"></i> All Students Connection Details
+            </h2>
+            <div class="flex gap-2">
+                <button onclick="refreshData()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
+                    <i class="fa-solid fa-refresh mr-2"></i>Refresh
+                </button>
+                <button onclick="exportData()" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition duration-200">
+                    <i class="fa-solid fa-download mr-2"></i>Export
+                </button>
+            </div>
+        </div>
+        
+        <!-- Filter Section -->
+        <div class="mb-4 flex gap-4 flex-wrap">
+            <select id="connection-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Students</option>
+                <option value="connected">Connected Only</option>
+                <option value="not-connected">Not Connected Only</option>
+            </select>
+            <select id="school-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Schools</option>
+            </select>
+            <select id="grade-filter" class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <option value="all">All Grades</option>
+            </select>
+            <input type="text" id="search-filter" placeholder="Search student name..." 
+                   class="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto border-collapse border border-gray-300">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-4 py-3 text-left">Student Name</th>
+                        <th class="border px-4 py-3 text-center">School</th>
+                        <th class="border px-4 py-3 text-center">School Code</th>
+                        <th class="border px-4 py-3 text-center">Grade Level</th>
+                        <th class="border px-4 py-3 text-center">Section</th>
+                        <th class="border px-4 py-3 text-center">Parent Contact</th>
+                        <th class="border px-4 py-3 text-center">Telegram Status</th>
+                        <th class="border px-4 py-3 text-center">Chat ID</th>
+                        <th class="border px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="students-table">
+                    <!-- Student data will be dynamically loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Bot Configuration History -->
+    <div class="bg-white border rounded-xl p-6">
+        <h2 class="font-semibold text-xl mb-6 flex items-center gap-2">
+            <i class="fa-solid fa-history"></i> Global Bot Configuration History
+        </h2>
+        <div class="overflow-x-auto">
+            <table class="min-w-full table-auto border-collapse border border-gray-300">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="border px-4 py-3 text-center">Config ID</th>
+                        <th class="border px-4 py-3 text-center">Bot Token</th>
+                        <th class="border px-4 py-3 text-center">Bot Username</th>
+                        <th class="border px-4 py-3 text-center">Status</th>
+                        <th class="border px-4 py-3 text-center">Created At</th>
+                        <th class="border px-4 py-3 text-center">Updated At</th>
+                        <th class="border px-4 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="bot-table">
+                    <!-- Bot configurations will be dynamically loaded here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% block scripts %}
+<script>
+    let allStudents = [];
+    let allGrades = [];
+    let allSchools = [];
+
+    // Load dashboard data
+    async function loadDashboardData() {
+        await Promise.all([
+            loadTelegramConfig(),
+            loadStudentConnections(),
+            loadStatistics(),
+            loadSchoolStatistics()
+        ]);
+    }
+
+    // Load system-wide statistics
+    async function loadStatistics() {
+        try {
+            // Show loading state
+            document.getElementById('total-schools').textContent = '...';
+            document.getElementById('total-students').textContent = '...';
+            document.getElementById('connected-parents').textContent = '...';
+            document.getElementById('not-connected').textContent = '...';
+            document.getElementById('connection-rate').textContent = '...';
+            
+            const res = await fetch('/main_admin/telegram-stats');
+            const stats = await res.json();
+            
+            document.getElementById('total-schools').textContent = stats.total_schools || 0;
+            document.getElementById('total-students').textContent = stats.total_students || 0;
+            document.getElementById('connected-parents').textContent = stats.connected_parents || 0;
+            document.getElementById('not-connected').textContent = stats.not_connected || 0;
+            
+            const connectionRate = stats.total_students > 0 
+                ? Math.round((stats.connected_parents / stats.total_students) * 100) 
+                : 0;
+            document.getElementById('connection-rate').textContent = connectionRate + '%';
+            
+            // Update serving schools count
+            document.getElementById('serving-schools').textContent = `${stats.total_schools || 0} schools`;
+            
+        } catch (error) {
+            console.error('Error loading statistics:', error);
+        }
+    }
+
+    // Load school-wise statistics
+    async function loadSchoolStatistics() {
+        try {
+            const res = await fetch('/main_admin/school-telegram-stats');
+            const schoolStats = await res.json();
+            const tbody = document.getElementById('school-stats-table');
+            
+            tbody.innerHTML = '';
+            
+            if (schoolStats.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="border px-4 py-2 text-gray-500 text-center">No school data found</td></tr>';
+                return;
+            }
+            
+            schoolStats.forEach(school => {
+                const connectionRate = school.total_students > 0 
+                    ? Math.round((school.connected / school.total_students) * 100) 
+                    : 0;
+                
+                const progressBar = `
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-green-600 h-2 rounded-full" style="width: ${connectionRate}%"></div>
+                    </div>
+                `;
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50">
+                        <td class="border px-4 py-3 font-medium">${school.school_name}</td>
+                        <td class="border px-4 py-3 text-center"><code class="bg-gray-100 px-2 py-1 rounded">${school.school_code}</code></td>
+                        <td class="border px-4 py-3 text-center">${school.total_students}</td>
+                        <td class="border px-4 py-3 text-center text-green-600 font-semibold">${school.connected}</td>
+                        <td class="border px-4 py-3 text-center text-red-600">${school.not_connected}</td>
+                        <td class="border px-4 py-3 text-center">
+                            <div class="flex flex-col items-center gap-1">
+                                <span class="font-semibold">${connectionRate}%</span>
+                                ${progressBar}
+                            </div>
+                        </td>
+                        <td class="border px-4 py-3 text-center">
+                            <button onclick="viewSchoolDetails('${school.school_code}')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600">
+                                <i class="fa-solid fa-eye"></i> View
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+        } catch (error) {
+            console.error('Error loading school statistics:', error);
+        }
+    }
+
+    // Load student connections
+    async function loadStudentConnections() {
+        try {
+            const res = await fetch('/main_admin/all-student-connections');
+            const data = await res.json();
+            allStudents = data.students || [];
+            allGrades = [...new Set(allStudents.map(s => s.grade_level))];
+            allSchools = [...new Set(allStudents.map(s => ({name: s.school_name, code: s.school_code})))];
+            
+            populateFilterDropdowns();
+            displayStudents(allStudents);
+            loadSchoolCodes();
+            
+        } catch (error) {
+            console.error('Error loading student connections:', error);
+            document.getElementById('students-table').innerHTML = 
+                '<tr><td colspan="9" class="border px-4 py-2 text-red-500 text-center">Error loading student data</td></tr>';
+        }
+    }
+
+    // Load school codes for the info box
+    function loadSchoolCodes() {
+        const schoolCodesContainer = document.getElementById('school-codes-list');
+        schoolCodesContainer.innerHTML = '';
+        
+        allSchools.forEach(school => {
+            schoolCodesContainer.innerHTML += `<div><strong>${school.code}</strong> - ${school.name}</div>`;
+        });
+    }
+
+    // Populate filter dropdowns
+    function populateFilterDropdowns() {
+        const gradeFilter = document.getElementById('grade-filter');
+        const schoolFilter = document.getElementById('school-filter');
+        
+        // Populate grades
+        gradeFilter.innerHTML = '<option value="all">All Grades</option>';
+        allGrades.forEach(grade => {
+            gradeFilter.innerHTML += `<option value="${grade}">${grade}</option>`;
+        });
+        
+        // Populate schools
+        schoolFilter.innerHTML = '<option value="all">All Schools</option>';
+        allSchools.forEach(school => {
+            schoolFilter.innerHTML += `<option value="${school.code}">${school.name} (${school.code})</option>`;
+        });
+    }
+
+    // Display students in table
+    function displayStudents(students) {
+        const tbody = document.getElementById('students-table');
+        tbody.innerHTML = '';
+        
+        if (students.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="9" class="border px-4 py-2 text-gray-500 text-center">No students found</td></tr>';
+            return;
+        }
+        
+        students.forEach(student => {
+            const isConnected = student.telegram_status;
+            const statusBadge = isConnected 
+                ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i>Connected</span>'
+                : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-times mr-1"></i>Not Connected</span>';
+            
+            const chatId = student.telegram_chat_id || '<span class="text-gray-400">Not Available</span>';
+            
+            tbody.innerHTML += `
+                <tr class="hover:bg-gray-50">
+                    <td class="border px-4 py-3 font-medium">${student.first_name} ${student.last_name}</td>
+                    <td class="border px-4 py-3 text-center">${student.school_name || 'N/A'}</td>
+                    <td class="border px-4 py-3 text-center"><code class="bg-gray-100 px-2 py-1 rounded">${student.school_code || 'N/A'}</code></td>
+                    <td class="border px-4 py-3 text-center">${student.grade_level}</td>
+                    <td class="border px-4 py-3 text-center">${student.section_name || 'N/A'}</td>
+                    <td class="border px-4 py-3 text-center">${student.parent_contact || 'N/A'}</td>
+                    <td class="border px-4 py-3 text-center">${statusBadge}</td>
+                    <td class="border px-4 py-3 text-center text-sm font-mono">${chatId}</td>
+                    <td class="border px-4 py-3 text-center">
+                        <div class="flex justify-center gap-1">
+                            ${isConnected 
+                                ? '<button onclick="sendTestMessage(' + student.id + ')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Send Test Message"><i class="fa-solid fa-paper-plane"></i></button>'
+                                : `<button onclick="showRegistrationHelp('${student.school_code}', '${student.code}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Show Registration Help"><i class="fa-solid fa-info"></i></button>`
+                            }
+                            <button onclick="viewDetails(${student.id})" class="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600" title="View Details"><i class="fa-solid fa-eye"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    // Filter students
+    function filterStudents() {
+        const connectionFilter = document.getElementById('connection-filter').value;
+        const schoolFilter = document.getElementById('school-filter').value;
+        const gradeFilter = document.getElementById('grade-filter').value;
+        const searchFilter = document.getElementById('search-filter').value.toLowerCase();
+        
+        let filtered = allStudents;
+        
+        // Filter by connection status
+        if (connectionFilter === 'connected') {
+            filtered = filtered.filter(s => s.telegram_status);
+        } else if (connectionFilter === 'not-connected') {
+            filtered = filtered.filter(s => !s.telegram_status);
+        }
+        
+        // Filter by school
+        if (schoolFilter !== 'all') {
+            filtered = filtered.filter(s => s.school_code === schoolFilter);
+        }
+        
+        // Filter by grade
+        if (gradeFilter !== 'all') {
+            filtered = filtered.filter(s => s.grade_level === gradeFilter);
+        }
+        
+        // Filter by search (search in name, code, school name, school code)
+        if (searchFilter) {
+            filtered = filtered.filter(s => 
+                (s.first_name + ' ' + s.last_name).toLowerCase().includes(searchFilter) ||
+                s.code.toLowerCase().includes(searchFilter) ||
+                s.school_name.toLowerCase().includes(searchFilter) ||
+                s.school_code.toLowerCase().includes(searchFilter)
+            );
+        }
+        
+        displayStudents(filtered);
+    }
+
+    // Load telegram configurations
+    async function loadTelegramConfig() {
+        try {
+            const res = await fetch('/main_admin/telegram-config-api');
+            const data = await res.json();
+            const tbody = document.getElementById('bot-table');
+            tbody.innerHTML = '';
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="border px-4 py-2 text-gray-500 text-center">No telegram configuration found</td></tr>';
+                updateBotStatus(null);
+                return;
+            }
+            
+            const activeConfig = data.find(config => config.is_active) || data[0];
+            updateBotStatus(activeConfig);
+            
+            data.forEach(config => {
+                const createdAt = config.created_at ? new Date(config.created_at).toLocaleDateString() : 'N/A';
+                const updatedAt = config.updated_at ? new Date(config.updated_at).toLocaleDateString() : 'N/A';
+                const isActive = config.is_active;
+                const statusBadge = isActive 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i>Active</span>'
+                    : '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-pause mr-1"></i>Inactive</span>';
+                
+                tbody.innerHTML += `
+                    <tr class="hover:bg-gray-50 ${isActive ? 'bg-green-50 border-green-200' : ''}">
+                        <td class="border px-4 py-2 text-center font-semibold">${config.id}</td>
+                        <td class="border px-4 py-2 text-center">
+                            <code class="bg-gray-100 px-2 py-1 rounded text-xs">${config.bot_token.substring(0, 15)}...${config.bot_token.slice(-4)}</code>
+                        </td>
+                        <td class="border px-4 py-2 text-center">
+                            <a href="https://t.me/${config.bot_username}" target="_blank" class="text-blue-600 hover:underline font-semibold">@${config.bot_username}</a>
+                        </td>
+                        <td class="border px-4 py-2 text-center">${statusBadge}</td>
+                        <td class="border px-4 py-2 text-center text-sm">${createdAt}</td>
+                        <td class="border px-4 py-2 text-center text-sm">${updatedAt}</td>
+                        <td class="border px-4 py-2 text-center">
+                            <div class="flex justify-center gap-1 flex-wrap">
+                                ${!isActive ? `<button onclick="activateBot(${config.id})" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600 mb-1" title="Activate Bot"><i class="fa-solid fa-play mr-1"></i>Activate</button>` : `<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs font-semibold mb-1"><i class="fa-solid fa-crown mr-1"></i>Active</span>`}
+                                <button onclick="testBot(${config.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600 mb-1" title="Test Bot"><i class="fa-solid fa-vial mr-1"></i>Test</button>
+                                <button onclick="editConfig(${config.id})" class="bg-yellow-500 text-white px-2 py-1 rounded text-xs hover:bg-yellow-600 mb-1" title="Edit Config"><i class="fa-solid fa-edit mr-1"></i>Edit</button>
+                                <button onclick="deleteConfig(${config.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600 mb-1" title="Delete Config"><i class="fa-solid fa-trash mr-1"></i>Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        } catch (error) {
+            console.error('Error loading telegram config:', error);
+            document.getElementById('bot-table').innerHTML = '<tr><td colspan="7" class="border px-4 py-2 text-red-500 text-center">Error loading configurations</td></tr>';
+        }
+    }
+
+    // Update bot status display
+    function updateBotStatus(config) {
+        const statusIndicator = document.getElementById('bot-status-indicator');
+        const currentBotName = document.getElementById('current-bot-name');
+        const lastUpdated = document.getElementById('last-updated');
+        
+        if (config) {
+            statusIndicator.innerHTML = '<i class="fa-solid fa-circle text-green-500"></i> Active';
+            statusIndicator.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800';
+            currentBotName.textContent = '@' + config.bot_username;
+            lastUpdated.textContent = config.updated_at ? new Date(config.updated_at).toLocaleString() : 'Unknown';
+        } else {
+            statusIndicator.innerHTML = '<i class="fa-solid fa-circle text-red-500"></i> Inactive';
+            statusIndicator.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800';
+            currentBotName.textContent = 'Not configured';
+            lastUpdated.textContent = 'Never';
+        }
+    }
+
+    // Add/Update Telegram Configuration
+    document.getElementById('add-bot-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const bot_token = document.getElementById('bot_token').value.trim();
+        const bot_username = document.getElementById('bot_username').value.trim();
+        
+        if (!bot_token || !bot_username) {
+            alert('Please fill in both bot token and username');
+            return;
+        }
+        
+        try {
+            const response = await fetch('/main_admin/telegram-config-api', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    bot_token: bot_token,
+                    bot_username: bot_username
+                })
+            });
+            
+            if (response.ok) {
+                document.getElementById('bot_token').value = '';
+                document.getElementById('bot_username').value = '';
+                await loadDashboardData();
+                showSuccessMessage('✅ Global telegram configuration saved successfully!');
+            } else {
+                const error = await response.json();
+                showErrorMessage('❌ Error: ' + (error.message || 'Failed to save configuration'));
+            }
+        } catch (error) {
+            console.error('Error saving config:', error);
+            alert('Error saving configuration');
+        }
+    });
+
+    // Event listeners for filters
+    document.getElementById('connection-filter').addEventListener('change', filterStudents);
+    document.getElementById('school-filter').addEventListener('change', filterStudents);
+    document.getElementById('grade-filter').addEventListener('change', filterStudents);
+    document.getElementById('search-filter').addEventListener('input', filterStudents);
+
+    // Utility functions
+    function refreshData() {
+        loadDashboardData();
+    }
+
+    function refreshSchoolStats() {
+        loadSchoolStatistics();
+    }
+
+    function exportData() {
+        // Export student connections data as CSV
+        if (confirm('Export all student telegram connection data as CSV?')) {
+            window.open('/main_admin/export-connections', '_blank');
+        }
+    }
+
+    function editConfig(id) {
+        const row = document.querySelector(`#bot-table tr:has(td:first-child:contains('${id}'))`);
+        if (row) {
+            const username = row.children[2].textContent.replace('@', '');
+            document.getElementById('bot_username').value = username;
+            document.getElementById('bot_token').focus();
+            alert('Edit mode: Update the bot token and username, then click Save Configuration');
+        }
+    }
+
+    async function testBot(id) {
+        // Test bot functionality
+        try {
+            const response = await fetch(`/main_admin/test-bot/${id}`, {
+                method: 'POST'
+            });
+            
+            const result = await response.json();
+            
+            if (result.success) {
+                const botInfo = result.bot_info;
+                const message = `✅ Bot Test Successful!\n\n` +
+                              `Username: @${botInfo.username}\n` +
+                              `Name: ${botInfo.first_name}\n` +
+                              `Can Join Groups: ${botInfo.can_join_groups ? 'Yes' : 'No'}\n` +
+                              `Can Read Messages: ${botInfo.can_read_all_group_messages ? 'Yes' : 'No'}`;
+                alert(message);
+            } else {
+                alert('❌ Bot Test Failed: ' + result.message);
+            }
+        } catch (error) {
+            console.error('Error testing bot:', error);
+            alert('Error testing bot');
+        }
+    }
+
+    async function deleteConfig(id) {
+        if (confirm('Are you sure you want to delete this telegram configuration?')) {
+            try {
+                const response = await fetch(`/main_admin/telegram-config-api/${id}`, {
+                    method: 'DELETE'
+                });
+                
+                if (response.ok) {
+                    await loadDashboardData();
+                    showSuccessMessage('✅ Configuration deleted successfully!');
+                } else {
+                    const error = await response.json();
+                    showErrorMessage('❌ Error: ' + (error.message || 'Failed to delete configuration'));
+                }
+            } catch (error) {
+                console.error('Error deleting config:', error);
+                alert('Error deleting configuration');
+            }
+        }
+    }
+
+    async function sendTestMessage(studentId) {
+        // Send test message functionality
+        if (confirm('Send a test message to this student via Telegram?')) {
+            try {
+                const response = await fetch(`/main_admin/send-test-message/${studentId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    alert('✅ ' + result.message);
+                } else {
+                    alert('❌ ' + result.message);
+                }
+            } catch (error) {
+                console.error('Error sending test message:', error);
+                alert('Error sending test message');
+            }
+        }
+    }
+
+    function showRegistrationHelp(schoolCode, studentCode) {
+        // Show registration instructions for the specific student
+        const message = `To register for Telegram notifications, send this message to the bot:\n\n${schoolCode} ${studentCode}\n\nExample: Send "${schoolCode} ${studentCode}" to the bot chat.`;
+        alert(message);
+    }
+
+    function viewDetails(studentId) {
+        // Implement student details view
+        alert(`Viewing details for student ID: ${studentId}`);
+    }
+
+    function viewSchoolDetails(schoolCode) {
+        // Filter to show only students from the selected school
+        document.getElementById('school-filter').value = schoolCode;
+        filterStudents();
+        
+        // Scroll to the students table
+        document.getElementById('students-table').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function activateBot(configId) {
+        // Activate a specific bot configuration
+        if (confirm('Are you sure you want to activate this bot configuration? This will deactivate the current active bot.')) {
+            try {
+                const response = await fetch(`/main_admin/activate-bot/${configId}`, {
+                    method: 'POST'
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    alert(result.message);
+                    await loadDashboardData(); // Refresh data
+                } else {
+                    alert('Error: ' + (result.message || 'Failed to activate bot'));
+                }
+            } catch (error) {
+                console.error('Error activating bot:', error);
+                alert('Error activating bot');
+            }
+        }
+    }
+
+    // Notification functions
+    function showSuccessMessage(message) {
+        // Create and show success notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.innerHTML = `<i class="fa-solid fa-check-circle mr-2"></i>${message}`;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+        
+        // Remove after 4 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 4000);
+    }
+    
+    function showErrorMessage(message) {
+        // Create and show error notification
+        const notification = document.createElement('div');
+        notification.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300';
+        notification.innerHTML = `<i class="fa-solid fa-exclamation-triangle mr-2"></i>${message}`;
+        document.body.appendChild(notification);
+        
+        // Animate in
+        setTimeout(() => notification.classList.remove('translate-x-full'), 100);
+        
+        // Remove after 6 seconds
+        setTimeout(() => {
+            notification.classList.add('translate-x-full');
+            setTimeout(() => document.body.removeChild(notification), 300);
+        }, 6000);
+    }
+
+    // Load all data on page load
+    loadDashboardData();
+    
+    // Check auto-setup status on page load
+    checkAutoSetupStatus();
+    
+    // Auto-refresh auto-setup status every 30 seconds
+    setInterval(checkAutoSetupStatus, 30000);
+    
+    // Auto-refresh statistics every 60 seconds
+    setInterval(loadStatistics, 60000);
+    
+    // Check auto-setup status
+    async function checkAutoSetupStatus() {
+        try {
+            const response = await fetch('/main_admin/auto-setup-status');
+            const data = await response.json();
+            
+            const statusElement = document.getElementById('auto-setup-status');
+            const urlElement = document.getElementById('public-url');
+            
+            if (data.setup_complete) {
+                statusElement.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i>Global Bot System Active';
+                urlElement.textContent = `Public URL: ${data.public_url}`;
+            } else if (data.public_url) {
+                statusElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Setting up global bot...';
+                urlElement.textContent = `Public URL: ${data.public_url}`;
+            } else {
+                statusElement.innerHTML = '<i class="fa-solid fa-clock mr-2"></i>Starting global bot system...';
+                urlElement.textContent = 'Public URL: Initializing...';
+            }
+            
+        } catch (error) {
+            console.error('Error checking auto-setup status:', error);
+            document.getElementById('auto-setup-status').innerHTML = '<i class="fa-solid fa-exclamation-triangle mr-2"></i>Global bot system not available';
+            document.getElementById('public-url').textContent = 'Public URL: Not available';
+        }
+    }
+</script>
+{% endblock %}
+{% endblock %}

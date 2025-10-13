@@ -6,6 +6,7 @@ class School(db.Model):
     __tablename__ = 'schools'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False)
+    school_code = db.Column(db.String(20), unique=True, nullable=False)  # Added school code
     address = db.Column(db.String(255))
     contact = db.Column(db.String(50))
 
@@ -142,21 +143,18 @@ class TelegramConfig(db.Model):
     __tablename__ = 'telegram_config'
 
     id = db.Column(db.Integer, primary_key=True)
-    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
     bot_token = db.Column(db.String(255), nullable=False)
     bot_username = db.Column(db.String(100), nullable=False)
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     updated_at = db.Column(db.DateTime, onupdate=datetime.datetime.utcnow)
-
-    # Relationship with school
-    school = db.relationship('School', backref=db.backref('telegram_config', uselist=False))
 
     def to_dict(self):
         return {
             "id": self.id,
-            "school_id": self.school_id,
             "bot_token": self.bot_token,
             "bot_username": self.bot_username,
+            "is_active": self.is_active,
             "created_at": self.created_at,
             "updated_at": self.updated_at
         }

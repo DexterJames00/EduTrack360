@@ -1,38 +1,43 @@
 {% extends 'school_admin/school_admin_base.html' %}
-{% block title %}Telegram Bot Dashboard | School Admin{% endblock %}
+{% block title %}Telegram Notifications | School Admin{% endblock %}
 
 {% block content %}
 <div class="bg-white rounded-xl shadow-lg p-10 mt-6">
     <h1 class="text-3xl font-extrabold text-blue-800 mb-4 flex items-center gap-2">
-        <i class="fa-solid fa-robot"></i> Telegram Bot Dashboard
+        <i class="fa-solid fa-paper-plane"></i> Telegram Notifications
     </h1>
-    <p class="text-gray-600 mb-8 text-lg">Manage your school's Telegram bot and monitor parent connections in real-time.</p>
+    <p class="text-gray-600 mb-8 text-lg">View and manage Telegram notifications for your school students.</p>
     
-    <!-- Auto-Setup Status -->
-    <div class="bg-gradient-to-r from-green-400 to-blue-500 text-white p-6 rounded-xl shadow-lg mb-6">
+    <!-- School Bot Status -->
+    <div class="bg-gradient-to-r from-blue-500 to-indigo-600 text-white p-6 rounded-xl shadow-lg mb-6">
         <div class="flex items-center justify-between">
             <div>
                 <h3 class="text-lg font-semibold flex items-center gap-2">
-                    <i class="fa-solid fa-magic"></i> Auto-Setup Status
+                    <i class="fa-solid fa-school"></i> Your School's Bot Status
                 </h3>
                 <p id="auto-setup-status" class="text-xl font-bold">Checking...</p>
-                <p id="public-url" class="text-sm opacity-90">Public URL: Loading...</p>
+                <p id="bot-system-status" class="text-sm opacity-90">Bot System: Loading...</p>
+                <p class="text-sm opacity-90 mt-1">
+                    <i class="fa-solid fa-info-circle mr-1"></i>
+                    Connected to global bot system with school code: <span id="school-code-display" class="font-bold">{{ session.school_code or 'Loading...' }}</span>
+                </p>
             </div>
             <div class="text-right">
                 <button onclick="checkAutoSetupStatus()" class="bg-white bg-opacity-20 text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition duration-200">
-                    <i class="fa-solid fa-refresh mr-2"></i>Refresh
+                    <i class="fa-solid fa-refresh mr-2"></i>Refresh Status
                 </button>
             </div>
         </div>
     </div>
     
-    <!-- Statistics Cards -->
+    <!-- Your School Statistics -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white p-6 rounded-xl shadow-lg">
             <div class="flex items-center justify-between">
                 <div>
                     <h3 class="text-lg font-semibold">Total Students</h3>
                     <p class="text-3xl font-bold" id="total-students">0</p>
+                    <p class="text-sm opacity-80">In your school</p>
                 </div>
                 <i class="fa-solid fa-graduation-cap text-4xl opacity-70"></i>
             </div>
@@ -43,6 +48,7 @@
                 <div>
                     <h3 class="text-lg font-semibold">Connected Parents</h3>
                     <p class="text-3xl font-bold" id="connected-parents">0</p>
+                    <p class="text-sm opacity-80">Using Telegram</p>
                 </div>
                 <i class="fa-solid fa-link text-4xl opacity-70"></i>
             </div>
@@ -53,6 +59,7 @@
                 <div>
                     <h3 class="text-lg font-semibold">Not Connected</h3>
                     <p class="text-3xl font-bold" id="not-connected">0</p>
+                    <p class="text-sm opacity-80">Need registration</p>
                 </div>
                 <i class="fa-solid fa-unlink text-4xl opacity-70"></i>
             </div>
@@ -63,65 +70,47 @@
                 <div>
                     <h3 class="text-lg font-semibold">Connection Rate</h3>
                     <p class="text-3xl font-bold" id="connection-rate">0%</p>
+                    <p class="text-sm opacity-80">School progress</p>
                 </div>
                 <i class="fa-solid fa-chart-pie text-4xl opacity-70"></i>
             </div>
         </div>
     </div>
 
-    <!-- Bot Configuration Section -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
-        <!-- Configure Bot -->
-        <div class="bg-blue-50 p-6 rounded-xl">
-            <h2 class="font-semibold text-xl mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-cog"></i> Bot Configuration
-            </h2>
-            <form id="add-bot-form" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Bot Token</label>
-                    <input type="text" id="bot_token" placeholder="Enter Bot Token (e.g., 123456:ABC-DEF1234...)" 
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Bot Username</label>
-                    <input type="text" id="bot_username" placeholder="Enter Bot Username (without @)" 
-                           class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
-                </div>
-                <button type="submit" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 font-semibold">
-                    <i class="fa-solid fa-save mr-2"></i>Save Configuration
-                </button>
-            </form>
+    <!-- Registration Instructions -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 mb-8">
+        <h2 class="font-semibold text-xl mb-4 flex items-center gap-2 text-yellow-800">
+            <i class="fa-solid fa-lightbulb"></i> How Parents Register for Notifications
+        </h2>
+        <div class="bg-yellow-100 p-4 rounded-lg mb-4">
+            <h4 class="font-semibold text-yellow-800 mb-2">
+                <i class="fa-solid fa-info-circle mr-2"></i>Registration Format
+            </h4>
+            <p class="text-sm text-yellow-700 mb-2">
+                Parents need to send this message to the bot: 
+                <code class="bg-white px-2 py-1 rounded font-mono">{{ session.school_code or 'SCHOOLCODE' }} STUDENTCODE</code>
+            </p>
+            <p class="text-sm text-yellow-700">
+                Example: <code class="bg-white px-2 py-1 rounded font-mono">{{ session.school_code or 'ACLCCOLLEG' }} ABC123</code>
+            </p>
         </div>
-        
-        <!-- Bot Status -->
-        <div class="bg-gray-50 p-6 rounded-xl">
-            <h2 class="font-semibold text-xl mb-4 flex items-center gap-2">
-                <i class="fa-solid fa-robot"></i> Bot Status
-            </h2>
-            <div id="bot-status" class="space-y-3">
-                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <span class="font-medium">Bot Status:</span>
-                    <span id="bot-status-indicator" class="px-3 py-1 rounded-full text-sm font-semibold">
-                        <i class="fa-solid fa-circle-question"></i> Unknown
-                    </span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <span class="font-medium">Current Bot:</span>
-                    <span id="current-bot-name" class="text-gray-600">Not configured</span>
-                </div>
-                <div class="flex items-center justify-between p-3 bg-white rounded-lg border">
-                    <span class="font-medium">Last Updated:</span>
-                    <span id="last-updated" class="text-gray-600">Never</span>
-                </div>
-            </div>
+        <div class="text-sm text-yellow-700">
+            <p><strong>Instructions for parents:</strong></p>
+            <ol class="list-decimal ml-5 mt-2 space-y-1">
+                <li>Find the school's official Telegram bot</li>
+                <li>Start a chat with the bot</li>
+                <li>Send the message: <strong>{{ session.school_code or 'SCHOOLCODE' }} [Student's Code]</strong></li>
+                <li>Wait for confirmation message</li>
+                <li>They will receive attendance notifications automatically</li>
+            </ol>
         </div>
     </div>
 
-    <!-- Parent Connection Details -->
+    <!-- Your Students Connection Status -->
     <div class="bg-white border rounded-xl p-6 mb-8">
         <div class="flex items-center justify-between mb-6">
             <h2 class="font-semibold text-xl flex items-center gap-2">
-                <i class="fa-solid fa-users"></i> Parent Connection Details
+                <i class="fa-solid fa-users"></i> Your Students' Connection Status
             </h2>
             <div class="flex gap-2">
                 <button onclick="refreshData()" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition duration-200">
@@ -152,40 +141,17 @@
                 <thead class="bg-gray-100">
                     <tr>
                         <th class="border px-4 py-3 text-left">Student Name</th>
+                        <th class="border px-4 py-3 text-center">Student Code</th>
                         <th class="border px-4 py-3 text-center">Grade Level</th>
                         <th class="border px-4 py-3 text-center">Section</th>
                         <th class="border px-4 py-3 text-center">Parent Contact</th>
                         <th class="border px-4 py-3 text-center">Telegram Status</th>
-                        <th class="border px-4 py-3 text-center">Chat ID</th>
+                        <th class="border px-4 py-3 text-center">Registration Code</th>
                         <th class="border px-4 py-3 text-center">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="students-table">
                     <!-- Student data will be dynamically loaded here -->
-                </tbody>
-            </table>
-        </div>
-    </div>
-
-    <!-- Bot Configuration History -->
-    <div class="bg-white border rounded-xl p-6">
-        <h2 class="font-semibold text-xl mb-6 flex items-center gap-2">
-            <i class="fa-solid fa-history"></i> Configuration History
-        </h2>
-        <div class="overflow-x-auto">
-            <table class="min-w-full table-auto border-collapse border border-gray-300">
-                <thead class="bg-gray-100">
-                    <tr>
-                        <th class="border px-4 py-3 text-center">Config ID</th>
-                        <th class="border px-4 py-3 text-center">Bot Token</th>
-                        <th class="border px-4 py-3 text-center">Bot Username</th>
-                        <th class="border px-4 py-3 text-center">Created At</th>
-                        <th class="border px-4 py-3 text-center">Updated At</th>
-                        <th class="border px-4 py-3 text-center">Actions</th>
-                    </tr>
-                </thead>
-                <tbody id="bot-table">
-                    <!-- Bot configurations will be dynamically loaded here -->
                 </tbody>
             </table>
         </div>
@@ -196,17 +162,17 @@
 <script>
     let allStudents = [];
     let allGrades = [];
+    let schoolCode = '{{ session.school_code or "" }}';
 
     // Load dashboard data
     async function loadDashboardData() {
         await Promise.all([
-            loadTelegramConfig(),
             loadStudentConnections(),
             loadStatistics()
         ]);
     }
 
-    // Load statistics
+    // Load school statistics
     async function loadStatistics() {
         try {
             const res = await fetch('/school_admin/telegram-stats');
@@ -226,7 +192,7 @@
         }
     }
 
-    // Load student connections
+    // Load student connections for this school only
     async function loadStudentConnections() {
         try {
             const res = await fetch('/school_admin/student-connections');
@@ -234,21 +200,22 @@
             allStudents = data.students || [];
             allGrades = [...new Set(allStudents.map(s => s.grade_level))];
             
-            populateGradeFilter();
+            populateFilterDropdowns();
             displayStudents(allStudents);
             
         } catch (error) {
             console.error('Error loading student connections:', error);
             document.getElementById('students-table').innerHTML = 
-                '<tr><td colspan="7" class="border px-4 py-2 text-red-500 text-center">Error loading student data</td></tr>';
+                '<tr><td colspan="8" class="border px-4 py-2 text-red-500 text-center">Error loading student data</td></tr>';
         }
     }
 
-    // Populate grade filter dropdown
-    function populateGradeFilter() {
+    // Populate filter dropdowns
+    function populateFilterDropdowns() {
         const gradeFilter = document.getElementById('grade-filter');
-        gradeFilter.innerHTML = '<option value="all">All Grades</option>';
         
+        // Populate grades
+        gradeFilter.innerHTML = '<option value="all">All Grades</option>';
         allGrades.forEach(grade => {
             gradeFilter.innerHTML += `<option value="${grade}">${grade}</option>`;
         });
@@ -260,7 +227,7 @@
         tbody.innerHTML = '';
         
         if (students.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="7" class="border px-4 py-2 text-gray-500 text-center">No students found</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="8" class="border px-4 py-2 text-gray-500 text-center">No students found</td></tr>';
             return;
         }
         
@@ -270,23 +237,26 @@
                 ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-check mr-1"></i>Connected</span>'
                 : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-semibold"><i class="fa-solid fa-times mr-1"></i>Not Connected</span>';
             
-            const chatId = student.telegram_chat_id || '<span class="text-gray-400">Not Available</span>';
+            const registrationCode = `${schoolCode} ${student.code}`;
             
             tbody.innerHTML += `
                 <tr class="hover:bg-gray-50">
                     <td class="border px-4 py-3 font-medium">${student.first_name} ${student.last_name}</td>
+                    <td class="border px-4 py-3 text-center"><code class="bg-gray-100 px-2 py-1 rounded">${student.code}</code></td>
                     <td class="border px-4 py-3 text-center">${student.grade_level}</td>
                     <td class="border px-4 py-3 text-center">${student.section_name || 'N/A'}</td>
                     <td class="border px-4 py-3 text-center">${student.parent_contact || 'N/A'}</td>
                     <td class="border px-4 py-3 text-center">${statusBadge}</td>
-                    <td class="border px-4 py-3 text-center text-sm font-mono">${chatId}</td>
+                    <td class="border px-4 py-3 text-center">
+                        <code class="bg-blue-50 text-blue-800 px-2 py-1 rounded font-mono text-sm">${registrationCode}</code>
+                    </td>
                     <td class="border px-4 py-3 text-center">
                         <div class="flex justify-center gap-1">
                             ${isConnected 
-                                ? '<button onclick="sendTestMessage(' + student.id + ')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"><i class="fa-solid fa-paper-plane"></i></button>'
-                                : '<button onclick="generateInvite(' + student.id + ')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600"><i class="fa-solid fa-link"></i></button>'
+                                ? '<button onclick="sendTestMessage(' + student.id + ')" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600" title="Send Test Message"><i class="fa-solid fa-paper-plane"></i></button>'
+                                : `<button onclick="showRegistrationHelp('${registrationCode}')" class="bg-green-500 text-white px-2 py-1 rounded text-xs hover:bg-green-600" title="Show Registration Help"><i class="fa-solid fa-info"></i></button>`
                             }
-                            <button onclick="viewDetails(${student.id})" class="bg-gray-500 text-white px-2 py-1 rounded text-xs hover:bg-gray-600"><i class="fa-solid fa-eye"></i></button>
+                            <button onclick="copyRegistrationCode('${registrationCode}')" class="bg-purple-500 text-white px-2 py-1 rounded text-xs hover:bg-purple-600" title="Copy Registration Code"><i class="fa-solid fa-copy"></i></button>
                         </div>
                     </td>
                 </tr>
@@ -324,105 +294,6 @@
         displayStudents(filtered);
     }
 
-    // Load telegram configurations
-    async function loadTelegramConfig() {
-        try {
-            const res = await fetch('/school_admin/telegram-config-api');
-            const data = await res.json();
-            const tbody = document.getElementById('bot-table');
-            tbody.innerHTML = '';
-            
-            if (data.length === 0) {
-                tbody.innerHTML = '<tr><td colspan="6" class="border px-4 py-2 text-gray-500 text-center">No telegram configuration found</td></tr>';
-                updateBotStatus(null);
-                return;
-            }
-            
-            const latestConfig = data[0]; // Assuming the first one is the latest
-            updateBotStatus(latestConfig);
-            
-            data.forEach(config => {
-                const createdAt = config.created_at ? new Date(config.created_at).toLocaleDateString() : 'N/A';
-                const updatedAt = config.updated_at ? new Date(config.updated_at).toLocaleDateString() : 'N/A';
-                
-                tbody.innerHTML += `
-                    <tr class="hover:bg-gray-50">
-                        <td class="border px-4 py-2 text-center">${config.id}</td>
-                        <td class="border px-4 py-2 text-center font-mono text-sm">${config.bot_token.substring(0, 20)}...</td>
-                        <td class="border px-4 py-2 text-center">@${config.bot_username}</td>
-                        <td class="border px-4 py-2 text-center">${createdAt}</td>
-                        <td class="border px-4 py-2 text-center">${updatedAt}</td>
-                        <td class="border px-4 py-2 text-center">
-                            <div class="flex justify-center gap-1">
-                                <button onclick="editConfig(${config.id})" class="bg-yellow-400 text-black px-2 py-1 rounded text-xs hover:bg-yellow-500"><i class="fa-solid fa-edit"></i></button>
-                                <button onclick="testBot(${config.id})" class="bg-blue-500 text-white px-2 py-1 rounded text-xs hover:bg-blue-600"><i class="fa-solid fa-vial"></i></button>
-                                <button onclick="deleteConfig(${config.id})" class="bg-red-500 text-white px-2 py-1 rounded text-xs hover:bg-red-600"><i class="fa-solid fa-trash"></i></button>
-                            </div>
-                        </td>
-                    </tr>
-                `;
-            });
-        } catch (error) {
-            console.error('Error loading telegram config:', error);
-            document.getElementById('bot-table').innerHTML = '<tr><td colspan="6" class="border px-4 py-2 text-red-500 text-center">Error loading configurations</td></tr>';
-        }
-    }
-
-    // Update bot status display
-    function updateBotStatus(config) {
-        const statusIndicator = document.getElementById('bot-status-indicator');
-        const currentBotName = document.getElementById('current-bot-name');
-        const lastUpdated = document.getElementById('last-updated');
-        
-        if (config) {
-            statusIndicator.innerHTML = '<i class="fa-solid fa-circle text-green-500"></i> Active';
-            statusIndicator.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800';
-            currentBotName.textContent = '@' + config.bot_username;
-            lastUpdated.textContent = config.updated_at ? new Date(config.updated_at).toLocaleString() : 'Unknown';
-        } else {
-            statusIndicator.innerHTML = '<i class="fa-solid fa-circle text-red-500"></i> Inactive';
-            statusIndicator.className = 'px-3 py-1 rounded-full text-sm font-semibold bg-red-100 text-red-800';
-            currentBotName.textContent = 'Not configured';
-            lastUpdated.textContent = 'Never';
-        }
-    }
-
-    // Add/Update Telegram Configuration
-    document.getElementById('add-bot-form').addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const bot_token = document.getElementById('bot_token').value.trim();
-        const bot_username = document.getElementById('bot_username').value.trim();
-        
-        if (!bot_token || !bot_username) {
-            alert('Please fill in both bot token and username');
-            return;
-        }
-        
-        try {
-            const response = await fetch('/school_admin/telegram-config-api', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({
-                    bot_token: bot_token,
-                    bot_username: bot_username
-                })
-            });
-            
-            if (response.ok) {
-                document.getElementById('bot_token').value = '';
-                document.getElementById('bot_username').value = '';
-                await loadDashboardData();
-                alert('Telegram configuration saved successfully!');
-            } else {
-                const error = await response.json();
-                alert('Error: ' + (error.message || 'Failed to save configuration'));
-            }
-        } catch (error) {
-            console.error('Error saving config:', error);
-            alert('Error saving configuration');
-        }
-    });
-
     // Event listeners for filters
     document.getElementById('connection-filter').addEventListener('change', filterStudents);
     document.getElementById('grade-filter').addEventListener('change', filterStudents);
@@ -438,54 +309,30 @@
         alert('Export functionality coming soon!');
     }
 
-    function editConfig(id) {
-        const row = document.querySelector(`#bot-table tr:has(td:first-child:contains('${id}'))`);
-        if (row) {
-            const username = row.children[2].textContent.replace('@', '');
-            document.getElementById('bot_username').value = username;
-            document.getElementById('bot_token').focus();
-            alert('Edit mode: Update the bot token and username, then click Save Configuration');
-        }
-    }
-
-    function testBot(id) {
-        // Implement bot testing functionality
-        alert('Testing bot functionality...');
-    }
-
-    async function deleteConfig(id) {
-        if (confirm('Are you sure you want to delete this telegram configuration?')) {
-            try {
-                const response = await fetch(`/school_admin/telegram-config-api/${id}`, {
-                    method: 'DELETE'
-                });
-                
-                if (response.ok) {
-                    await loadDashboardData();
-                    alert('Configuration deleted successfully!');
-                } else {
-                    alert('Error deleting configuration');
-                }
-            } catch (error) {
-                console.error('Error deleting config:', error);
-                alert('Error deleting configuration');
-            }
-        }
-    }
-
     function sendTestMessage(studentId) {
         // Implement test message functionality
         alert(`Sending test message to student ID: ${studentId}`);
     }
 
-    function generateInvite(studentId) {
-        // Implement invite generation
-        alert(`Generating invite link for student ID: ${studentId}`);
+    function showRegistrationHelp(registrationCode) {
+        // Show registration instructions for the specific student
+        const message = `To register for Telegram notifications, send this exact message to the school's bot:\n\n${registrationCode}\n\nMake sure to type it exactly as shown (including the space).`;
+        alert(message);
     }
 
-    function viewDetails(studentId) {
-        // Implement student details view
-        alert(`Viewing details for student ID: ${studentId}`);
+    function copyRegistrationCode(code) {
+        navigator.clipboard.writeText(code).then(() => {
+            alert('Registration code copied to clipboard!');
+        }).catch(() => {
+            // Fallback for older browsers
+            const textArea = document.createElement('textarea');
+            textArea.value = code;
+            document.body.appendChild(textArea);
+            textArea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textArea);
+            alert('Registration code copied to clipboard!');
+        });
     }
 
     // Load all data on page load
@@ -494,8 +341,8 @@
     // Check auto-setup status on page load
     checkAutoSetupStatus();
     
-    // Auto-refresh auto-setup status every 10 seconds
-    setInterval(checkAutoSetupStatus, 10000);
+    // Auto-refresh auto-setup status every 30 seconds
+    setInterval(checkAutoSetupStatus, 30000);
     
     // Check auto-setup status
     async function checkAutoSetupStatus() {
@@ -504,23 +351,20 @@
             const data = await response.json();
             
             const statusElement = document.getElementById('auto-setup-status');
-            const urlElement = document.getElementById('public-url');
+            const botSystemElement = document.getElementById('bot-system-status');
             
             if (data.setup_complete) {
-                statusElement.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i>Auto-Setup Complete';
-                urlElement.textContent = `Public URL: ${data.public_url}`;
-            } else if (data.public_url) {
-                statusElement.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i>Setting up webhooks...';
-                urlElement.textContent = `Public URL: ${data.public_url}`;
+                statusElement.innerHTML = '<i class="fa-solid fa-check-circle mr-2"></i>Bot Connected';
+                botSystemElement.textContent = 'Bot System: Active and Ready';
             } else {
-                statusElement.innerHTML = '<i class="fa-solid fa-clock mr-2"></i>Starting auto-setup...';
-                urlElement.textContent = 'Public URL: Initializing...';
+                statusElement.innerHTML = '<i class="fa-solid fa-exclamation-triangle mr-2"></i>Bot Not Ready';
+                botSystemElement.textContent = 'Bot System: Setting up...';
             }
             
         } catch (error) {
             console.error('Error checking auto-setup status:', error);
-            document.getElementById('auto-setup-status').innerHTML = '<i class="fa-solid fa-exclamation-triangle mr-2"></i>Auto-setup not available';
-            document.getElementById('public-url').textContent = 'Public URL: Not available';
+            document.getElementById('auto-setup-status').innerHTML = '<i class="fa-solid fa-exclamation-triangle mr-2"></i>Bot system not available';
+            document.getElementById('bot-system-status').textContent = 'Bot System: Not available';
         }
     }
 </script>

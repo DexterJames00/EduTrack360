@@ -64,12 +64,15 @@ def process_telegram_update(update):
 def handle_start_command(chat_id, text):
     """Handle /start command"""
     try:
-        # Send welcome message
+        # Send welcome message with school codes
         welcome_message = (
             "🎓 Welcome to the School Attendance Bot!\n\n"
             "To register for attendance notifications:\n"
-            "📝 Send: SCHOOLNAME STUDENTCODE\n\n"
-            "Example: SAMPLESCHOOL ABC123\n\n"
+            "📝 Send: SCHOOLCODE STUDENTCODE\n\n"
+            "Available school codes:\n"
+            "• ACLCCOLLEG - Aclc College of Butuan\n"
+            "• MAGAUDNATI - Magaud National High School\n\n"
+            "Example: ACLCCOLLEG ABC123\n\n"
             "❓ Need help? Contact your school administrator."
         )
         
@@ -84,27 +87,42 @@ def handle_start_command(chat_id, text):
         return {'status': 'error', 'message': str(e)}
 
 def handle_student_registration(chat_id, text):
-    """Handle student registration with school name and code"""
+    """Handle student registration with school code and student code"""
     try:
         parts = text.split()
         
-        # The last part should be the student code
-        student_code = parts[-1].upper()
+        if len(parts) != 2:
+            message = (
+                "❌ Invalid format!\n\n"
+                "Please send: SCHOOLCODE STUDENTCODE\n\n"
+                "Available school codes:\n"
+                "• ACLCCOLLEG - Aclc College of Butuan\n"
+                "• MAGAUDNATI - Magaud National High School\n\n"
+                "Example: ACLCCOLLEG ABC123"
+            )
+            send_telegram_message(chat_id, message)
+            return {'status': 'error', 'message': 'Invalid format'}
         
-        # Everything except the last part is the school name
-        school_name = ' '.join(parts[:-1])
+        school_code = parts[0].upper()
+        student_code = parts[1].upper()
         
-        print(f"🔍 Looking for school: '{school_name}', student code: '{student_code}'")
+        print(f"🔍 Looking for school code: '{school_code}', student code: '{student_code}'")
         
-        # Find school by name (case insensitive partial match)
-        school = School.query.filter(School.name.ilike(f"%{school_name}%")).first()
+        # Find school by code
+        school = School.query.filter_by(school_code=school_code).first()
         
         if not school:
-            message = f"❌ School '{school_name}' not found.\n\nPlease check the school name and try again."
+            message = (
+                f"❌ School code '{school_code}' not found.\n\n"
+                "Available school codes:\n"
+                "• ACLCCOLLEG - Aclc College of Butuan\n"
+                "• MAGAUDNATI - Magaud National High School\n\n"
+                "Please check the school code and try again."
+            )
             send_telegram_message(chat_id, message)
-            return {'status': 'error', 'message': f'School not found: {school_name}'}
+            return {'status': 'error', 'message': f'School not found: {school_code}'}
         
-        print(f"✅ Found school: {school.name} (ID: {school.id})")
+        print(f"✅ Found school: {school.name} (Code: {school_code})")
         
         # Find student by code in that school
         student = Student.query.filter_by(school_id=school.id, code=student_code).first()
@@ -128,7 +146,7 @@ def handle_student_registration(chat_id, text):
         db.session.commit()
         
         # Send success message
-        success_message = f"✅ Student {student.first_name} {student.last_name} is updated!"
+        success_message = f"✅ Registration successful!\n\n👤 Student: {student.first_name} {student.last_name}\n🏫 School: {school.name}\n📚 You'll receive attendance notifications here."
         
         send_telegram_message(chat_id, success_message)
         
@@ -172,12 +190,11 @@ def handle_general_message(chat_id, text):
 def send_telegram_message(chat_id, message):
     """Send a message to a Telegram chat"""
     try:
-        # Get bot token from any active configuration
-        # In a real scenario, you might want to determine which bot to use
-        config = TelegramConfig.query.first()
+        # Get active bot configuration
+        config = TelegramConfig.query.filter_by(is_active=True).first()
         
         if not config:
-            print("❌ No bot configuration found")
+            print("❌ No active bot configuration found")
             return False
         
         import requests
@@ -257,8 +274,8 @@ def get_telegram_config():
         if not school_id:
             return jsonify({'error': 'School not found'}), 400
         
-        configs = TelegramConfig.query.filter_by(school_id=school_id)\
-                                    .order_by(TelegramConfig.created_at.desc()).all()
+        # Get all telegram configs (global bot system)
+        configs = TelegramConfig.query.order_by(TelegramConfig.created_at.desc()).all()
         
         config_list = []
         for config in configs:
@@ -306,15 +323,15 @@ def create_or_update_telegram_config():
         if not bot_token or not bot_username:
             return jsonify({'error': 'Bot token and username are required'}), 400
         
-        # Check if configuration already exists for this school
-        existing_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Check if configuration already exists (global bot system)
+        existing_config = TelegramConfig.query.filter_by(bot_token=bot_token).first()
         print(f"DEBUG: Existing config found: {existing_config is not None}")
         
         if existing_config:
             # Update existing configuration
             print("DEBUG: Updating existing configuration...")
-            existing_config.bot_token = bot_token
             existing_config.bot_username = bot_username
+            existing_config.is_active = True
             existing_config.updated_at = datetime.datetime.utcnow()
         else:
             # Create new configuration
@@ -489,10 +506,10 @@ def generate_invite(student_id):
         if not student:
             return jsonify({'error': 'Student not found'}), 404
         
-        # Get bot configuration
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Get global bot configuration (active bot)
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            return jsonify({'error': 'Telegram bot not configured'}), 400
+            return jsonify({'error': 'No active telegram bot configuration found'}), 400
         
         # Generate a unique code for the student if not exists
         if not student.code:

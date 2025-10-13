@@ -66,10 +66,10 @@ def process_telegram_update(update_data, school_id):
         first_name = message['from'].get('first_name', '')
         username = message['from'].get('username', '')
         
-        # Get bot configuration
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Get global bot configuration (active bot)
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            return {'status': 'error', 'message': 'Bot not configured for this school'}
+            return {'status': 'error', 'message': 'No active bot configuration found'}
         
         bot = TelegramBot(bot_config.bot_token, school_id)
         
@@ -246,8 +246,8 @@ def send_attendance_notification(student_id, message, notification_type='info'):
         if not student or not student.telegram_status or not student.telegram_chat_id:
             return False
         
-        # Get bot configuration
-        bot_config = TelegramConfig.query.filter_by(school_id=student.school_id).first()
+        # Get global bot configuration (active bot)
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
             return False
         
@@ -303,10 +303,10 @@ def broadcast_message_to_school(school_id, message, grade_level=None, section_id
         if not students:
             return {'status': 'error', 'message': 'No connected students found'}
         
-        # Get bot configuration
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Get global bot configuration (active bot)
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            return {'status': 'error', 'message': 'Bot not configured'}
+            return {'status': 'error', 'message': 'No active bot configuration found'}
         
         bot = TelegramBot(bot_config.bot_token, school_id)
         
@@ -347,9 +347,9 @@ def broadcast_message_to_school(school_id, message, grade_level=None, section_id
 def setup_webhook_for_school(school_id, webhook_url):
     """Setup webhook for a school's bot"""
     try:
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            return {'status': 'error', 'message': 'Bot not configured'}
+            return {'status': 'error', 'message': 'No active bot configuration found'}
         
         bot = TelegramBot(bot_config.bot_token, school_id)
         result = bot.set_webhook(webhook_url)
@@ -365,9 +365,9 @@ def setup_webhook_for_school(school_id, webhook_url):
 def test_bot_connection(school_id):
     """Test if bot is properly configured and responsive"""
     try:
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            return {'status': 'error', 'message': 'Bot not configured'}
+            return {'status': 'error', 'message': 'No active bot configuration found'}
         
         bot = TelegramBot(bot_config.bot_token, school_id)
         bot_info = bot.get_bot_info()
@@ -393,10 +393,10 @@ def send_attendance_notification(student_id, subject_name, date, status, start_t
             print(f"Student {student_id} not found or no telegram_chat_id")
             return False
         
-        # Get bot configuration
-        bot_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Get global bot configuration (active bot)
+        bot_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not bot_config:
-            print(f"No bot configuration found for school {school_id}")
+            print(f"No active bot configuration found")
             return False
         
         bot = TelegramBot(bot_config.bot_token, school_id)

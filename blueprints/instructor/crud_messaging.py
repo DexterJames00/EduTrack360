@@ -38,10 +38,10 @@ def send_message():
                 'no_telegram': True
             }), 400
         
-        # Get bot configuration for the school
-        telegram_config = TelegramConfig.query.filter_by(school_id=school_id).first()
+        # Get global bot configuration (active bot)
+        telegram_config = TelegramConfig.query.filter_by(is_active=True).first()
         if not telegram_config:
-            return jsonify({'error': 'Telegram bot not configured for this school'}), 400
+            return jsonify({'error': 'No active telegram bot configuration found'}), 400
         
         # Format message with student, instructor, and subject details
         instructor_name = session.get('instructor_name', 'Instructor')
