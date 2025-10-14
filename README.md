@@ -176,3 +176,4 @@ This project is open source and available under the [MIT License](LICENSE).
 
 Built with ❤️ using Flask and modern web technologies
 # EduTrack360
+# EduTrack360
