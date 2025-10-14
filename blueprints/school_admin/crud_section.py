@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from database import db
 from models import Section
+from activity_logger import log_activity
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import text
 
@@ -52,6 +53,30 @@ def create_section():
         db.session.add(new_section)
         db.session.commit()
         
+        # Log the activity
+        log_activity(
+            action='CREATE',
+            entity_type='section',
+            entity_id=new_section.id,
+            entity_name=new_section.name,
+            description=f"Created new section: {new_section.name} (Grade {new_section.grade_level})"
+        )
+        
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('section_created', {
+                    'school_id': school_id,
+                    'section': {
+                        'id': new_section.id,
+                        'name': new_section.name,
+                        'grade_level': new_section.grade_level
+                    }
+                }, room=f'school_{school_id}')
+        except Exception as e:
+            print(f"Socket.IO emit error: {e}")
+        
         print(f"DEBUG: Section created - ID: {new_section.id}, Name: {new_section.name}, School: {new_section.school_id}")
 
         return jsonify({
@@ -85,9 +110,39 @@ def update_section(section_id):
         if existing_section:
             return jsonify({"success": False, "message": f"Section name '{data.get('name')}' already exists in your school."}), 400
 
+        # Store old values for logging
+        old_name = section.name
+        old_grade = section.grade_level
+        
         section.name = data.get('name')
         section.grade_level = data.get('grade_level')
         db.session.commit()
+
+        # Log the activity
+        log_activity(
+            action='UPDATE',
+            entity_type='section',
+            entity_id=section.id,
+            entity_name=section.name,
+            description=f"Updated section: {old_name} (Grade {old_grade}) → {section.name} (Grade {section.grade_level})"
+        )
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('section_updated', {
+                    'school_id': school_id,
+                    'section': {
+                        'id': section.id,
+                        'name': section.name,
+                        'grade_level': section.grade_level
+                    }
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting section_updated event: {{'school_id': {school_id}, 'section': {{'id': {section.id}, 'name': '{section.name}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
 
         return jsonify({
             "success": True, 
@@ -158,6 +213,19 @@ def delete_section(section_id):
 
         print(f"No dependencies found, proceeding to delete section '{section.name}'")
         
+        # Store section info for real-time update before deletion
+        section_name = section.name
+        section_school_id = section.school_id
+        
+        # Log the activity before deletion
+        log_activity(
+            action='DELETE',
+            entity_type='section',
+            entity_id=section_id,
+            entity_name=section_name,
+            description=f"Deleted section: {section_name} (Grade {section.grade_level})"
+        )
+        
         # Use raw SQL to delete the section to avoid triggering relationship queries
         db.session.execute(
             text("DELETE FROM sections WHERE id = :section_id"), 
@@ -165,6 +233,20 @@ def delete_section(section_id):
         )
         db.session.commit()
         print("Section deleted successfully")
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('section_deleted', {
+                    'school_id': section_school_id,
+                    'section': {
+                        'id': section_id,
+                        'name': section_name
+                    }
+                }, room=f'school_{section_school_id}')
+        except Exception as e:
+            print(f"Socket.IO emit error: {e}")
 
         return jsonify({"success": True, "message": "Section deleted successfully!"})
         

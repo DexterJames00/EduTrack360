@@ -159,6 +159,40 @@ class TelegramConfig(db.Model):
             "updated_at": self.updated_at
         }
 
+
+class ActivityLog(db.Model):
+    __tablename__ = 'activity_logs'
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    user_id = db.Column(db.Integer, nullable=True)  # ID of the user who performed the action
+    username = db.Column(db.String(100), nullable=False)  # Username of the user who performed the action
+    user_role = db.Column(db.String(50), nullable=False)  # Role: school_admin, instructor, etc.
+    action = db.Column(db.String(50), nullable=False)  # CREATE, UPDATE, DELETE, LOGIN, LOGOUT
+    entity_type = db.Column(db.String(50), nullable=False)  # student, instructor, subject, section, account, etc.
+    entity_id = db.Column(db.Integer, nullable=True)  # ID of the affected entity
+    entity_name = db.Column(db.String(255), nullable=True)  # Name/description of the affected entity
+    description = db.Column(db.Text, nullable=True)  # Detailed description of the action
+    ip_address = db.Column(db.String(45), nullable=True)  # User's IP address
+    user_agent = db.Column(db.Text, nullable=True)  # User's browser/device info
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow, nullable=False)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "school_id": self.school_id,
+            "user_id": self.user_id,
+            "username": self.username,
+            "user_role": self.user_role,
+            "action": self.action,
+            "entity_type": self.entity_type,
+            "entity_id": self.entity_id,
+            "entity_name": self.entity_name,
+            "description": self.description,
+            "ip_address": self.ip_address,
+            "user_agent": self.user_agent,
+            "timestamp": self.timestamp.isoformat() if self.timestamp else None
+        }
+
     
 
 

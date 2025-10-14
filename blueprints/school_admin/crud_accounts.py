@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from database import db
 from models import SchoolAdmin, SchoolInstructorAccount, Instructor
+from activity_logger import log_activity
 from werkzeug.security import generate_password_hash
 
 school_admin_bp = Blueprint('school_admin_accounts', __name__, url_prefix='/school_admin/accounts')
@@ -101,6 +102,41 @@ def create_account():
             db.session.add(account)
 
         db.session.commit()
+
+        # Log the activity
+        log_activity(
+            action='CREATE',
+            entity_type='account',
+            entity_id=account.id,
+            entity_name=data['username'],
+            description=f"Created new {data['role']} account: {data['username']}"
+        )
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                account_data = {
+                    'id': account.id,
+                    'username': data['username'],
+                    'school_id': school_id,
+                    'role': data['role'],
+                    'type': data['role']
+                }
+                
+                # Add instructor name if it's an instructor account
+                if data['role'] == 'school_instructor' and instructor:
+                    account_data['instructor_name'] = instructor.name
+                
+                current_app.socketio.emit('account_created', {
+                    'school_id': school_id,
+                    'account': account_data
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting account_created event: {{'school_id': {school_id}, 'account': {{'id': {account.id}, 'username': '{data['username']}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
+        
         return jsonify({"success": True, "message": "Account saved successfully!"})
 
     except Exception as e:
@@ -146,6 +182,42 @@ def update_account(id):
                 instructor.email = data['username']
 
         db.session.commit()
+
+        # Log the activity
+        username = data.get('username') if data.get('username') else (account.username if hasattr(account, 'username') else account.instructor.email)
+        log_activity(
+            action='UPDATE',
+            entity_type='account',
+            entity_id=id,
+            entity_name=username,
+            description=f"Updated account: {username}"
+        )
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                account_data = {
+                    'id': account.id,
+                    'username': data.get('username', getattr(account, 'username', account.instructor.email if hasattr(account, 'instructor') else '')),
+                    'school_id': school_id,
+                    'role': data.get('role', getattr(account, 'role', 'school_instructor')),
+                    'type': data.get('role', getattr(account, 'role', 'school_instructor'))
+                }
+                
+                # Add instructor name if it's an instructor account
+                if hasattr(account, 'instructor') and account.instructor:
+                    account_data['instructor_name'] = account.instructor.name
+                
+                current_app.socketio.emit('account_updated', {
+                    'school_id': school_id,
+                    'account': account_data
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting account_updated event: {{'school_id': {school_id}, 'account': {{'id': {account.id}, 'username': '{account_data['username']}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
+
         return jsonify({"success": True, "message": "Account updated successfully!"})
 
     except Exception as e:
@@ -171,8 +243,44 @@ def delete_account(id):
         if not account:
             return jsonify({"success": False, "message": "Account not found."}), 404
 
+        # Store account data for Socket.IO event before deletion
+        account_data = {
+            'id': account.id,
+            'username': getattr(account, 'username', account.instructor.email if hasattr(account, 'instructor') else ''),
+            'school_id': school_id,
+            'role': getattr(account, 'role', 'school_instructor'),
+            'type': getattr(account, 'role', 'school_instructor')
+        }
+        
+        # Add instructor name if it's an instructor account
+        if hasattr(account, 'instructor') and account.instructor:
+            account_data['instructor_name'] = account.instructor.name
+
+        # Log the activity before deletion
+        log_activity(
+            action='DELETE',
+            entity_type='account',
+            entity_id=id,
+            entity_name=account_data['username'],
+            description=f"Deleted account: {account_data['username']} ({account_data['role']})"
+        )
+        
         db.session.delete(account)
         db.session.commit()
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('account_deleted', {
+                    'school_id': school_id,
+                    'account': account_data
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting account_deleted event: {{'school_id': {school_id}, 'account': {{'id': {account_data['id']}, 'username': '{account_data['username']}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
+
         return jsonify({"success": True, "message": "Account deleted successfully!"})
 
     except Exception as e:

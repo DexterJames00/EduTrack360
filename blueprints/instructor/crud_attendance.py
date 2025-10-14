@@ -174,8 +174,28 @@ def record_attendance(sched_id):
             db.session.add_all(attendance_records)
             db.session.commit()
             
-            # Send Telegram notifications to students
+            # Emit real-time attendance update
             school_id = session.get('school_id')
+            try:
+                from flask import current_app
+                if hasattr(current_app, 'socketio'):
+                    # Get student names for notification
+                    present_count = sum(1 for r in attendance_records if r.status == 'Present')
+                    total_count = len(attendance_records)
+                    
+                    current_app.socketio.emit('attendance_recorded', {
+                        'school_id': school_id,
+                        'instructor_id': instructor_id,
+                        'subject_name': Subject.query.get(schedule.subject_id).name if Subject.query.get(schedule.subject_id) else 'Unknown Subject',
+                        'date': attendance_date.strftime('%Y-%m-%d'),
+                        'present_count': present_count,
+                        'total_count': total_count,
+                        'student_name': f"{present_count}/{total_count} students"
+                    }, room=f'school_{school_id}')
+            except Exception as e:
+                print(f"Socket.IO emit error: {e}")
+            
+            # Send Telegram notifications to students
             subject = Subject.query.get(schedule.subject_id)
             
             notification_count = 0

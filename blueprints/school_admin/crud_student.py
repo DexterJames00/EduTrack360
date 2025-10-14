@@ -1,6 +1,7 @@
 from flask import Blueprint, request, render_template, redirect, url_for, flash, session, jsonify
 from database import db
 from models import Student, Section
+from activity_logger import log_activity
 import random, string
 
 school_admin_bp = Blueprint('crud_student', __name__, url_prefix='/school_admin')
@@ -59,9 +60,42 @@ def add_student():
         db.session.add(new_student)
         db.session.commit()
 
+        # Log the activity
+        log_activity(
+            action='CREATE',
+            entity_type='student',
+            entity_id=new_student.id,
+            entity_name=f"{first_name} {last_name}",
+            description=f"Created new student: {first_name} {last_name} (Grade {grade_level})"
+        )
+
         # Get section name for response
         section = Section.query.get(section_id)
         section_name = section.name if section else 'No Section'
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('student_created', {
+                    'school_id': school_id,
+                    'student': {
+                        'id': new_student.id,
+                        'first_name': first_name,
+                        'last_name': last_name,
+                        'grade_level': grade_level,
+                        'section_id': section_id,
+                        'section_name': section_name,
+                        'parent_contact': parent_contact,
+                        'code': code,
+                        'telegram_chat_id': new_student.telegram_chat_id,
+                        'telegram_status': new_student.telegram_status
+                    }
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting student_created event: {{'school_id': {school_id}, 'student': {{'id': {new_student.id}, 'name': '{first_name} {last_name}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
 
         success_message = f"Student {first_name} {last_name} added successfully with code {code}"
         
@@ -115,6 +149,9 @@ def edit_student(student_id):
             flash(error_message, "danger")
             return redirect(url_for('crud_student.students_page'))
 
+        # Store old values for logging
+        old_name = f"{student.first_name} {student.last_name}"
+        
         student.first_name = request.form['first_name']
         student.last_name = request.form['last_name']
         student.grade_level = request.form['grade_level']
@@ -122,6 +159,43 @@ def edit_student(student_id):
         student.parent_contact = request.form['parent_contact']
 
         db.session.commit()
+
+        # Log the activity
+        log_activity(
+            action='UPDATE',
+            entity_type='student',
+            entity_id=student.id,
+            entity_name=f"{student.first_name} {student.last_name}",
+            description=f"Updated student: {old_name} → {student.first_name} {student.last_name} (Grade {student.grade_level})"
+        )
+
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                # Get section name for complete data
+                section = Section.query.get(student.section_id)
+                section_name = section.name if section else 'No Section'
+                
+                current_app.socketio.emit('student_updated', {
+                    'school_id': school_id,
+                    'student': {
+                        'id': student.id,
+                        'first_name': student.first_name,
+                        'last_name': student.last_name,
+                        'grade_level': student.grade_level,
+                        'section_id': student.section_id,
+                        'section_name': section_name,
+                        'parent_contact': student.parent_contact,
+                        'code': student.code,
+                        'telegram_chat_id': student.telegram_chat_id,
+                        'telegram_status': student.telegram_status
+                    }
+                }, room=f'school_{school_id}')
+                print(f"📢 Emitting student_updated event: {{'school_id': {school_id}, 'student': {{'id': {student.id}, 'name': '{student.first_name} {student.last_name}'}}}}")
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
 
         # Get section name for response
         section = Section.query.get(student.section_id)
@@ -180,6 +254,30 @@ def delete_student(student_id):
             return redirect(url_for('crud_student.students_page'))
 
         student_name = f"{student.first_name} {student.last_name}"
+        
+        # Emit real-time update before deletion
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('student_deleted', {
+                    'school_id': school_id,
+                    'student': {
+                        'id': student_id,
+                        'name': student_name
+                    }
+                }, room=f'school_{school_id}')
+        except Exception as e:
+            print(f"Socket.IO emit error: {e}")
+        
+        # Log the activity before deletion
+        log_activity(
+            action='DELETE',
+            entity_type='student',
+            entity_id=student_id,
+            entity_name=student_name,
+            description=f"Deleted student: {student_name} (Grade {student.grade_level})"
+        )
+        
         db.session.delete(student)
         db.session.commit()
         

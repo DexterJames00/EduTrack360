@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, session
 from database import db
 from models import Subject, Instructor, Section, SchoolAdmin
+from activity_logger import log_activity
 import re
 
 subjects_bp = Blueprint('subjects', __name__, url_prefix='/school_admin')
@@ -70,6 +71,34 @@ def create_subject():
         db.session.add(new_subject)
         db.session.commit()
         
+        # Log the activity
+        log_activity(
+            action='CREATE',
+            entity_type='subject',
+            entity_id=new_subject.id,
+            entity_name=name,
+            description=f"Created new subject: {name} (Grade {grade_level})"
+        )
+        
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                print(f"📚 Emitting subject_created event to room school_{school_id}")
+                current_app.socketio.emit('subject_created', {
+                    'school_id': school_id,
+                    'subject': {
+                        'id': new_subject.id,
+                        'name': new_subject.name,
+                        'grade_level': new_subject.grade_level
+                    }
+                }, room=f'school_{school_id}')
+                print(f"✅ Subject_created event emitted successfully")
+            else:
+                print("❌ No socketio found in current_app")
+        except Exception as e:
+            print(f"🔥 Socket.IO emit error: {e}")
+        
         # Return the new subject data
         subject_data = {
             'id': new_subject.id,
@@ -129,11 +158,42 @@ def update_subject(subject_id):
                 'message': f'Subject "{name}" already exists for grade level "{grade_level}".'
             }), 400
 
+        # Store old values for logging
+        old_name = subject.name
+        old_grade = subject.grade_level
+        
         # Update subject
         subject.name = name
         subject.grade_level = grade_level
         
         db.session.commit()
+        
+        # Log the activity
+        log_activity(
+            action='UPDATE',
+            entity_type='subject',
+            entity_id=subject.id,
+            entity_name=name,
+            description=f"Updated subject: {old_name} (Grade {old_grade}) → {name} (Grade {grade_level})"
+        )
+        
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                subject_data = {
+                    'school_id': school_id,
+                    'subject': {
+                        'id': subject.id,
+                        'name': subject.name,
+                        'grade_level': subject.grade_level
+                    }
+                }
+                print(f"📢 Emitting subject_updated event: {subject_data}")
+                current_app.socketio.emit('subject_updated', subject_data, room=f'school_{school_id}')
+                print(f"✅ Successfully emitted to room: school_{school_id}")
+        except Exception as e:
+            print(f"❌ Socket.IO emit error: {e}")
         
         # Return updated subject data
         subject_data = {
@@ -176,8 +236,31 @@ def delete_subject(subject_id):
         # Check if subject has any related records (schedules, attendance)
         # You might want to add checks here for related data
         
+        # Log the activity before deletion
+        log_activity(
+            action='DELETE',
+            entity_type='subject',
+            entity_id=subject_id,
+            entity_name=subject.name,
+            description=f"Deleted subject: {subject.name} (Grade {subject.grade_level})"
+        )
+        
         db.session.delete(subject)
         db.session.commit()
+        
+        # Emit real-time update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('subject_deleted', {
+                    'school_id': school_id,
+                    'subject': {
+                        'id': subject_id,
+                        'name': subject_name
+                    }
+                }, room=f'school_{school_id}')
+        except Exception as e:
+            print(f"Socket.IO emit error: {e}")
         
         return jsonify({
             'success': True, 

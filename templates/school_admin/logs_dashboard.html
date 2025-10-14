@@ -1,0 +1,294 @@
+{% extends "school_admin/school_admin_base.html" %}
+
+{% block title %}Activity Logs | School Admin{% endblock %}
+
+{% block content %}
+<div id="alertContainer" class="fixed top-20 right-6 z-50"></div>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <!-- Header with Real-time Status -->
+    <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
+        <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Activity Logs</h1>
+                <p class="text-gray-600">
+                    Monitor all system activities - 
+                    Status: <span id="socketStatus" class="text-green-600 font-semibold">Real-time Active</span>
+                    | Last Update: <span id="lastUpdate" class="text-blue-600">Never</span>
+                    | Updates: <span id="updateCount" class="text-purple-600 font-bold">0</span>
+                </p>
+            </div>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <button id="testRealtimeBtn" class="bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
+                    <i class="fas fa-sync-alt"></i>
+                    Manual Refresh
+                </button>
+                <button id="exportLogsBtn" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center gap-2">
+                    <i class="fas fa-download"></i>
+                    Export Logs
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-500 to-blue-700 rounded-2xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium">Today's Activity</p>
+                    <p class="text-3xl font-bold" id="todayCount">-</p>
+                </div>
+                <div class="bg-blue-400 bg-opacity-30 p-3 rounded-xl">
+                    <i class="fas fa-calendar-day text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-green-500 to-green-700 rounded-2xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium">This Week</p>
+                    <p class="text-3xl font-bold" id="weekCount">-</p>
+                </div>
+                <div class="bg-green-400 bg-opacity-30 p-3 rounded-xl">
+                    <i class="fas fa-calendar-week text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-500 to-purple-700 rounded-2xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium">Total Users</p>
+                    <p class="text-3xl font-bold" id="totalUsers">-</p>
+                </div>
+                <div class="bg-purple-400 bg-opacity-30 p-3 rounded-xl">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-orange-500 to-orange-700 rounded-2xl p-6 text-white shadow-lg">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium">Total Actions</p>
+                    <p class="text-3xl font-bold" id="totalActions">-</p>
+                </div>
+                <div class="bg-orange-400 bg-opacity-30 p-3 rounded-xl">
+                    <i class="fas fa-bolt text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
+        <div class="p-6 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Recent Activity</h2>
+            <p class="text-gray-600 text-sm mt-1">
+                Real-time activity logs with automatic refresh every 2 seconds
+            </p>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Action</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entity</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                    </tr>
+                </thead>
+                <tbody id="logsTableBody" class="bg-white divide-y divide-gray-200">
+                    <tr>
+                        <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                            <div class="flex flex-col items-center">
+                                <i class="fas fa-spinner fa-spin text-3xl mb-2"></i>
+                                <p>Loading activity logs...</p>
+                            </div>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // BULLETPROOF REAL-TIME LOGS SYSTEM
+    let updateCount = 0;
+    
+    function updateRealtimeStatus(message) {
+        const statusEl = document.getElementById('socketStatus');
+        const lastUpdateEl = document.getElementById('lastUpdate');
+        const updateCountEl = document.getElementById('updateCount');
+        
+        statusEl.textContent = message;
+        statusEl.className = message.includes('Active') ? 'text-green-600 font-semibold' : 'text-blue-600 font-semibold';
+        lastUpdateEl.textContent = new Date().toLocaleTimeString();
+        updateCount++;
+        updateCountEl.textContent = updateCount;
+        
+        console.log(`🔄 Update ${updateCount}: ${message}`);
+    }
+    
+    function loadLogs() {
+        updateRealtimeStatus('Refreshing logs...');
+        
+        fetch('/school_admin/logs/api/logs')
+            .then(response => response.json())
+            .then(data => {
+                updateRealtimeStatus('✅ Real-time Active');
+                
+                const tbody = document.getElementById('logsTableBody');
+                
+                if (data.logs && data.logs.length > 0) {
+                    tbody.innerHTML = data.logs.slice(0, 20).map((log, index) => `
+                        <tr class="hover:bg-gray-50 transition-colors duration-200 ${index === 0 ? 'bg-green-50' : ''}">
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white text-sm font-semibold">
+                                        ${log.username.charAt(0).toUpperCase()}
+                                    </div>
+                                    <div class="ml-3">
+                                        <div class="text-sm font-medium text-gray-900">${log.username}</div>
+                                        <div class="text-sm text-gray-500">${log.user_role}</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="inline-flex px-2 py-1 text-xs font-semibold rounded-full 
+                                    ${log.action === 'CREATE' ? 'bg-green-100 text-green-800' : 
+                                      log.action === 'UPDATE' ? 'bg-yellow-100 text-yellow-800' : 
+                                      'bg-red-100 text-red-800'}">
+                                    ${log.action}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="text-sm text-gray-900">${log.entity_type}</div>
+                            </td>
+                            <td class="px-6 py-4">
+                                <div class="text-sm text-gray-900 max-w-xs truncate">${log.entity_name || 'N/A'}</div>
+                                ${log.ip_address ? `<div class="text-xs text-gray-500">IP: ${log.ip_address}</div>` : ''}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${new Date(log.timestamp).toLocaleString()}
+                            </td>
+                        </tr>
+                    `).join('');
+                } else {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="5" class="px-6 py-8 text-center text-gray-500">
+                                <div class="flex flex-col items-center">
+                                    <i class="fas fa-inbox text-3xl mb-2"></i>
+                                    <p>No activity logs yet</p>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('❌ Error loading logs:', error);
+                updateRealtimeStatus('❌ Error loading logs');
+                showAlert('Failed to load logs', 'error');
+            });
+    }
+    
+    function loadStats() {
+        fetch('/school_admin/logs/api/stats')
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('todayCount').textContent = data.today || '0';
+                document.getElementById('weekCount').textContent = data.week || '0';
+                document.getElementById('totalUsers').textContent = data.total_users || '0';
+                document.getElementById('totalActions').textContent = data.total || '0';
+            })
+            .catch(error => {
+                console.error('❌ Error loading stats:', error);
+            });
+    }
+    
+    // GUARANTEED BULLETPROOF REAL-TIME: Refresh every 2 seconds
+    setInterval(function() {
+        loadLogs();
+        loadStats();
+    }, 2000);
+    
+    // Initial load
+    loadLogs();
+    loadStats();
+    
+    // Test button functionality
+    document.getElementById('testRealtimeBtn').addEventListener('click', function() {
+        showAlert('🔄 Manual refresh triggered', 'info');
+        loadLogs();
+        loadStats();
+    });
+    
+    // Alert system
+    function showAlert(message, type = 'info') {
+        const alertContainer = document.getElementById('alertContainer');
+        const alertId = 'alert_' + Date.now();
+        
+        const alertClasses = {
+            'success': 'bg-green-500',
+            'error': 'bg-red-500',
+            'warning': 'bg-yellow-500',
+            'info': 'bg-blue-500'
+        };
+        
+        const alertHTML = `
+            <div id="${alertId}" class="${alertClasses[type] || alertClasses.info} text-white px-6 py-4 rounded-lg shadow-lg mb-4 transform transition-all duration-300 translate-x-full">
+                <div class="flex items-center justify-between">
+                    <span>${message}</span>
+                    <button onclick="closeAlert('${alertId}')" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        alertContainer.insertAdjacentHTML('beforeend', alertHTML);
+        
+        setTimeout(() => {
+            const alert = document.getElementById(alertId);
+            if (alert) {
+                alert.classList.remove('translate-x-full');
+            }
+        }, 100);
+        
+        setTimeout(() => {
+            closeAlert(alertId);
+        }, 5000);
+    }
+    
+    function closeAlert(alertId) {
+        const alert = document.getElementById(alertId);
+        if (alert) {
+            alert.classList.add('translate-x-full');
+            setTimeout(() => {
+                alert.remove();
+            }, 300);
+        }
+    }
+    
+    // Initial status
+    showAlert('🚀 Bulletproof logs dashboard loaded!', 'success');
+    console.log('✅ BULLETPROOF logs dashboard started - refreshing every 2 seconds');
+</script>
+
+<!-- Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+<style>
+    .hover\\:scale-105:hover {
+        transform: scale(1.05);
+    }
+</style>
+
+{% endblock %}

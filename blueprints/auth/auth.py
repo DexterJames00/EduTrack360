@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, flash, session
 from models import MainAdmin, SchoolAdmin, SchoolInstructorAccount, Instructor
+from activity_logger import log_login, log_logout
 from werkzeug.security import check_password_hash
 
 auth_bp = Blueprint('auth', __name__, url_prefix='/auth')
@@ -28,6 +29,10 @@ def login():
                 session['user_id'] = main_admin_user.id
                 session['username'] = main_admin_user.username
                 session['user_type'] = 'main_admin'
+                
+                # Log the login
+                log_login(main_admin_user.username, 'main_admin')
+                
                 flash(f'Welcome back, Main Admin {main_admin_user.username}!', 'success')
                 return redirect(url_for('main_admin.dashboard'))
 
@@ -56,6 +61,10 @@ def login():
                 session['school_id'] = school_admin_user.school_id
                 session['school_code'] = school_code
                 session['user_type'] = 'school_admin'
+                
+                # Log the login
+                log_login(school_admin_user.username, 'school_admin', school_admin_user.school_id)
+                
                 flash(f'Welcome back, {school_admin_user.username}!', 'success')
                 return redirect(url_for('school_admin.dashboard'))
         
@@ -86,6 +95,13 @@ def login():
 
 @auth_bp.route('/logout')
 def logout():
+    # Log the logout before clearing session
+    username = session.get('username', 'Unknown User')
+    user_type = session.get('user_type', 'unknown')
+    school_id = session.get('school_id')
+    
+    log_logout(username, user_type, school_id)
+    
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('auth.login'))
