@@ -227,31 +227,82 @@ document.addEventListener('DOMContentLoaded', function() {
     const searchInput = document.getElementById('searchInput');
     const gradeFilter = document.getElementById('gradeFilter');
     
-    // Show alert function
+    // Enhanced Alert system with better styling and animations
     function showAlert(message, type = 'success') {
-        const alertContainer = document.getElementById('alertContainer');
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert-message p-4 rounded-xl shadow-lg transform transition-all duration-300 mb-4 ${
-            type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
-        }`;
-        alertDiv.innerHTML = `
-            <div class="flex items-center justify-between">
-                <div class="flex items-center space-x-2">
-                    <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
-                    <span>${message}</span>
+        const container = document.getElementById('alertContainer') || document.body;
+        
+        // Define enhanced alert configurations
+        const alertConfigs = {
+            success: {
+                bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
+                borderColor: 'border-emerald-200',
+                textColor: 'text-emerald-800',
+                iconColor: 'text-emerald-500',
+                icon: 'fas fa-check-circle',
+                shadowColor: 'shadow-emerald-200/50'
+            },
+            info: {
+                bgColor: 'bg-gradient-to-r from-blue-50 to-cyan-50',
+                borderColor: 'border-blue-200',
+                textColor: 'text-blue-800',
+                iconColor: 'text-blue-500',
+                icon: 'fas fa-info-circle',
+                shadowColor: 'shadow-blue-200/50'
+            },
+            warning: {
+                bgColor: 'bg-gradient-to-r from-orange-50 to-amber-50',
+                borderColor: 'border-orange-200',
+                textColor: 'text-orange-800',
+                iconColor: 'text-orange-500',
+                icon: 'fas fa-exclamation-triangle',
+                shadowColor: 'shadow-orange-200/50'
+            },
+            error: {
+                bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+                borderColor: 'border-red-200',
+                textColor: 'text-red-800',
+                iconColor: 'text-red-500',
+                icon: 'fas fa-times-circle',
+                shadowColor: 'shadow-red-200/50'
+            }
+        };
+        
+        const config = alertConfigs[type] || alertConfigs.info;
+        
+        const alert = document.createElement('div');
+        alert.className = `fixed top-20 right-6 z-50 max-w-md ${config.bgColor} ${config.borderColor} ${config.textColor} border-l-4 rounded-lg shadow-lg ${config.shadowColor} opacity-0 transform translate-x-full transition-all duration-500 ease-out`;
+        
+        alert.innerHTML = `
+            <div class="flex items-start p-4">
+                <div class="flex-shrink-0 mr-3">
+                    <i class="${config.icon} ${config.iconColor} text-xl"></i>
                 </div>
-                <button onclick="this.parentElement.parentElement.remove()" class="text-white hover:text-gray-200">
-                    <i class="fas fa-times"></i>
+                <div class="flex-1">
+                    <p class="text-sm font-medium leading-5">${message}</p>
+                </div>
+                <button class="flex-shrink-0 ml-4 ${config.textColor} hover:${config.textColor.replace('800', '600')} focus:outline-none" onclick="this.closest('div').parentElement.remove()">
+                    <i class="fas fa-times text-sm"></i>
                 </button>
             </div>
         `;
-        alertContainer.appendChild(alertDiv);
         
+        container.appendChild(alert);
+        
+        // Trigger slide-in animation
         setTimeout(() => {
-            if (alertDiv.parentNode) {
-                alertDiv.remove();
-            }
-        }, 5000);
+            alert.classList.remove('opacity-0', 'translate-x-full');
+            alert.classList.add('opacity-100', 'translate-x-0');
+        }, 100);
+        
+        // Auto-remove after 7 seconds with slide-out animation
+        setTimeout(() => {
+            alert.classList.add('opacity-0', 'translate-x-full');
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.remove();
+                }
+            }, 500);
+        }, 7000);
     }
     
     // Open modal for adding
@@ -323,16 +374,15 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                showAlert(data.message, 'success');
                 closeModal();
-                
+                // Show immediate success feedback
                 if (isEdit) {
-                    // Update existing card
-                    updateSubjectCard(data.subject);
+                    showAlert(`✏️ Subject Updated by ${currentUser}! "${data.subject.name}" details have been successfully modified`, 'success');
                 } else {
-                    // Add new card
-                    addSubjectCard(data.subject);
+                    showAlert(`🎉 Subject Created by ${currentUser}! "${data.subject.name}" (Grade ${data.subject.grade_level}) has been added to your curriculum`, 'success');
                 }
+                // Don't manually add/update here - let Socket.IO handle it
+                // The real-time events will update the UI automatically
                 updateStats();
             } else {
                 showAlert(data.message, 'error');
@@ -393,11 +443,9 @@ document.addEventListener('DOMContentLoaded', function() {
             const data = await response.json();
             
             if (data.success) {
-                showAlert(data.message, 'success');
                 deleteModal.classList.add('hidden');
-                
-                // Remove subject card from DOM
-                removeSubjectCard(id);
+                // Don't manually remove here - let Socket.IO handle it
+                // The real-time events will update the UI automatically
                 updateStats();
             } else {
                 showAlert(data.message, 'error');
@@ -662,7 +710,188 @@ document.addEventListener('DOMContentLoaded', function() {
             deleteModal.classList.add('hidden');
         }
     });
+    
+    // Real-time Socket.IO integration
+    const socket = io();
+    const schoolId = {% if session.school_id %}{{ session.school_id }}{% else %}null{% endif %};
+    const currentUser = "{{ session.username or 'Administrator' }}";
+    
+    // Debug connection status
+    socket.on('connect', function() {
+        console.log('✅ Socket.IO connected successfully');
+        if (schoolId) {
+            console.log(`🏫 Joining school room: school_${schoolId}`);
+            socket.emit('join_school_room', { school_id: schoolId });
+        }
+    });
+    
+    socket.on('disconnect', function() {
+        console.log('❌ Socket.IO disconnected');
+    });
+    
+    socket.on('connect_error', function(error) {
+        console.error('🔥 Socket.IO connection error:', error);
+    });
+    
+    if (schoolId) {
+        
+        // Real-time subject creation
+        socket.on('subject_created', function(data) {
+            console.log('📚 Received subject_created event:', data);
+            if (data.school_id == schoolId) {
+                addSubjectToGrid(data.subject);
+                // Success message is shown by form submission handler
+            }
+        });
+        
+        // Real-time subject updates
+        socket.on('subject_updated', function(data) {
+            console.log('📝 Received subject_updated event:', data);
+            if (data.school_id == schoolId) {
+                updateSubjectInGrid(data.subject);
+                // Success message is shown by form submission handler
+            }
+        });
+        
+        // Real-time subject deletion
+        socket.on('subject_deleted', function(data) {
+            console.log('🗑️ Received subject_deleted event:', data);
+            if (data.school_id == schoolId) {
+                removeSubjectFromGrid(data.subject.id);
+                showAlert(`🗑️ Subject Removed by ${currentUser}! "${data.subject.name}" has been permanently deleted from your system`, 'warning');
+            }
+        });
+    }
+    
+    // Helper functions for real-time updates
+    function addSubjectToGrid(subject) {
+        const container = document.getElementById('subjectsContainer');
+        const subjectCard = createSubjectCard(subject);
+        container.appendChild(subjectCard);
+        
+        // Animate in
+        subjectCard.style.opacity = '0';
+        subjectCard.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            subjectCard.style.opacity = '1';
+            subjectCard.style.transform = 'scale(1)';
+            subjectCard.style.transition = 'all 0.3s ease';
+        }, 50);
+    }
+    
+    function updateSubjectInGrid(subject) {
+        const existingCard = document.querySelector(`[data-subject-id="${subject.id}"]`);
+        if (existingCard) {
+            // Update the content with null checks
+            const titleElement = existingCard.querySelector('h3');
+            if (titleElement) {
+                titleElement.textContent = subject.name;
+            }
+            
+            const gradeDataElement = existingCard.querySelector('[data-grade]');
+            if (gradeDataElement) {
+                gradeDataElement.setAttribute('data-grade', subject.grade_level);
+            }
+            
+            const gradeLevelTextElement = existingCard.querySelector('.grade-level-text');
+            if (gradeLevelTextElement) {
+                gradeLevelTextElement.textContent = subject.grade_level;
+            }
+            
+            // Update card data attributes
+            existingCard.setAttribute('data-grade', subject.grade_level);
+            existingCard.setAttribute('data-name', subject.name.toLowerCase());
+            
+            // Update edit button data attributes
+            const editBtn = existingCard.querySelector('.edit-btn');
+            if (editBtn) {
+                editBtn.setAttribute('data-name', subject.name);
+                editBtn.setAttribute('data-grade', subject.grade_level);
+            }
+            
+            // Update delete button data attributes
+            const deleteBtn = existingCard.querySelector('.delete-btn');
+            if (deleteBtn) {
+                deleteBtn.setAttribute('data-name', subject.name);
+            }
+            
+            // Flash animation
+            existingCard.style.backgroundColor = '#e0f2fe';
+            setTimeout(() => {
+                existingCard.style.backgroundColor = '';
+            }, 1000);
+        }
+    }
+    
+    function removeSubjectFromGrid(subjectId) {
+        const card = document.querySelector(`[data-subject-id="${subjectId}"]`);
+        if (card) {
+            card.style.transition = 'all 0.3s ease';
+            card.style.opacity = '0';
+            card.style.transform = 'scale(0.9)';
+            setTimeout(() => {
+                card.remove();
+            }, 300);
+        }
+    }
+    
+    function createSubjectCard(subject) {
+        const div = document.createElement('div');
+        div.className = 'subject-card bg-gradient-to-br from-gray-50 to-white rounded-2xl p-6 border border-gray-200 hover:border-purple-300 hover:shadow-lg transition-all duration-300 group';
+        div.setAttribute('data-subject-id', subject.id);
+        div.setAttribute('data-grade', subject.grade_level);
+        div.setAttribute('data-name', subject.name.toLowerCase());
+        
+        div.innerHTML = `
+            <div class="flex items-start justify-between mb-4">
+                <div class="w-14 h-14 bg-gradient-to-br from-purple-500 to-purple-700 rounded-xl flex items-center justify-center shadow-md group-hover:scale-110 transition-transform duration-300">
+                    <i class="fas fa-book text-white text-lg"></i>
+                </div>
+                <div class="flex space-x-2">
+                    <button class="edit-btn w-8 h-8 bg-blue-500 hover:bg-blue-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                            data-subject-id="${subject.id}" data-name="${subject.name}" data-grade="${subject.grade_level}">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                    <button class="delete-btn w-8 h-8 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors duration-200 cursor-pointer z-10"
+                            data-subject-id="${subject.id}" data-name="${subject.name}">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="space-y-3">
+                <h3 class="text-xl font-bold text-gray-800 group-hover:text-purple-600 transition-colors duration-300">
+                    ${subject.name}
+                </h3>
+                <div class="space-y-2 text-sm text-gray-600">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-layer-group text-purple-500 w-4"></i>
+                        <span>Grade Level: <span class="font-semibold grade-level-text">${subject.grade_level}</span></span>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-hashtag text-blue-500 w-4"></i>
+                        <span>Subject ID: <span class="font-mono text-gray-800">#${subject.id}</span></span>
+                    </div>
+                </div>
+            </div>
+            <div class="mt-4 pt-4 border-t border-gray-200">
+                <div class="flex items-center justify-between text-xs text-gray-500">
+                    <span class="bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">
+                        Active Program
+                    </span>
+                    <span class="flex items-center space-x-1">
+                        <i class="fas fa-clock"></i>
+                        <span>Just Added</span>
+                    </span>
+                </div>
+            </div>
+        `;
+        
+        return div;
+    }
 });
 </script>
+
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
 
 {% endblock %}

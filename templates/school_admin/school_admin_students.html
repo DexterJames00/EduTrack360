@@ -2,18 +2,8 @@
 {% block title %}Students | School Admin{% endblock %}
 {% block content %}
 
-<!-- Flash Messages -->
-{% with messages = get_flashed_messages(with_categories=true) %}
-  {% if messages %}
-    <div class="mt-4">
-      {% for category, message in messages %}
-        <div class="alert alert-{{ 'danger' if category == 'error' else category }} bg-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-100 border border-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-400 text-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-700 px-4 py-3 rounded mb-4">
-          {{ message }}
-        </div>
-      {% endfor %}
-    </div>
-  {% endif %}
-{% endwith %}
+<!-- Alert Container for Success Messages -->
+<div id="alertContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
 
 <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl shadow-xl p-8 mt-6 border border-slate-200">
     <div class="flex justify-between items-center mb-8">
@@ -65,11 +55,20 @@
                     <td class="py-4 px-6 text-center">
                         <div class="flex justify-center gap-2">
                             <button class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors duration-200 shadow-sm"
-                                onclick="openStudentModal('{{ student.id }}','{{ student.first_name }}','{{ student.last_name }}','{{ student.grade_level }}','{{ student.section_id }}','{{ student.parent_contact }}','{{ student.code }}')">
+                                data-student-id="{{ student.id }}"
+                                data-first-name="{{ student.first_name or '' }}"
+                                data-last-name="{{ student.last_name or '' }}"
+                                data-grade-level="{{ student.grade_level or '' }}"
+                                data-section-id="{{ student.section_id or '' }}"
+                                data-parent-contact="{{ student.parent_contact or '' }}"
+                                data-code="{{ student.code or '' }}"
+                                onclick="openStudentModalWithData(this)">
                                 <i class="fa-solid fa-edit mr-1"></i> Edit
                             </button>
                             <button class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm transition-colors duration-200 shadow-sm"
-                                onclick="deleteStudent({{ student.id }}, '{{ student.first_name }} {{ student.last_name }}')">
+                                data-student-id="{{ student.id }}"
+                                data-student-name="{{ student.first_name }} {{ student.last_name }}"
+                                onclick="deleteStudentWithData(this)">
                                 <i class="fa-solid fa-trash mr-1"></i> Delete
                             </button>
                         </div>
@@ -199,6 +198,19 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('deleteForm').addEventListener('submit', handleDeleteSubmit);
 });
 
+// New function to handle opening modal with data attributes (safer for quotes and null values)
+function openStudentModalWithData(button) {
+    const id = button.dataset.studentId;
+    const first = button.dataset.firstName || '';
+    const last = button.dataset.lastName || '';
+    const grade = button.dataset.gradeLevel || '';
+    const section = button.dataset.sectionId || '';
+    const contact = button.dataset.parentContact || '';
+    const code = button.dataset.code || '';
+    
+    openStudentModal(id, first, last, grade, section, contact, code);
+}
+
 function openStudentModal(id='', first='', last='', grade='', section='', contact='', code='') {
     const modal = document.getElementById('studentModal');
     const title = document.getElementById('modalTitle');
@@ -212,13 +224,13 @@ function openStudentModal(id='', first='', last='', grade='', section='', contac
         // Set the hidden student_id field
         document.querySelector('[name=student_id]').value = id;
         
-        // Populate form fields
-        document.querySelector('[name=first_name]').value = first;
-        document.querySelector('[name=last_name]').value = last;
-        document.querySelector('[name=grade_level]').value = grade;
-        document.querySelector('[name=section_id]').value = section;
-        document.querySelector('[name=parent_contact]').value = contact;
-        document.querySelector('[name=code]').value = code;
+        // Populate form fields with proper null handling
+        document.querySelector('[name=first_name]').value = first || '';
+        document.querySelector('[name=last_name]').value = last || '';
+        document.querySelector('[name=grade_level]').value = grade || '';
+        document.querySelector('[name=section_id]').value = section || '';
+        document.querySelector('[name=parent_contact]').value = contact || '';
+        document.querySelector('[name=code]').value = code || '';
     } else {
         // Add mode
         isEditMode = false;
@@ -248,6 +260,13 @@ function generateCode() {
         code += chars.charAt(Math.floor(Math.random() * chars.length));
     }
     document.getElementById("code").value = code;
+}
+
+// New function to handle delete with data attributes (safer for quotes)
+function deleteStudentWithData(button) {
+    const studentId = button.dataset.studentId;
+    const studentName = button.dataset.studentName || 'Unknown Student';
+    deleteStudent(studentId, studentName);
 }
 
 function deleteStudent(studentId, studentName) {
@@ -311,14 +330,8 @@ function handleStudentSubmit(e) {
     .then(data => {
         console.log('Response data:', data);
         if (data.success) {
-            showAlert(data.message, 'success');
             closeStudentModal();
-            
-            if (isEditMode) {
-                updateStudentRow(data.student);
-            } else {
-                addStudentRow(data.student);
-            }
+            // Socket.IO will handle the success message and UI update
         } else {
             showAlert(data.message, 'error');
         }
@@ -356,9 +369,8 @@ function handleDeleteSubmit(e) {
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            showAlert(data.message, 'success');
             closeDeleteModal();
-            removeStudentRow(data.student_id);
+            // Socket.IO will handle the success message and UI update
         } else {
             showAlert(data.message, 'error');
         }
@@ -426,22 +438,31 @@ function createStudentRow(student) {
         '<span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-xs font-semibold border border-red-200"><i class="fa-solid fa-times-circle mr-1"></i>Not Connected</span>';
     
     row.innerHTML = `
-        <td class="py-4 px-6 font-medium text-slate-700">${student.id}</td>
-        <td class="py-4 px-6 font-semibold text-slate-800">${student.first_name} ${student.last_name}</td>
-        <td class="py-4 px-6 text-slate-600">${student.grade_level}</td>
-        <td class="py-4 px-6 text-slate-600">${student.section_name}</td>
-        <td class="py-4 px-6 text-slate-600">${student.parent_contact}</td>
+        <td class="py-4 px-6 font-medium text-slate-700">${student.id || ''}</td>
+        <td class="py-4 px-6 font-semibold text-slate-800">${(student.first_name || '')} ${(student.last_name || '')}</td>
+        <td class="py-4 px-6 text-slate-600">${student.grade_level || ''}</td>
+        <td class="py-4 px-6 text-slate-600">${student.section_name || 'No Section'}</td>
+        <td class="py-4 px-6 text-slate-600">${student.parent_contact || ''}</td>
         <td class="py-4 px-6 font-mono text-sm text-blue-600 bg-blue-50 rounded px-2 py-1">${student.code || '—'}</td>
         <td class="py-4 px-6 font-mono text-xs text-slate-500">${student.telegram_chat_id || 'Not Linked'}</td>
         <td class="py-4 px-6">${telegramStatus}</td>
         <td class="py-4 px-6 text-center">
             <div class="flex justify-center gap-2">
                 <button class="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 text-sm transition-colors duration-200 shadow-sm"
-                    onclick="openStudentModal('${student.id}','${student.first_name}','${student.last_name}','${student.grade_level}','${student.section_id}','${student.parent_contact}','${student.code}')">
+                    data-student-id="${student.id}"
+                    data-first-name="${student.first_name || ''}"
+                    data-last-name="${student.last_name || ''}"
+                    data-grade-level="${student.grade_level || ''}"
+                    data-section-id="${student.section_id || ''}"
+                    data-parent-contact="${student.parent_contact || ''}"
+                    data-code="${student.code || ''}"
+                    onclick="openStudentModalWithData(this)">
                     <i class="fa-solid fa-edit mr-1"></i> Edit
                 </button>
                 <button class="bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 text-sm transition-colors duration-200 shadow-sm"
-                    onclick="deleteStudent(${student.id}, '${student.first_name} ${student.last_name}')">
+                    data-student-id="${student.id}"
+                    data-student-name="${student.first_name} ${student.last_name}"
+                    onclick="deleteStudentWithData(this)">
                     <i class="fa-solid fa-trash mr-1"></i> Delete
                 </button>
             </div>
@@ -451,42 +472,77 @@ function createStudentRow(student) {
     return row;
 }
 
-// Alert system
-function showAlert(message, type) {
-    const alertContainer = document.querySelector('.mt-4') || createAlertContainer();
+// Enhanced Alert System with Beautiful Styling
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.error('Alert container not found');
+        return;
+    }
     
-    const alertClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue';
+    const alertTypes = {
+        success: {
+            bg: 'bg-gradient-to-r from-green-500 to-emerald-500',
+            text: 'text-white',
+            icon: 'fa-check-circle',
+            iconColor: 'text-green-100'
+        },
+        error: {
+            bg: 'bg-gradient-to-r from-red-500 to-pink-500',
+            text: 'text-white', 
+            icon: 'fa-exclamation-circle',
+            iconColor: 'text-red-100'
+        },
+        warning: {
+            bg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+            text: 'text-white',
+            icon: 'fa-exclamation-triangle',
+            iconColor: 'text-yellow-100'
+        },
+        info: {
+            bg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+            text: 'text-white',
+            icon: 'fa-info-circle',
+            iconColor: 'text-blue-100'
+        }
+    };
+    
+    const config = alertTypes[type] || alertTypes.info;
     
     const alert = document.createElement('div');
-    alert.className = `alert bg-${alertClass}-100 border border-${alertClass}-400 text-${alertClass}-700 px-4 py-3 rounded mb-4 opacity-0 transform translate-y-2 transition-all duration-300`;
-    alert.textContent = message;
+    alert.className = `
+        ${config.bg} ${config.text} px-6 py-4 rounded-xl shadow-2xl 
+        border-l-4 border-white/30 backdrop-blur-sm
+        transform translate-x-full transition-all duration-500 ease-out
+        flex items-center gap-3 min-w-80 max-w-md
+    `.replace(/\s+/g, ' ').trim();
+    
+    alert.innerHTML = `
+        <i class="fas ${config.icon} ${config.iconColor} text-lg flex-shrink-0"></i>
+        <span class="flex-1 font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white transition-colors ml-2">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
     
     alertContainer.appendChild(alert);
     
-    // Trigger animation
+    // Slide in animation
     setTimeout(() => {
-        alert.classList.remove('opacity-0', 'translate-y-2');
+        alert.style.transform = 'translateX(0)';
     }, 100);
     
-    // Auto-remove after 5 seconds
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        alert.classList.add('opacity-0', 'translate-y-2');
-        setTimeout(() => {
-            if (alert.parentNode) {
-                alert.remove();
-            }
-        }, 300);
+        if (alert.parentElement) {
+            alert.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 500);
+        }
     }, 5000);
-}
-
-function createAlertContainer() {
-    const container = document.createElement('div');
-    container.className = 'mt-4';
-    
-    const mainContent = document.querySelector('.bg-gradient-to-br');
-    mainContent.parentNode.insertBefore(container, mainContent);
-    
-    return container;
 }
 
 // Close modals when clicking outside
@@ -521,6 +577,43 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+    
+    // Real-time Socket.IO integration
+    const socket = io();
+    const schoolId = {% if session.school_id %}{{ session.school_id }}{% else %}null{% endif %};
+    const currentUser = "{{ session.username or 'Administrator' }}";
+    
+    if (schoolId) {
+        socket.emit('join_school_room', { school_id: schoolId });
+        
+        // Real-time student creation
+        socket.on('student_created', function(data) {
+            if (data.school_id == schoolId) {
+                addStudentRow(data.student);
+                showAlert(`👨‍🎓 Student "${data.student.first_name} ${data.student.last_name}" added by ${currentUser}!`, 'success');
+            }
+        });
+        
+        // Real-time student updates
+        socket.on('student_updated', function(data) {
+            if (data.school_id == schoolId) {
+                updateStudentRow(data.student);
+                showAlert(`📝 Student "${data.student.first_name} ${data.student.last_name}" updated by ${currentUser}!`, 'success');
+            }
+        });
+        
+        // Real-time student deletion
+        socket.on('student_deleted', function(data) {
+            if (data.school_id == schoolId) {
+                removeStudentRow(data.student.id);
+                showAlert(`🗑️ Student "${data.student.name}" deleted by ${currentUser}!`, 'warning');
+            }
+        });
+    }
 });
 </script>
+
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
 {% endblock %}

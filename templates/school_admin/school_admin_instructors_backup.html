@@ -1,175 +1,151 @@
 {% extends 'school_admin/school_admin_base.html' %}
 {% block title %}Instructors | School Admin{% endblock %}
 {% block content %}
-<div class="min-h-screen bg-gradient-to-br from-gray-50 to-blue-50 p-6">
-    <!-- Modern Header with Floating Card -->
-    <div class="max-w-7xl mx-auto">
-        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 mb-8 relative overflow-hidden">
-            <!-- Animated Background Elements -->
-            <div class="absolute -top-16 -right-16 w-32 h-32 bg-blue-700 opacity-10 rounded-full animate-pulse"></div>
-            <div class="absolute -bottom-8 -left-8 w-24 h-24 bg-blue-800 opacity-5 rounded-full animate-pulse delay-1000"></div>
-            
-            <div class="relative z-10 flex items-center justify-between">
-                <div class="flex items-center space-x-6">
-                    <div class="relative">
-                        <div class="w-20 h-20 bg-gradient-to-tr from-blue-700 to-blue-800 rounded-2xl flex items-center justify-center shadow-lg transform rotate-3 hover:rotate-0 transition-transform duration-300">
-                            <i class="fas fa-users-cog text-white text-2xl"></i>
-                        </div>
-                        <div class="absolute -top-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-3 border-white animate-bounce"></div>
-                    </div>
-                    <div>
-                        <h1 class="text-4xl font-black text-gray-800 mb-2">Teaching Staff</h1>
-                        <p class="text-xl text-gray-600 font-medium">Manage your educational team</p>
-                        <div class="flex items-center mt-2 text-sm text-gray-500">
-                            <i class="fas fa-clock mr-2"></i>
-                            <span>Last updated: Just now</span>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="flex flex-col items-end space-y-4">
-                    <button onclick="openInstructorModal()" class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-800 hover:to-blue-900 transition-all duration-300 shadow-lg hover:shadow-xl">
-                        <div class="flex items-center space-x-3">
-                            <i class="fas fa-user-plus text-xl"></i>
-                            <span>New Instructor</span>
-                        </div>
-                    </button>
-                    
-                    <!-- Quick Stats -->
-                    <div class="flex space-x-4 text-sm">
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-blue-700" id="totalInstructors">{{ instructors|length }}</div>
-                            <div class="text-gray-500">Total</div>
-                        </div>
-                        <div class="text-center">
-                            <div class="text-2xl font-bold text-green-600">{{ (instructors|length * 0.85)|int }}</div>
-                            <div class="text-gray-500">Active</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
 
-        <!-- Instructor Cards Grid with New Design -->
-        <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="instructorsContainer">
-            {% for instructor in instructors %}
-            <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300" data-instructor-id="{{ instructor.id }}">
-                
-                <!-- Profile Section -->
-                <div class="relative p-6 bg-gradient-to-br from-blue-700 to-blue-800 text-white">
-                    <!-- Background Pattern -->
-                    <div class="absolute inset-0 opacity-10">
-                        <div class="absolute top-0 right-0 w-20 h-20 border-4 border-white rounded-full -translate-y-10 translate-x-10"></div>
-                        <div class="absolute bottom-0 left-0 w-16 h-16 border-4 border-white rounded-full translate-y-8 -translate-x-8"></div>
-                    </div>
-                    
-                    <div class="relative z-10 text-center">
-                        <!-- Profile Avatar -->
-                        <div class="relative inline-block mb-4">
-                            <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white border-opacity-30">
-                                {{ instructor.name[0]|upper }}
-                            </div>
-                            <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
-                        </div>
-                        
-                        <!-- Name and Title -->
-                        <h3 class="text-lg font-bold mb-1 truncate">{{ instructor.name }}</h3>
-                        <p class="text-blue-100 text-sm opacity-90">{{ instructor.gender }}</p>
-                    </div>
-                    
-                    <!-- Action Buttons -->
-                    <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                        <button class="edit-instructor-btn w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" 
-                                data-instructor-id="{{ instructor.id }}"
-                                data-instructor-name="{{ instructor.name }}"
-                                data-instructor-gender="{{ instructor.gender }}"
-                                data-instructor-email="{{ instructor.email }}"
-                                data-instructor-address="{{ instructor.address }}">
-                            <i class="fas fa-edit text-xs"></i>
-                        </button>
-                        <button class="delete-instructor-btn w-8 h-8 bg-red-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" 
-                                data-instructor-id="{{ instructor.id }}" 
-                                data-instructor-name="{{ instructor.name }}">
-                            <i class="fas fa-trash text-xs"></i>
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Details Section -->
-                <div class="p-6">
-                    <!-- Contact Info -->
-                    <div class="space-y-3 mb-6">
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-envelope text-blue-600 text-xs"></i>
-                            </div>
-                            <span class="text-gray-600 text-sm truncate flex-1">{{ instructor.email }}</span>
-                        </div>
-                        
-                        <div class="flex items-center space-x-3">
-                            <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                <i class="fas fa-map-marker-alt text-blue-600 text-xs"></i>
-                            </div>
-                            <span class="text-gray-600 text-sm truncate flex-1">{{ instructor.address }}</span>
-                        </div>
-                    </div>
-                    
-                    <!-- Stats Row -->
-                    <div class="grid grid-cols-2 gap-3 mb-4">
-                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-3 text-center">
-                            <div class="text-lg font-bold text-blue-700">{{ range(3, 8) | random }}</div>
-                            <div class="text-xs text-blue-600 font-medium">Classes</div>
-                        </div>
-                        <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-3 text-center">
-                            <div class="text-lg font-bold text-green-700">{{ range(80, 150) | random }}</div>
-                            <div class="text-xs text-green-600 font-medium">Students</div>
-                        </div>
-                    </div>
-                    
-                    <!-- Creator Info -->
-                    <div class="text-xs text-gray-400 text-center border-t pt-3">
-                        <i class="fas fa-user-shield mr-1"></i>
-                        Added by {{ instructor.added_by }}
-                    </div>
-                </div>
-                
-                <!-- Hover Overlay -->
-                <div class="absolute inset-0 bg-gradient-to-t from-blue-600 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"></div>
-            </div>
-            {% endfor %}
-            
-            {% if instructors|length == 0 %}
-            <!-- Empty State -->
-            <div class="col-span-full flex flex-col items-center justify-center py-20">
-                <div class="relative mb-8">
-                    <div class="w-32 h-32 bg-gradient-to-br from-blue-700 to-blue-800 rounded-3xl flex items-center justify-center text-white text-5xl shadow-2xl transform rotate-12 hover:rotate-0 transition-transform duration-500">
-                        <i class="fas fa-chalkboard-teacher"></i>
-                    </div>
-                    <div class="absolute -top-4 -right-4 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
-                        <i class="fas fa-exclamation text-white text-xl"></i>
-                    </div>
-                </div>
-                
-                <h3 class="text-3xl font-bold text-gray-700 mb-4">No Instructors Yet</h3>
-                <p class="text-lg text-gray-500 text-center max-w-md mb-8">
-                    Your teaching staff directory is empty. Start building your educational team by adding instructors.
-                </p>
-                
-                <button onclick="openInstructorModal()" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition-all hover:shadow-xl flex items-center space-x-3">
-                    <i class="fas fa-plus-circle text-xl"></i>
-                    <span>Add First Instructor</span>
-                </button>
-            </div>
-            {% endif %}
+<!-- Flash Messages -->
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    <div class="mt-4">
+      {% for category, message in messages %}
+        <div class="alert alert-{{ 'danger' if category == 'error' else category }} bg-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-100 border border-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-400 text-{{ 'red' if category in ['error', 'danger'] else 'green' if category == 'success' else 'blue' }}-700 px-4 py-3 rounded mb-4">
+          {{ message }}
         </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+{% endwith %}
+
+<div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl shadow-xl p-8 mt-6 border border-slate-200">
+    <div class="flex justify-between items-center mb-8">
+        <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
+            <i class="fa-solid fa-chalkboard-teacher text-blue-700"></i> Instructors Management
+        </h1>
+        <button class="bg-gradient-to-r from-blue-700 to-blue-800 text-white px-6 py-3 rounded-xl font-bold hover:from-blue-800 hover:to-blue-900 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-1" onclick="openInstructorModal()">
+            <i class="fa-solid fa-plus mr-2"></i> Add Instructor
+        </button>
+    </div>
+    <p class="text-slate-600 mb-8 text-lg">Manage instructor details and information.</p>
+
+    <!-- Instructor Cards Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="instructorsContainer">
+        {% for instructor in instructors %}
+        <div class="group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-2" data-instructor-id="{{ instructor.id }}">
+            
+            <!-- Profile Header -->
+            <div class="relative bg-gradient-to-br from-blue-700 to-blue-800 text-white p-6">
+                <!-- Background Pattern -->
+                <div class="absolute inset-0 opacity-10">
+                    <div class="absolute top-0 right-0 w-20 h-20 border-4 border-white rounded-full -translate-y-10 translate-x-10"></div>
+                    <div class="absolute bottom-0 left-0 w-16 h-16 border-4 border-white rounded-full translate-y-8 -translate-x-8"></div>
+                </div>
+                
+                <div class="relative z-10 text-center">
+                    <!-- Profile Avatar -->
+                    <div class="relative inline-block mb-4">
+                        <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white border-opacity-30">
+                            {{ instructor.name[0]|upper }}
+                        </div>
+                        <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
+                    </div>
+                    
+                    <!-- Name and Title -->
+                    <h3 class="text-lg font-bold mb-1 truncate">{{ instructor.name }}</h3>
+                    <p class="text-blue-100 text-sm opacity-90 flex items-center justify-center gap-1">
+                        <i class="fas fa-user-tie"></i>{{ instructor.gender }}
+                    </p>
+                </div>
+                
+                <!-- Action Buttons -->
+                <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                    <button onclick="openAssignmentModal('{{ instructor.id }}', '{{ instructor.name }}')" 
+                            class="w-8 h-8 bg-green-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" title="Assign Schedule">
+                        <i class="fas fa-calendar-plus text-xs"></i>
+                    </button>
+                    <button onclick="openInstructorModal('{{ instructor.id }}','{{ instructor.name }}','{{ instructor.gender }}','{{ instructor.email }}','{{ instructor.address }}')" 
+                            class="w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
+                        <i class="fas fa-edit text-xs"></i>
+                    </button>
+                    <button onclick="deleteInstructor('{{ instructor.id }}', '{{ instructor.name }}')" 
+                            class="w-8 h-8 bg-red-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
+                        <i class="fas fa-trash text-xs"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Details Section -->
+            <div class="p-6">
+                <!-- Contact Info -->
+                <div class="space-y-3 mb-6">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-envelope text-blue-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-600 text-sm truncate flex-1">{{ instructor.email }}</span>
+                    </div>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <i class="fas fa-map-marker-alt text-blue-600 text-xs"></i>
+                        </div>
+                        <span class="text-gray-600 text-sm truncate flex-1">{{ instructor.address }}</span>
+                    </div>
+                </div>
+                
+                <!-- Stats Row -->
+                <div class="grid grid-cols-2 gap-3 mb-4">
+                    <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-3 text-center">
+                        <div class="text-lg font-bold text-blue-700">{{ range(3, 8) | random }}</div>
+                        <div class="text-xs text-blue-600 font-medium">Classes</div>
+                    </div>
+                    <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-3 text-center">
+                        <div class="text-lg font-bold text-green-700">{{ range(80, 150) | random }}</div>
+                        <div class="text-xs text-green-600 font-medium">Students</div>
+                    </div>
+                </div>
+                
+                <!-- Creator Info -->
+                <div class="text-xs text-gray-400 text-center border-t pt-3">
+                    <i class="fas fa-user-shield mr-1"></i>
+                    Added by {{ instructor.creator_name }}
+                </div>
+            </div>
+            
+            <!-- Hover Overlay -->
+            <div class="absolute inset-0 bg-gradient-to-t from-blue-600 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"></div>
+        </div>
+        {% endfor %}
+        
+        {% if instructors|length == 0 %}
+        <!-- Empty State Card -->
+        <div class="col-span-full flex flex-col items-center justify-center py-20">
+            <div class="relative mb-8">
+                <div class="w-32 h-32 bg-gradient-to-br from-blue-700 to-blue-800 rounded-3xl flex items-center justify-center text-white text-5xl shadow-2xl transform rotate-12 hover:rotate-0 transition-transform duration-500">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div class="absolute -top-4 -right-4 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
+                    <i class="fas fa-exclamation text-white text-xl"></i>
+                </div>
+            </div>
+            
+            <h3 class="text-3xl font-bold text-gray-700 mb-4">No Instructors Yet</h3>
+            <p class="text-lg text-gray-500 text-center max-w-md mb-8">
+                Your teaching staff directory is empty. Start building your educational team by adding instructors.
+            </p>
+            
+            <button onclick="openInstructorModal()" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition-all hover:shadow-xl flex items-center space-x-3">
+                <i class="fas fa-plus-circle text-xl"></i>
+                <span>Add First Instructor</span>
+            </button>
+        </div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Modern Modal with New Design -->
-<div id="instructorModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden p-4">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-5xl relative overflow-hidden transform transition-all">
+<!-- Enhanced Add/Edit Modal -->
+<div id="instructorModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl p-8 w-full max-w-5xl relative mx-4 max-h-[90vh] overflow-y-auto">
         <!-- Modal Header -->
-        <div class="relative bg-gradient-to-r from-blue-700 to-blue-800 text-white p-8">
+        <div class="relative bg-gradient-to-r from-blue-700 to-blue-800 text-white p-8 -m-8 mb-8 rounded-t-3xl">
             <!-- Background Pattern -->
             <div class="absolute inset-0 opacity-10">
                 <div class="absolute top-0 right-0 w-40 h-40 border-8 border-white rounded-full -translate-y-20 translate-x-20"></div>
@@ -194,442 +170,378 @@
         </div>
         
         <!-- Modal Body -->
-        <div class="p-8">
-            <form id="instructorForm" class="space-y-8">
-                <input type="hidden" id="modalInstructorId">
+        <form id="instructorForm" class="space-y-8">
+            <input type="hidden" id="instructorId" name="instructor_id" value="">
+            
+            <!-- Personal Information Section -->
+            <div class="space-y-6">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
+                    <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-user text-blue-600"></i>
+                    </div>
+                    <span>Personal Information</span>
+                </h3>
                 
-                <!-- Personal Information Section -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Full Name <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-user text-blue-600"></i>
+                            </div>
+                            <input type="text" name="name" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="Enter full name" required>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Gender <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-venus-mars text-blue-600"></i>
+                            </div>
+                            <select name="gender" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                <option value="">Select gender</option>
+                                <option value="Male">Male</option>
+                                <option value="Female">Female</option>
+                                <option value="Other">Other</option>
+                            </select>
+                            <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                <i class="fas fa-chevron-down text-gray-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Contact Information Section -->
+            <div class="space-y-6">
+                <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
+                    <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-address-book text-green-600"></i>
+                    </div>
+                    <span>Contact Information</span>
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Email Address <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-envelope text-blue-600"></i>
+                            </div>
+                            <input type="email" name="email" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="instructor@school.com" required>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-2">
+                        <label class="block text-sm font-semibold text-gray-700">
+                            Address <span class="text-red-500">*</span>
+                        </label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                <i class="fas fa-map-marker-alt text-blue-600"></i>
+                            </div>
+                            <input type="text" name="address" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="Complete address" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
+                <button type="button" onclick="closeInstructorModal()" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
+                    Cancel
+                </button>
+                <button type="submit" class="px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white rounded-xl font-bold shadow-lg transition-all flex items-center space-x-3">
+                    <i class="fas fa-save"></i>
+                    <span>Save Instructor</span>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle"></i> Confirm Delete
+        </h3>
+        <p class="text-slate-600 mb-6">Are you sure you want to delete <strong id="deleteInstructorName"></strong>? This action cannot be undone.</p>
+        <div class="flex gap-4">
+            <button onclick="closeDeleteModal()" class="flex-1 bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-colors duration-200">
+                Cancel
+            </button>
+            <form id="deleteForm" class="flex-1">
+                <button type="submit" class="w-full bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                    Delete
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Assignment Modal -->
+<div id="assignmentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-6xl relative mx-4 max-h-[95vh] overflow-y-auto">
+        <!-- Modal Header -->
+        <div class="relative bg-gradient-to-r from-blue-700 to-blue-800 text-white p-8 rounded-t-3xl">
+            <button class="absolute top-6 right-6 w-10 h-10 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-xl flex items-center justify-center text-white text-xl transition-all z-10" onclick="closeAssignmentModal()">
+                <i class="fas fa-times"></i>
+            </button>
+            
+            <div class="flex items-center space-x-6">
+                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center backdrop-blur-sm border border-white border-opacity-30">
+                    <i class="fas fa-calendar-plus text-2xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-3xl font-bold mb-2">Assign Schedule</h2>
+                    <p class="text-blue-100 text-lg">Manage class assignments for <span id="assignmentInstructorName" class="font-semibold"></span></p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="p-8">
+            <!-- Two Column Layout -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                
+                <!-- Left Column: Assignment Form -->
                 <div class="space-y-6">
                     <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
                         <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-user text-blue-600"></i>
+                            <i class="fas fa-plus text-blue-600"></i>
                         </div>
-                        <span>Personal Information</span>
+                        <span>Create New Assignment</span>
                     </h3>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label class="block text-sm font-semibold text-gray-700">
-                                Full Name <span class="text-red-500">*</span>
-                            </label>
-                            <div class="relative">
-                                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-user text-blue-600"></i>
-                                </div>
-                                <input type="text" id="modalInstructorName" name="name" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="Enter full name" required>
-                            </div>
-                        </div>
+                    <form id="assignmentForm" class="space-y-6">
+                        <input type="hidden" id="assignmentInstructorId" name="instructor_id" value="">
                         
+                        <!-- Subject Selection -->
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700">
-                                Gender <span class="text-red-500">*</span>
+                                Subject <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-venus-mars text-blue-600"></i>
+                                    <i class="fas fa-book text-blue-600"></i>
                                 </div>
-                                <select id="modalInstructorGender" name="gender" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
-                                    <option value="">Select gender</option>
-                                    <option value="Male">Male</option>
-                                    <option value="Female">Female</option>
-                                    <option value="Other">Other</option>
+                                <select name="subject_id" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select subject</option>
                                 </select>
                                 <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
                                     <i class="fas fa-chevron-down text-gray-400"></i>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-                
-                <!-- Contact Information Section -->
-                <div class="space-y-6">
-                    <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
-                        <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
-                            <i class="fas fa-address-book text-green-600"></i>
-                        </div>
-                        <span>Contact Information</span>
-                    </h3>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        
+                        <!-- Section Selection -->
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700">
-                                Email Address <span class="text-red-500">*</span>
+                                Section <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-envelope text-blue-600"></i>
+                                    <i class="fas fa-users text-blue-600"></i>
                                 </div>
-                                <input type="email" id="modalInstructorEmail" name="email" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="instructor@school.com" required>
+                                <select name="section_id" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select section</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
                             </div>
                         </div>
                         
+                        <!-- Day Selection -->
                         <div class="space-y-2">
                             <label class="block text-sm font-semibold text-gray-700">
-                                Address <span class="text-red-500">*</span>
+                                Day <span class="text-red-500">*</span>
                             </label>
                             <div class="relative">
                                 <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                    <i class="fas fa-map-marker-alt text-blue-600"></i>
+                                    <i class="fas fa-calendar-day text-blue-600"></i>
                                 </div>
-                                <input type="text" id="modalInstructorAddress" name="address" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" placeholder="Complete address" required>
+                                <select name="day" class="w-full pl-12 pr-10 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white appearance-none" required>
+                                    <option value="">Select day</option>
+                                    <option value="Monday">Monday</option>
+                                    <option value="Tuesday">Tuesday</option>
+                                    <option value="Wednesday">Wednesday</option>
+                                    <option value="Thursday">Thursday</option>
+                                    <option value="Friday">Friday</option>
+                                    <option value="Saturday">Saturday</option>
+                                    <option value="Sunday">Sunday</option>
+                                </select>
+                                <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                    <i class="fas fa-chevron-down text-gray-400"></i>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                        
+                        <!-- Time Selection -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">
+                                    Start Time <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i class="fas fa-clock text-blue-600"></i>
+                                    </div>
+                                    <input type="time" name="start_time" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" required>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-2">
+                                <label class="block text-sm font-semibold text-gray-700">
+                                    End Time <span class="text-red-500">*</span>
+                                </label>
+                                <div class="relative">
+                                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                                        <i class="fas fa-clock text-blue-600"></i>
+                                    </div>
+                                    <input type="time" name="end_time" class="w-full pl-12 pr-4 py-4 border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-600 focus:border-transparent transition-all text-lg bg-gray-50 focus:bg-white" required>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Submit Button -->
+                        <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white py-4 rounded-xl font-bold shadow-lg transition-all flex items-center justify-center space-x-3">
+                            <i class="fas fa-save"></i>
+                            <span>Create Assignment</span>
+                        </button>
+                    </form>
                 </div>
                 
-                <!-- Action Buttons -->
-                <div class="flex items-center justify-end space-x-4 pt-6 border-t border-gray-200">
-                    <button type="button" onclick="closeInstructorModal()" class="px-8 py-3 border-2 border-gray-300 text-gray-700 rounded-xl font-semibold hover:bg-gray-50 transition-all">
-                        Cancel
-                    </button>
-                    <button type="submit" id="modalSubmitButton" class="px-8 py-3 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white rounded-xl font-bold shadow-lg transition-all flex items-center space-x-3">
-                        <i class="fas fa-save"></i>
-                        <span>Save Instructor</span>
-                    </button>
+                <!-- Right Column: Current Assignments -->
+                <div class="space-y-6">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center space-x-3 border-b border-gray-200 pb-3">
+                        <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                            <i class="fas fa-list text-blue-600"></i>
+                        </div>
+                        <span>Current Assignments</span>
+                    </h3>
+                    
+                    <div id="currentAssignments" class="min-h-[100px] bg-gray-50 rounded-xl p-4">
+                        <!-- Assignments will be loaded here -->
+                    </div>
                 </div>
-            </form>
-            
-            <!-- Success/Error Message -->
-            <div id="modalMessage" class="mt-4 text-center font-semibold"></div>
+            </div>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirmation Modal -->
-<div id="deleteModal" class="fixed inset-0 bg-black bg-opacity-60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
-    <div class="bg-white rounded-3xl shadow-2xl w-full max-w-md mx-4 relative overflow-hidden transform transition-all">
-        <!-- Modal Header -->
-        <div class="relative bg-gradient-to-r from-red-500 to-red-600 text-white p-6">
-            <!-- Background Pattern -->
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-0 right-0 w-20 h-20 border-4 border-white rounded-full -translate-y-10 translate-x-10"></div>
-                <div class="absolute bottom-0 left-0 w-16 h-16 border-4 border-white rounded-full translate-y-8 -translate-x-8"></div>
+<!-- Success Modal -->
+<div id="successModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-check text-green-600 text-2xl"></i>
             </div>
-            
-            <div class="relative z-10 text-center">
-                <div class="w-16 h-16 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mx-auto mb-4 backdrop-blur-sm border border-white border-opacity-30">
-                    <i class="fas fa-exclamation-triangle text-2xl"></i>
-                </div>
-                <h2 class="text-2xl font-bold mb-2">Delete Instructor</h2>
-                <p class="text-red-100">This action cannot be undone</p>
-            </div>
+            <h3 id="successTitle" class="text-2xl font-bold text-gray-800 mb-2">Success!</h3>
+            <p id="successMessage" class="text-gray-600 mb-6">Operation completed successfully.</p>
+            <button onclick="closeSuccessModal()" class="bg-green-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-green-700 transition-colors">
+                OK
+            </button>
         </div>
-        
-        <!-- Modal Body -->
-        <div class="p-6">
-            <div class="text-center mb-6">
-                <div class="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
-                    <i class="fas fa-user-times text-red-500 text-3xl mb-3"></i>
-                    <p class="text-gray-700 text-lg font-medium">Are you sure you want to delete</p>
-                    <p class="text-red-600 text-xl font-bold" id="deleteInstructorName"></p>
-                </div>
-                <p class="text-gray-500 text-sm">This will permanently remove the instructor and all associated data from your system.</p>
+    </div>
+</div>
+
+<!-- Error Modal -->
+<div id="errorModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
             </div>
-            
-            <!-- Action Buttons -->
-            <form id="deleteForm">
-                <div class="flex space-x-3">
-                    <button type="button" onclick="closeDeleteModal()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-3 rounded-xl font-semibold transition-colors duration-200">
-                        <i class="fas fa-times mr-2"></i>Cancel
-                    </button>
-                    <button type="submit" class="flex-1 bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white py-3 rounded-xl font-bold transition-all duration-200">
-                        <i class="fas fa-trash mr-2"></i>Delete
-                    </button>
-                </div>
-            </form>
+            <h3 id="errorTitle" class="text-2xl font-bold text-gray-800 mb-2">Error</h3>
+            <p id="errorMessage" class="text-gray-600 mb-6">Something went wrong.</p>
+            <button onclick="closeErrorModal()" class="bg-red-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors">
+                OK
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Assignment Confirmation Modal -->
+<div id="deleteAssignmentModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle"></i> Confirm Delete
+        </h3>
+        <div id="deleteAssignmentDetails" class="text-slate-600 mb-6">
+            <!-- Assignment details will be populated here -->
+        </div>
+        <div class="flex gap-4">
+            <button onclick="closeDeleteAssignmentModal()" class="flex-1 bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-colors duration-200">
+                Cancel
+            </button>
+            <button onclick="confirmDeleteAssignment()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                Delete
+            </button>
         </div>
     </div>
 </div>
 
 <script>
-function openInstructorModal(name='', gender='', email='', address='', id='') {
-    console.log('openInstructorModal called with:', { name, gender, email, address, id });
+let isEditMode = false;
+let currentInstructorId = null;
+
+// Initialize event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Instructor form submission
+    document.getElementById('instructorForm').addEventListener('submit', handleInstructorSubmit);
     
+    // Delete form submission
+    document.getElementById('deleteForm').addEventListener('submit', handleDeleteSubmit);
+});
+
+function openInstructorModal(id='', name='', gender='', email='', address='') {
     const modal = document.getElementById('instructorModal');
-    const titleElement = document.getElementById('modalTitle');
-    const iconElement = document.getElementById('modalIcon');
-    const submitButton = document.getElementById('modalSubmitButton');
+    const title = document.getElementById('modalTitle');
     
-    console.log('Modal elements:', { modal, titleElement, iconElement, submitButton });
-    
-    modal.classList.remove('hidden');
-    modal.style.display = 'flex';
-    
-    // Fill form data
-    document.getElementById('modalInstructorId').value = id;
-    document.getElementById('modalInstructorName').value = name;
-    document.getElementById('modalInstructorGender').value = gender;
-    document.getElementById('modalInstructorEmail').value = email;
-    document.getElementById('modalInstructorAddress').value = address;
-    
-    console.log('Form fields populated');
-    
-    // Update modal content based on action
-    if(id && id !== 'temp') {
-        titleElement.textContent = 'Edit Instructor';
-        iconElement.className = 'fas fa-user-edit text-2xl';
-        submitButton.innerHTML = '<i class="fas fa-save"></i><span>Update Instructor</span>';
-        document.querySelector('.text-blue-100').textContent = 'Update the instructor information below';
+    if (id) {
+        // Edit mode
+        isEditMode = true;
+        currentInstructorId = id;
+        title.textContent = 'Edit Instructor';
+        
+        // Set the hidden instructor_id field
+        document.querySelector('[name=instructor_id]').value = id;
+        
+        // Populate form fields
+        document.querySelector('[name=name]').value = name;
+        document.querySelector('[name=gender]').value = gender;
+        document.querySelector('[name=email]').value = email;
+        document.querySelector('[name=address]').value = address;
     } else {
-        titleElement.textContent = 'Add New Instructor';
-        iconElement.className = 'fas fa-user-plus text-2xl';
-        submitButton.innerHTML = '<i class="fas fa-save"></i><span>Save Instructor</span>';
-        document.querySelector('.text-blue-100').textContent = 'Fill in the details to add a new instructor to your team';
+        // Add mode
+        isEditMode = false;
+        currentInstructorId = null;
+        title.textContent = 'Add Instructor';
+        
+        // Clear form fields
+        document.getElementById('instructorForm').reset();
+        document.querySelector('[name=instructor_id]').value = '';
     }
     
-    console.log('Modal setup complete');
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
 }
 
 function closeInstructorModal() {
     const modal = document.getElementById('instructorModal');
-    const form = document.getElementById('instructorForm');
-    const messageElement = document.getElementById('modalMessage');
-    
     modal.classList.add('hidden');
-    modal.style.display = 'none';
-    form.reset();
-    messageElement.textContent = '';
-    messageElement.className = 'mt-4 text-center font-semibold';
+    document.body.style.overflow = 'auto';
 }
 
-// Enhanced modal interactions
-document.getElementById('instructorModal').addEventListener('click', function(e) {
-    if (e.target === this) {
-        closeInstructorModal();
-    }
-});
-
-// Form submission handler (separated for event delegation)
-async function handleInstructorFormSubmit(e) {
-    console.log('Form submitted');
-
-    const submitButton = document.getElementById('modalSubmitButton');
-    const messageElement = document.getElementById('modalMessage');
-    const originalText = submitButton.innerHTML;
-    
-    console.log('Submit button:', submitButton);
-    console.log('Message element:', messageElement);
-    
-    // Show loading state
-    submitButton.disabled = true;
-    submitButton.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processing...';
-    messageElement.textContent = '';
-
-    const id = document.getElementById('modalInstructorId').value;
-    const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData.entries());
-
-    console.log('Form data:', data);
-    console.log('Instructor ID:', id);
-
-    const url = id ? `/school_admin/update/instructor/${id}` : '/school_admin/create/instructor';
-    const method = id ? 'PUT' : 'POST';
-    
-    console.log('Request URL:', url);
-    console.log('Request method:', method);
-
-    try {
-        console.log('Sending request...');
-        const response = await fetch(url, {
-            method: method,
-            headers: { 
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            },
-            body: JSON.stringify(data)
-        });
-
-        console.log('Response received:', response);
-        const result = await response.json();
-        console.log('Response data:', result);
-        console.log('result.success:', result.success);
-        console.log('Type of result.success:', typeof result.success);
-        
-        if(result.success){
-            console.log('Success branch executed');
-            messageElement.innerHTML = '<div class="text-green-600 bg-green-50 border border-green-200 rounded-lg px-4 py-3 flex items-center space-x-2"><i class="fas fa-check-circle"></i><span>' + result.message + '</span></div>';
-            
-            // Success state
-            submitButton.innerHTML = '<i class="fas fa-check mr-2"></i>Success!';
-            console.log('Success message and button updated');
-            
-            setTimeout(() => {
-                console.log('Timeout callback started');
-                console.log('About to close modal');
-                closeInstructorModal();
-                console.log('Modal closed');
-                
-                if (id && id !== 'temp') {
-                    console.log('Updating existing card with ID:', id);
-                    // Update existing card
-                    updateInstructorCard(id, data);
-                } else {
-                    console.log('Adding new card');
-                    console.log('result.instructor:', result.instructor);
-                    // Add new card with real instructor data from server
-                    if (result.instructor) {
-                        console.log('Adding new instructor card with data:', result.instructor);
-                        addNewInstructorCard(result.instructor);
-                    } else {
-                        console.log('No instructor data, reloading page');
-                        // Fallback to reload if no instructor data returned
-                        window.location.reload();
-                    }
-                }
-                console.log('Timeout callback completed');
-            }, 1500);
-        } else {
-            console.log('Error branch executed');
-            console.log('Error message:', result.message);
-            messageElement.innerHTML = '<div class="text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center space-x-2"><i class="fas fa-exclamation-circle"></i><span>' + result.message + '</span></div>';
-            
-            // Reset button
-            submitButton.innerHTML = originalText;
-            submitButton.disabled = false;
-        }
-    } catch (error) {
-        messageElement.innerHTML = '<div class="text-red-600 bg-red-50 border border-red-200 rounded-lg px-4 py-3 flex items-center space-x-2"><i class="fas fa-exclamation-triangle"></i><span>Error saving instructor. Please try again.</span></div>';
-        
-        // Reset button
-        submitButton.innerHTML = originalText;
-        submitButton.disabled = false;
-    }
-}
-
-// Helper functions for dynamic card management
-function updateInstructorCard(instructorId, data) {
-    const card = document.querySelector(`[data-instructor-id="${instructorId}"]`);
-    if (card) {
-        // Update the card content
-        const nameElement = card.querySelector('h3');
-        const genderElement = card.querySelector('.text-blue-100');
-        const emailElement = card.querySelector('.fa-envelope').parentElement.querySelector('span');
-        const addressElement = card.querySelector('.fa-map-marker-alt').parentElement.querySelector('span');
-        const avatarElement = card.querySelector('.w-16.h-16');
-        
-        if (nameElement) nameElement.textContent = data.name;
-        if (genderElement) genderElement.textContent = data.gender;
-        if (emailElement) emailElement.textContent = data.email;
-        if (addressElement) addressElement.textContent = data.address;
-        if (avatarElement) avatarElement.textContent = data.name[0].toUpperCase();
-        
-        // Update the button data attributes
-        const editButton = card.querySelector('.edit-instructor-btn');
-        const deleteButton = card.querySelector('.delete-instructor-btn');
-        
-        if (editButton) {
-            editButton.setAttribute('data-instructor-name', data.name);
-            editButton.setAttribute('data-instructor-gender', data.gender);
-            editButton.setAttribute('data-instructor-email', data.email);
-            editButton.setAttribute('data-instructor-address', data.address);
-        }
-        
-        if (deleteButton) {
-            deleteButton.setAttribute('data-instructor-name', data.name);
-        }
-    }
-}
-
-function addNewInstructorCard(instructor) {
-    const container = document.getElementById('instructorsContainer');
-    const emptyState = container.querySelector('.col-span-full');
-    
-    // Remove empty state if it exists
-    if (emptyState) {
-        emptyState.remove();
-    }
-    
-    // Create new instructor card with real data
-    const newCard = document.createElement('div');
-    newCard.className = 'group relative bg-white rounded-2xl shadow-lg hover:shadow-xl border border-gray-100 overflow-hidden transition-all duration-300';
-    newCard.setAttribute('data-instructor-id', instructor.id);
-    
-    newCard.innerHTML = `
-        <div class="relative p-6 bg-gradient-to-br from-blue-700 to-blue-800 text-white">
-            <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-0 right-0 w-20 h-20 border-4 border-white rounded-full -translate-y-10 translate-x-10"></div>
-                <div class="absolute bottom-0 left-0 w-16 h-16 border-4 border-white rounded-full translate-y-8 -translate-x-8"></div>
-            </div>
-            
-            <div class="relative z-10 text-center">
-                <div class="relative inline-block mb-4">
-                    <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white border-opacity-30">
-                        ${instructor.name[0].toUpperCase()}
-                    </div>
-                    <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
-                </div>
-                
-                <h3 class="text-lg font-bold mb-1 truncate">${instructor.name}</h3>
-                <p class="text-blue-100 text-sm opacity-90">${instructor.gender}</p>
-            </div>
-            
-            <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
-                <button class="edit-instructor-btn w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer"
-                        data-instructor-id="${instructor.id}"
-                        data-instructor-name="${instructor.name}"
-                        data-instructor-gender="${instructor.gender}"
-                        data-instructor-email="${instructor.email}"
-                        data-instructor-address="${instructor.address}">
-                    <i class="fas fa-edit text-xs"></i>
-                </button>
-                <button class="delete-instructor-btn w-8 h-8 bg-red-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer"
-                        data-instructor-id="${instructor.id}" 
-                        data-instructor-name="${instructor.name}">
-                    <i class="fas fa-trash text-xs"></i>
-                </button>
-            </div>
-        </div>
-        
-        <div class="p-6">
-            <div class="space-y-3 mb-6">
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-envelope text-blue-600 text-xs"></i>
-                    </div>
-                    <span class="text-gray-600 text-sm truncate flex-1">${instructor.email}</span>
-                </div>
-                
-                <div class="flex items-center space-x-3">
-                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <i class="fas fa-map-marker-alt text-blue-600 text-xs"></i>
-                    </div>
-                    <span class="text-gray-600 text-sm truncate flex-1">${instructor.address}</span>
-                </div>
-            </div>
-            
-            <div class="grid grid-cols-2 gap-3 mb-4">
-                <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-3 text-center">
-                    <div class="text-lg font-bold text-blue-700">${Math.floor(Math.random() * 5) + 3}</div>
-                    <div class="text-xs text-blue-600 font-medium">Classes</div>
-                </div>
-                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-3 text-center">
-                    <div class="text-lg font-bold text-green-700">${Math.floor(Math.random() * 70) + 80}</div>
-                    <div class="text-xs text-green-600 font-medium">Students</div>
-                </div>
-            </div>
-            
-            <div class="text-xs text-gray-400 text-center border-t pt-3">
-                <i class="fas fa-user-shield mr-1"></i>
-                Added by Admin
-            </div>
-        </div>
-        
-        <div class="absolute inset-0 bg-gradient-to-t from-blue-600 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"></div>
-    `;
-    
-    container.appendChild(newCard);
-    
-    // Update total count
-    const totalElement = document.getElementById('totalInstructors');
-    if (totalElement) {
-        const currentCount = parseInt(totalElement.textContent);
-        totalElement.textContent = currentCount + 1;
-    }
-}
-let currentInstructorId = null;
-
-function openDeleteModal(instructorId, instructorName) {
+function deleteInstructor(instructorId, instructorName) {
     const modal = document.getElementById('deleteModal');
     const nameElement = document.getElementById('deleteInstructorName');
     
@@ -647,30 +559,79 @@ function closeDeleteModal() {
     currentInstructorId = null;
 }
 
-// AJAX form submission for delete
-function handleDeleteSubmit(e) {
+// AJAX form submission for instructor
+function handleInstructorSubmit(e) {
     e.preventDefault();
     
-    if (!currentInstructorId) return;
-    
     const form = e.target;
+    const formData = new FormData(form);
     const submitBtn = form.querySelector('button[type="submit"]');
     const originalText = submitBtn.innerHTML;
     
-    console.log('Deleting instructor with ID:', currentInstructorId);
+    // Client-side validation
+    const name = form.querySelector('[name="name"]').value.trim();
+    const email = form.querySelector('[name="email"]').value.trim();
+    const gender = form.querySelector('[name="gender"]').value;
+    const address = form.querySelector('[name="address"]').value.trim();
+    
+    // Validate required fields
+    if (!name || !email || !gender || !address) {
+        showAlert('Please fill in all required fields.', 'error');
+        return;
+    }
+    
+    // Validate email format
+    const emailPattern = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    if (!emailPattern.test(email)) {
+        showAlert('Please enter a valid email address.', 'error');
+        return;
+    }
+    
+    // Validate name length
+    if (name.length < 2) {
+        showAlert('Name must be at least 2 characters long.', 'error');
+        return;
+    }
+    
+    // Validate address length
+    if (address.length < 5) {
+        showAlert('Address must be at least 5 characters long.', 'error');
+        return;
+    }
+    
+    console.log('Form submission - isEditMode:', isEditMode, 'currentInstructorId:', currentInstructorId);
     
     // Show loading state
-    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Saving...';
     submitBtn.disabled = true;
     
-    fetch(`/school_admin/delete/instructor/${currentInstructorId}`, {
-        method: 'DELETE',
+    const url = isEditMode ? 
+        `/school_admin/update/instructor/${currentInstructorId}` :
+        `/school_admin/create/instructor`;
+    
+    const method = isEditMode ? 'PUT' : 'POST';
+    
+    console.log('Request URL:', url);
+    console.log('Request method:', method);
+    console.log('FormData entries:');
+    for (let [key, value] of formData.entries()) {
+        console.log(key, value);
+    }
+    
+    // Convert FormData to JSON for PUT/POST requests
+    const data = Object.fromEntries(formData.entries());
+    
+    fetch(url, {
+        method: method,
         headers: {
+            'Content-Type': 'application/json',
             'X-Requested-With': 'XMLHttpRequest'
-        }
+        },
+        body: JSON.stringify(data)
     })
     .then(response => {
         console.log('Response status:', response.status);
+        console.log('Response headers:', response.headers);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
@@ -679,147 +640,794 @@ function handleDeleteSubmit(e) {
     .then(data => {
         console.log('Response data:', data);
         if (data.success) {
-            // Show success state
-            submitBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Deleted!';
-            submitBtn.style.background = 'linear-gradient(to right, #10b981, #059669)';
+            showAlert(data.message, 'success');
+            closeInstructorModal();
             
-            // Close modal and remove card immediately
-            setTimeout(() => {
-                closeDeleteModal();
-            }, 1000);
-            
-            // Remove the instructor card with animation
-            const instructorCard = document.querySelector(`[data-instructor-id="${currentInstructorId}"]`);
-            console.log('Found instructor card:', instructorCard);
-            console.log('Current instructor ID:', currentInstructorId);
-            console.log('All instructor cards:', document.querySelectorAll('[data-instructor-id]'));
-            
-            if (instructorCard) {
-                // Smooth removal with fade-out animation
-                instructorCard.style.transition = 'opacity 0.4s ease, transform 0.4s ease';
-                instructorCard.style.opacity = '0';
-                instructorCard.style.transform = 'translateY(-10px)';
-                instructorCard.style.pointerEvents = 'none';
-                
-                // Remove from DOM after animation
-                setTimeout(() => {
-                    instructorCard.remove();
-                    console.log('Instructor card removed successfully');
-                    
-                    // Update total count immediately
-                    const totalElement = document.getElementById('totalInstructors');
-                    if (totalElement) {
-                        const currentCount = parseInt(totalElement.textContent);
-                        const newCount = Math.max(0, currentCount - 1);
-                        totalElement.textContent = newCount;
-                        console.log('Updated total count from', currentCount, 'to', newCount);
-                    }
-                }, 400);
-            } else {
-                console.error('Instructor card not found for ID:', currentInstructorId);
-                console.error('Available data-instructor-id values:', 
-                    Array.from(document.querySelectorAll('[data-instructor-id]')).map(el => el.getAttribute('data-instructor-id'))
-                );
-            }
+            // Don't manually add/update here - let Socket.IO handle it
         } else {
-            console.error('Delete failed:', data.message);
-            submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error';
-            submitBtn.style.background = 'linear-gradient(to right, #ef4444, #dc2626)';
-            
-            setTimeout(() => {
-                submitBtn.innerHTML = originalText;
-                submitBtn.style.background = '';
-                submitBtn.disabled = false;
-            }, 2000);
+            showAlert(data.message, 'error');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Error';
-        submitBtn.style.background = 'linear-gradient(to right, #ef4444, #dc2626)';
-        
-        setTimeout(() => {
-            submitBtn.innerHTML = originalText;
-            submitBtn.style.background = '';
-            submitBtn.disabled = false;
-        }, 2000);
+        showAlert('An error occurred while saving the instructor.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     });
 }
 
-// Enhanced page load setup
-document.addEventListener('DOMContentLoaded', function() {
-    // Add event listener for delete form
-    document.getElementById('deleteForm').addEventListener('submit', handleDeleteSubmit);
+// AJAX form submission for delete
+function handleDeleteSubmit(e) {
+    e.preventDefault();
     
-    // Event delegation for form submission (persistent across modal resets)
-    document.addEventListener('submit', function(e) {
-        if (e.target.id === 'instructorForm') {
-            e.preventDefault();
-            handleInstructorFormSubmit(e);
+    console.log('Delete submit triggered for instructor ID:', currentInstructorId);
+    
+    const submitBtn = e.target.querySelector('button[type="submit"]');
+    const originalText = submitBtn.innerHTML;
+    
+    // Show loading state
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+    submitBtn.disabled = true;
+    
+    const url = `/school_admin/delete/instructor/${currentInstructorId}`;
+    console.log('Delete URL:', url);
+    
+    fetch(url, {
+        method: 'DELETE',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
         }
+    })
+    .then(response => {
+        console.log('Delete response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Delete response:', data);
+        if (data.success) {
+            showAlert(data.message, 'success');
+            closeDeleteModal();
+            
+            // Don't manually remove here - let Socket.IO handle it
+        } else {
+            showAlert(data.message, 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('An error occurred while deleting the instructor.', 'error');
+    })
+    .finally(() => {
+        // Reset button state
+        submitBtn.innerHTML = originalText;
+        submitBtn.disabled = false;
     });
+}
+
+// DOM manipulation functions for cards
+function addInstructorCard(instructor) {
+    const container = document.getElementById('instructorsContainer');
+    const emptyState = container.querySelector('.col-span-full');
     
-    // Event delegation for edit buttons (works for dynamic content)
-    document.addEventListener('click', function(e) {
-        console.log('Document click detected:', e.target);
+    // Remove empty state if it exists
+    if (emptyState) {
+        emptyState.remove();
+    }
+    
+    const card = createInstructorCard(instructor);
+    container.appendChild(card);
+}
+
+function updateInstructorCard(instructor) {
+    const card = document.querySelector(`[data-instructor-id="${instructor.id}"]`);
+    if (card) {
+        const newCard = createInstructorCard(instructor);
+        card.replaceWith(newCard);
+    }
+}
+
+function removeInstructorCard(instructorId) {
+    console.log('Removing instructor card with ID:', instructorId);
+    const card = document.querySelector(`[data-instructor-id="${instructorId}"]`);
+    console.log('Found card element:', card);
+    
+    if (card) {
+        card.remove();
+        console.log('Card removed successfully');
         
-        if (e.target.closest('.edit-instructor-btn')) {
-            console.log('Edit button clicked');
-            const button = e.target.closest('.edit-instructor-btn');
-            console.log('Button element:', button);
-            
-            const instructorId = button.getAttribute('data-instructor-id');
-            const instructorName = button.getAttribute('data-instructor-name');
-            const instructorGender = button.getAttribute('data-instructor-gender');
-            const instructorEmail = button.getAttribute('data-instructor-email');
-            const instructorAddress = button.getAttribute('data-instructor-address');
-            
-            console.log('Raw attributes from button:');
-            console.log('- ID:', instructorId);
-            console.log('- Name:', instructorName);
-            console.log('- Gender:', instructorGender);
-            console.log('- Email:', instructorEmail);
-            console.log('- Address:', instructorAddress);
-            
-            console.log('Instructor data object:', { instructorId, instructorName, instructorGender, instructorEmail, instructorAddress });
-            
-            console.log('About to call openInstructorModal');
-            openInstructorModal(instructorName, instructorGender, instructorEmail, instructorAddress, instructorId);
-            console.log('openInstructorModal call completed');
+        // Check if there are no more instructors
+        const container = document.getElementById('instructorsContainer');
+        const remainingCards = container.querySelectorAll('[data-instructor-id]');
+        console.log('Remaining cards count:', remainingCards.length);
+        
+        if (remainingCards.length === 0) {
+            // Add empty state
+            const emptyState = document.createElement('div');
+            emptyState.className = 'col-span-full flex flex-col items-center justify-center py-20';
+            emptyState.innerHTML = `
+                <div class="relative mb-8">
+                    <div class="w-32 h-32 bg-gradient-to-br from-blue-700 to-blue-800 rounded-3xl flex items-center justify-center text-white text-5xl shadow-2xl transform rotate-12 hover:rotate-0 transition-transform duration-500">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <div class="absolute -top-4 -right-4 w-12 h-12 bg-yellow-400 rounded-full flex items-center justify-center animate-bounce">
+                        <i class="fas fa-exclamation text-white text-xl"></i>
+                    </div>
+                </div>
+                
+                <h3 class="text-3xl font-bold text-gray-700 mb-4">No Instructors Yet</h3>
+                <p class="text-lg text-gray-500 text-center max-w-md mb-8">
+                    Your teaching staff directory is empty. Start building your educational team by adding instructors.
+                </p>
+                
+                <button onclick="openInstructorModal()" class="bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-8 py-4 rounded-2xl font-bold shadow-lg transition-all hover:shadow-xl flex items-center space-x-3">
+                    <i class="fas fa-plus-circle text-xl"></i>
+                    <span>Add First Instructor</span>
+                </button>
+            `;
+            container.appendChild(emptyState);
+            console.log('Empty state added');
         }
-    });
+    } else {
+        console.log('Card not found with ID:', instructorId);
+    }
+}
+
+function createInstructorCard(instructor) {
+    const card = document.createElement('div');
+    card.className = 'group relative bg-white rounded-2xl shadow-lg hover:shadow-2xl border border-gray-100 overflow-hidden transition-all duration-300 hover:-translate-y-2';
+    card.setAttribute('data-instructor-id', instructor.id);
     
-    // Event delegation for delete buttons (works for dynamic content)
-    document.addEventListener('click', function(e) {
-        if (e.target.closest('.delete-instructor-btn')) {
-            const button = e.target.closest('.delete-instructor-btn');
-            const instructorId = button.getAttribute('data-instructor-id');
-            const instructorName = button.getAttribute('data-instructor-name');
+    card.innerHTML = `
+        <!-- Profile Header -->
+        <div class="relative bg-gradient-to-br from-blue-700 to-blue-800 text-white p-6">
+            <!-- Background Pattern -->
+            <div class="absolute inset-0 opacity-10">
+                <div class="absolute top-0 right-0 w-20 h-20 border-4 border-white rounded-full -translate-y-10 translate-x-10"></div>
+                <div class="absolute bottom-0 left-0 w-16 h-16 border-4 border-white rounded-full translate-y-8 -translate-x-8"></div>
+            </div>
             
-            openDeleteModal(instructorId, instructorName);
-        }
-    });
+            <div class="relative z-10 text-center">
+                <!-- Profile Avatar -->
+                <div class="relative inline-block mb-4">
+                    <div class="w-16 h-16 bg-white bg-opacity-20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-2xl font-bold border-2 border-white border-opacity-30">
+                        ${instructor.name[0].toUpperCase()}
+                    </div>
+                    <div class="absolute -bottom-2 -right-2 w-6 h-6 bg-green-400 rounded-full border-2 border-white"></div>
+                </div>
+                
+                <!-- Name and Title -->
+                <h3 class="text-lg font-bold mb-1 truncate">${instructor.name}</h3>
+                <p class="text-blue-100 text-sm opacity-90 flex items-center justify-center gap-1">
+                    <i class="fas fa-user-tie"></i>${instructor.gender}
+                </p>
+            </div>
+            
+            <!-- Action Buttons -->
+            <div class="absolute top-4 right-4 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20">
+                <button onclick="openAssignmentModal('${instructor.id}', '${instructor.name}')" 
+                        class="w-8 h-8 bg-green-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer" title="Assign Schedule">
+                    <i class="fas fa-calendar-plus text-xs"></i>
+                </button>
+                <button onclick="openInstructorModal('${instructor.id}','${instructor.name}','${instructor.gender}','${instructor.email}','${instructor.address}')" 
+                        class="w-8 h-8 bg-white bg-opacity-20 backdrop-blur-sm hover:bg-opacity-40 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
+                    <i class="fas fa-edit text-xs"></i>
+                </button>
+                <button onclick="deleteInstructor('${instructor.id}', '${instructor.name}')" 
+                        class="w-8 h-8 bg-red-500 bg-opacity-80 hover:bg-opacity-100 rounded-lg flex items-center justify-center transition-all duration-200 relative z-30 cursor-pointer">
+                    <i class="fas fa-trash text-xs"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Details Section -->
+        <div class="p-6">
+            <!-- Contact Info -->
+            <div class="space-y-3 mb-6">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-envelope text-blue-600 text-xs"></i>
+                    </div>
+                    <span class="text-gray-600 text-sm truncate flex-1">${instructor.email}</span>
+                </div>
+                
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-map-marker-alt text-blue-600 text-xs"></i>
+                    </div>
+                    <span class="text-gray-600 text-sm truncate flex-1">${instructor.address}</span>
+                </div>
+            </div>
+            
+            <!-- Stats Row -->
+            <div class="grid grid-cols-2 gap-3 mb-4">
+                <div class="bg-gradient-to-r from-blue-50 to-blue-100 rounded-xl p-3 text-center">
+                    <div class="text-lg font-bold text-blue-700">${Math.floor(Math.random() * 5) + 3}</div>
+                    <div class="text-xs text-blue-600 font-medium">Classes</div>
+                </div>
+                <div class="bg-gradient-to-r from-green-50 to-green-100 rounded-xl p-3 text-center">
+                    <div class="text-lg font-bold text-green-700">${Math.floor(Math.random() * 70) + 80}</div>
+                    <div class="text-xs text-green-600 font-medium">Students</div>
+                </div>
+            </div>
+            
+            <!-- Creator Info -->
+            <div class="text-xs text-gray-400 text-center border-t pt-3">
+                <i class="fas fa-user-shield mr-1"></i>
+                Added by ${instructor.creator_name || 'Admin'}
+            </div>
+        </div>
+        
+        <!-- Hover Overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-blue-600 to-transparent opacity-0 group-hover:opacity-20 transition-opacity duration-300 pointer-events-none"></div>
+    `;
+    
+    return card;
+}
+
+// Alert system
+function showAlert(message, type) {
+    const alertContainer = document.querySelector('.mt-4') || createAlertContainer();
+    
+    const alertClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue';
+    
+    const alert = document.createElement('div');
+    alert.className = `alert bg-${alertClass}-100 border border-${alertClass}-400 text-${alertClass}-700 px-4 py-3 rounded mb-4 opacity-0 transform translate-y-2 transition-all duration-300`;
+    alert.textContent = message;
+    
+    alertContainer.appendChild(alert);
+    
+    // Trigger animation
+    setTimeout(() => {
+        alert.classList.remove('opacity-0', 'translate-y-2');
+    }, 100);
+    
+    // Auto-remove after 5 seconds
+    setTimeout(() => {
+        alert.classList.add('opacity-0', 'translate-y-2');
+        setTimeout(() => {
+            if (alert.parentNode) {
+                alert.remove();
+            }
+        }, 300);
+    }, 5000);
+}
+
+function createAlertContainer() {
+    const container = document.createElement('div');
+    container.className = 'mt-4';
+    
+    const mainContent = document.querySelector('.bg-gradient-to-br');
+    mainContent.parentNode.insertBefore(container, mainContent);
+    
+    return container;
+}
+
+// Close modals when clicking outside
+document.getElementById('instructorModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        closeInstructorModal();
+    }
 });
 
-// Modal interactions for delete modal
 document.getElementById('deleteModal').addEventListener('click', function(e) {
     if (e.target === this) {
         closeDeleteModal();
     }
 });
 
-// Keyboard support for modals
+// Close modals on Escape key
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        const instructorModal = document.getElementById('instructorModal');
-        const deleteModal = document.getElementById('deleteModal');
-        
-        if (!instructorModal.classList.contains('hidden')) {
-            closeInstructorModal();
-        } else if (!deleteModal.classList.contains('hidden')) {
-            closeDeleteModal();
-        }
+        closeInstructorModal();
+        closeDeleteModal();
     }
 });
+
+// Add data attributes to existing rows for easier manipulation
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('tbody tr').forEach((row, index) => {
+        const firstCell = row.querySelector('td');
+        if (firstCell && firstCell.textContent.trim() !== '') {
+            const instructorId = firstCell.textContent.trim();
+            if (!isNaN(instructorId)) {
+                row.setAttribute('data-instructor-id', instructorId);
+            }
+        }
+    });
+});
+
+// Assignment Management Functions
+let currentAssignmentInstructorId = null;
+let currentDeleteAssignmentId = null;
+
+// Assignment Modal Functions
+function openAssignmentModal(instructorId, instructorName) {
+    console.log('Opening assignment modal for instructor:', instructorId, instructorName);
+    currentAssignmentInstructorId = instructorId;
+    document.getElementById('assignmentInstructorId').value = instructorId;
+    document.getElementById('assignmentInstructorName').textContent = instructorName;
+    
+    // Load subjects and sections
+    console.log('About to load subjects and sections...');
+    loadSubjects();
+    loadSections();
+    loadCurrentAssignments(instructorId);
+    
+    document.getElementById('assignmentModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+    console.log('Assignment modal opened successfully');
+}
+
+function closeAssignmentModal() {
+    document.getElementById('assignmentModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    document.getElementById('assignmentForm').reset();
+    currentAssignmentInstructorId = null;
+}
+
+// Load subjects for dropdown
+function loadSubjects() {
+    console.log('Loading subjects...');
+    fetch('/school_admin/subjects/api')
+        .then(response => {
+            console.log('Subjects response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Subjects data received:', data);
+            const select = document.querySelector('select[name="subject_id"]');
+            select.innerHTML = '<option value="">Select subject</option>';
+            
+            if (data.subjects && data.subjects.length > 0) {
+                data.subjects.forEach(subject => {
+                    const option = document.createElement('option');
+                    option.value = subject.id;
+                    option.textContent = subject.name;
+                    select.appendChild(option);
+                });
+                console.log(`Loaded ${data.subjects.length} subjects`);
+            } else {
+                console.log('No subjects found in response');
+                select.innerHTML = '<option value="">No subjects available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading subjects:', error);
+            const select = document.querySelector('select[name="subject_id"]');
+            select.innerHTML = '<option value="">Error loading subjects</option>';
+        });
+}
+
+// Load sections for dropdown
+function loadSections() {
+    console.log('Loading sections...');
+    fetch('/school_admin/sections/api')
+        .then(response => {
+            console.log('Sections response status:', response.status);
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log('Sections data received:', data);
+            const select = document.querySelector('select[name="section_id"]');
+            select.innerHTML = '<option value="">Select section</option>';
+            
+            if (data.sections && data.sections.length > 0) {
+                data.sections.forEach(section => {
+                    const option = document.createElement('option');
+                    option.value = section.id;
+                    option.textContent = `${section.grade_level} - ${section.name}`;
+                    select.appendChild(option);
+                });
+                console.log(`Loaded ${data.sections.length} sections`);
+            } else {
+                console.log('No sections found in response');
+                select.innerHTML = '<option value="">No sections available</option>';
+            }
+        })
+        .catch(error => {
+            console.error('Error loading sections:', error);
+            const select = document.querySelector('select[name="section_id"]');
+            select.innerHTML = '<option value="">Error loading sections</option>';
+        });
+}
+
+// Load current assignments for instructor
+function loadCurrentAssignments(instructorId) {
+    const currentAssignmentsDiv = document.getElementById('currentAssignments');
+    currentAssignmentsDiv.innerHTML = `
+        <div class="text-center text-gray-500 py-8">
+            <i class="fas fa-spinner fa-spin text-2xl mb-2"></i>
+            <p>Loading assignments...</p>
+        </div>
+    `;
+    
+    fetch(`/school_admin/assignments/instructor/${instructorId}`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.assignments && data.assignments.length > 0) {
+                let html = '<div class="space-y-3">';
+                
+                data.assignments.forEach(assignment => {
+                    html += `
+                        <div class="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                            <div class="flex items-center justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center space-x-3 mb-2">
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                            <i class="fas fa-book mr-1"></i>
+                                            ${assignment.subject_code}
+                                        </span>
+                                        <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                            <i class="fas fa-users mr-1"></i>
+                                            ${assignment.grade_level} - ${assignment.section_name}
+                                        </span>
+                                    </div>
+                                    <div class="flex items-center space-x-4 text-sm text-gray-600">
+                                        <span class="flex items-center">
+                                            <i class="fas fa-calendar-day mr-2 text-gray-400"></i>
+                                            ${assignment.day}
+                                        </span>
+                                        <span class="flex items-center">
+                                            <i class="fas fa-clock mr-2 text-gray-400"></i>
+                                            ${assignment.start_time} - ${assignment.end_time}
+                                        </span>
+                                    </div>
+                                </div>
+                                <button onclick="openDeleteAssignmentModal(${assignment.id}, '${assignment.subject_code}', '${assignment.grade_level} - ${assignment.section_name}', '${assignment.day}', '${assignment.start_time} - ${assignment.end_time}')" class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += '</div>';
+                currentAssignmentsDiv.innerHTML = html;
+            } else {
+                currentAssignmentsDiv.innerHTML = `
+                    <div class="text-center text-gray-500 py-8">
+                        <i class="fas fa-calendar-times text-3xl mb-3"></i>
+                        <p class="text-lg font-medium">No assignments yet</p>
+                        <p class="text-sm">Create the first assignment for this instructor</p>
+                    </div>
+                `;
+            }
+        })
+        .catch(error => {
+            console.error('Error loading assignments:', error);
+            currentAssignmentsDiv.innerHTML = `
+                <div class="text-center text-red-500 py-8">
+                    <i class="fas fa-exclamation-triangle text-2xl mb-2"></i>
+                    <p>Failed to load assignments</p>
+                </div>
+            `;
+        });
+}
+
+// Delete Assignment Modal Functions
+function openDeleteAssignmentModal(assignmentId, subjectName, sectionInfo, day, timeRange) {
+    currentDeleteAssignmentId = assignmentId;
+    
+    const detailsDiv = document.getElementById('deleteAssignmentDetails');
+    detailsDiv.innerHTML = `
+        <p>Are you sure you want to delete this assignment?</p>
+        <div class="bg-gray-50 rounded-lg p-4 mt-4">
+            <div class="space-y-2 text-sm">
+                <div><strong>Subject:</strong> ${subjectName}</div>
+                <div><strong>Section:</strong> ${sectionInfo}</div>
+                <div><strong>Day:</strong> ${day}</div>
+                <div><strong>Time:</strong> ${timeRange}</div>
+            </div>
+        </div>
+        <p class="mt-4 text-sm text-red-600">This action cannot be undone.</p>
+    `;
+    
+    document.getElementById('deleteAssignmentModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteAssignmentModal() {
+    document.getElementById('deleteAssignmentModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    currentDeleteAssignmentId = null;
+}
+
+function confirmDeleteAssignment() {
+    if (!currentDeleteAssignmentId) return;
+    
+    fetch(`/school_admin/assignments/${currentDeleteAssignmentId}`, {
+        method: 'DELETE',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showSuccessModal('Assignment Deleted', data.message);
+            closeDeleteAssignmentModal();
+            loadCurrentAssignments(currentAssignmentInstructorId);
+        } else {
+            showErrorModal('Delete Failed', data.message);
+        }
+    })
+    .catch(error => {
+        console.error('Error deleting assignment:', error);
+        showErrorModal('Error', 'Failed to delete assignment. Please try again.');
+    });
+}
+
+// Success Modal Functions
+function showSuccessModal(title, message) {
+    document.getElementById('successTitle').textContent = title;
+    document.getElementById('successMessage').textContent = message;
+    document.getElementById('successModal').classList.remove('hidden');
+}
+
+function closeSuccessModal() {
+    document.getElementById('successModal').classList.add('hidden');
+}
+
+// Error Modal Functions  
+function showErrorModal(title, message) {
+    document.getElementById('errorTitle').textContent = title;
+    document.getElementById('errorMessage').textContent = message;
+    document.getElementById('errorModal').classList.remove('hidden');
+}
+
+function closeErrorModal() {
+    document.getElementById('errorModal').classList.add('hidden');
+}
+
+// Make functions globally available
+window.showSuccessModal = showSuccessModal;
+window.showErrorModal = showErrorModal;
+
+// Initialize assignment form when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    // Assignment form submission
+    const assignmentForm = document.getElementById('assignmentForm');
+    if (assignmentForm) {
+        assignmentForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(e.target);
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            
+            // Frontend validation
+            const startTime = formData.get('start_time');
+            const endTime = formData.get('end_time');
+            const subjectId = formData.get('subject_id');
+            const sectionId = formData.get('section_id');
+            const day = formData.get('day');
+            
+            console.log('Form validation - startTime:', startTime, 'endTime:', endTime);
+            console.log('Other fields - subject:', subjectId, 'section:', sectionId, 'day:', day);
+            
+            // Check if all required fields are filled
+            if (!startTime || !endTime || startTime.trim() === '' || endTime.trim() === '') {
+                console.log('Time validation failed');
+                showErrorModal('Missing Information', 'Please fill in both start time and end time.');
+                return;
+            }
+            
+            if (!subjectId || !sectionId || !day) {
+                console.log('Other field validation failed');
+                showErrorModal('Missing Information', 'Please fill in all required fields.');
+                return;
+            }
+            
+            if (startTime >= endTime) {
+                console.log('Time range validation failed');
+                showErrorModal('Invalid Time Range', 'End time must be after start time.');
+                return;
+            }
+            
+            console.log('All validation passed');
+            
+            // Show loading state
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Creating...';
+            submitBtn.disabled = true;
+            
+            // Convert FormData to JSON
+            const data = Object.fromEntries(formData.entries());
+            
+            fetch('/school_admin/assignments', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showSuccessModal('Assignment Created', data.message);
+                    assignmentForm.reset();
+                    loadCurrentAssignments(currentAssignmentInstructorId);
+                } else {
+                    showErrorModal('Assignment Failed', data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error creating assignment:', error);
+                showErrorModal('Error', 'Failed to create assignment. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                submitBtn.innerHTML = originalText;
+                submitBtn.disabled = false;
+            });
+        });
+    }
+});
+
+// Include external assignment form handler for additional functionality
+
+// Socket.IO section removed to avoid conflicts
+
+// Debug connection status
+socket.on('connect', function() {
+    console.log('✅ Socket.IO connected successfully');
+    if (schoolId) {
+        console.log(`🏫 Joining school room: school_${schoolId}`);
+        socket.emit('join_school_room', { school_id: schoolId });
+    }
+});
+
+socket.on('disconnect', function() {
+    console.log('❌ Socket.IO disconnected');
+});
+
+socket.on('connect_error', function(error) {
+    console.error('🔥 Socket.IO connection error:', error);
+});
+
+if (schoolId) {
+    
+    // Real-time instructor creation
+    socket.on('instructor_created', function(data) {
+        console.log('�‍🏫 Received instructor_created event:', data);
+        if (data.school_id == schoolId) {
+            addInstructorToGrid(data.instructor);
+            showAlert(`👨‍🏫 New instructor "${data.instructor.name}" added!`, 'success');
+        }
+    });
+    
+    // Real-time instructor updates
+    socket.on('instructor_updated', function(data) {
+        console.log('� Received instructor_updated event:', data);
+        if (data.school_id == schoolId) {
+            updateInstructorInGrid(data.instructor);
+            showAlert(`📝 Instructor "${data.instructor.name}" updated!`, 'info');
+        }
+    });
+    
+    // Real-time instructor deletion
+    socket.on('instructor_deleted', function(data) {
+        console.log('�️ Received instructor_deleted event:', data);
+        if (data.school_id == schoolId) {
+            removeInstructorFromGrid(data.instructor.id);
+            showAlert(`🗑️ Instructor "${data.instructor.name}" deleted!`, 'warning');
+        }
+    });
+}
+
+// Helper functions for real-time updates
+function addInstructorToGrid(instructor) {
+    const container = document.getElementById('instructorsContainer');
+    const instructorCard = createInstructorCard(instructor);
+    container.appendChild(instructorCard);
+    
+    // Animate in
+    instructorCard.style.opacity = '0';
+    instructorCard.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        instructorCard.style.opacity = '1';
+        instructorCard.style.transform = 'scale(1)';
+        instructorCard.style.transition = 'all 0.3s ease';
+    }, 50);
+}
+
+function updateInstructorInGrid(instructor) {
+    const existingCard = document.querySelector(`[data-instructor-id="${instructor.id}"]`);
+    if (existingCard) {
+        // Replace the entire card with updated content
+        const newCard = createInstructorCard(instructor);
+        existingCard.parentNode.replaceChild(newCard, existingCard);
+        
+        // Flash animation
+        newCard.style.backgroundColor = '#e0f2fe';
+        setTimeout(() => {
+            newCard.style.backgroundColor = '';
+        }, 1000);
+    }
+}
+
+function removeInstructorFromGrid(instructorId) {
+    const card = document.querySelector(`[data-instructor-id="${instructorId}"]`);
+    if (card) {
+        card.style.transition = 'all 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            card.remove();
+        }, 300);
+    }
+}
+
+// Duplicate showAlert function removed - using existing one
+
 </script>
+
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+<script>
+// Real-time Socket.IO integration
+const socket = io();
+const schoolId = {% if session.school_id %}{{ session.school_id }}{% else %}null{% endif %};
+
+// Debug connection status
+socket.on('connect', function() {
+    console.log('Socket.IO connected successfully');
+    if (schoolId) {
+        console.log('Joining school room:', schoolId);
+        socket.emit('join_school_room', { school_id: schoolId });
+    }
+});
+
+socket.on('disconnect', function() {
+    console.log('Socket.IO disconnected');
+});
+
+socket.on('connect_error', function(error) {
+    console.error('Socket.IO connection error:', error);
+});
+
+if (schoolId) {
+    
+    // Real-time instructor creation
+    socket.on('instructor_created', function(data) {
+        console.log('Received instructor_created event:', data);
+        if (data.school_id == schoolId) {
+            addInstructorToGrid(data.instructor);
+            showAlert('New instructor "' + data.instructor.name + '" added!', 'success');
+        }
+    });
+    
+    // Real-time instructor updates
+    socket.on('instructor_updated', function(data) {
+        console.log('Received instructor_updated event:', data);
+        if (data.school_id == schoolId) {
+            updateInstructorInGrid(data.instructor);
+            showAlert('Instructor "' + data.instructor.name + '" updated!', 'info');
+        }
+    });
+    
+    // Real-time instructor deletion
+    socket.on('instructor_deleted', function(data) {
+        console.log('Received instructor_deleted event:', data);
+        if (data.school_id == schoolId) {
+            removeInstructorFromGrid(data.instructor.id);
+            showAlert('Instructor "' + data.instructor.name + '" deleted!', 'warning');
+        }
+    });
+}
+</script>
+
+<!-- Include external assignment form handler -->
+<!-- <script src="{{ url_for('static', filename='assignment_form_handler.js') }}"></script> -->
 {% endblock %}

@@ -126,6 +126,18 @@ def handle_start_command(text, chat_id, school_id, bot):
         student.telegram_status = True
         db.session.commit()
         
+        # Emit real-time Telegram connection update
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('telegram_connected', {
+                    'school_id': student.school_id,
+                    'student_id': student.id,
+                    'student_name': f"{student.first_name} {student.last_name}"
+                }, room=f'school_{student.school_id}')
+        except Exception as e:
+            print(f"Socket.IO emit error: {e}")
+        
         # Send confirmation message
         school_name = student.school.name if student.school else "your school"
         bot.send_message(chat_id,
@@ -182,6 +194,18 @@ def handle_manual_registration(text, chat_id, school_id, bot):
                         student.telegram_chat_id = chat_id
                         student.telegram_status = True
                         db.session.commit()
+                        
+                        # Emit real-time Telegram connection update
+                        try:
+                            from flask import current_app
+                            if hasattr(current_app, 'socketio'):
+                                current_app.socketio.emit('telegram_connected', {
+                                    'school_id': student.school_id,
+                                    'student_id': student.id,
+                                    'student_name': f"{student.first_name} {student.last_name}"
+                                }, room=f'school_{student.school_id}')
+                        except Exception as e:
+                            print(f"Socket.IO emit error: {e}")
                         
                         # Send confirmation message
                         bot.send_message(chat_id,

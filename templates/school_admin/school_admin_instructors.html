@@ -15,6 +15,9 @@
   {% endif %}
 {% endwith %}
 
+<!-- Success/Error Alert Container -->
+<div id="alertContainer" class="fixed top-20 right-6 z-50"></div>
+
 <div class="bg-gradient-to-br from-slate-50 to-blue-50 rounded-2xl shadow-xl p-8 mt-6 border border-slate-200">
     <div class="flex justify-between items-center mb-8">
         <h1 class="text-4xl font-bold bg-gradient-to-r from-blue-800 to-blue-600 bg-clip-text text-transparent flex items-center gap-3">
@@ -640,20 +643,10 @@ function handleInstructorSubmit(e) {
     .then(data => {
         console.log('Response data:', data);
         if (data.success) {
-            showAlert(data.message, 'success');
+            // Don't show manual success message - let Socket.IO handle it
             closeInstructorModal();
             
-            if (isEditMode) {
-                updateInstructorCard(data.instructor || {
-                    id: currentInstructorId,
-                    name: document.querySelector('[name=name]').value,
-                    gender: document.querySelector('[name=gender]').value,
-                    email: document.querySelector('[name=email]').value,
-                    address: document.querySelector('[name=address]').value
-                });
-            } else {
-                addInstructorCard(data.instructor);
-            }
+            // Don't manually add/update here - let Socket.IO handle it
         } else {
             showAlert(data.message, 'error');
         }
@@ -698,9 +691,10 @@ function handleDeleteSubmit(e) {
     .then(data => {
         console.log('Delete response:', data);
         if (data.success) {
-            showAlert(data.message, 'success');
+            // Don't show manual success message - let Socket.IO handle it
             closeDeleteModal();
-            removeInstructorCard(data.instructor_id || currentInstructorId);
+            
+            // Don't manually remove here - let Socket.IO handle it
         } else {
             showAlert(data.message, 'error');
         }
@@ -876,32 +870,82 @@ function createInstructorCard(instructor) {
     return card;
 }
 
-// Alert system
+// Enhanced Alert system with better styling and animations
 function showAlert(message, type) {
-    const alertContainer = document.querySelector('.mt-4') || createAlertContainer();
+    const container = document.getElementById('alertContainer') || document.body;
     
-    const alertClass = type === 'success' ? 'green' : type === 'error' ? 'red' : 'blue';
+    // Define enhanced alert configurations
+    const alertConfigs = {
+        success: {
+            bgColor: 'bg-gradient-to-r from-emerald-50 to-green-50',
+            borderColor: 'border-emerald-200',
+            textColor: 'text-emerald-800',
+            iconColor: 'text-emerald-500',
+            icon: 'fas fa-check-circle',
+            shadowColor: 'shadow-emerald-200/50'
+        },
+        info: {
+            bgColor: 'bg-gradient-to-r from-blue-50 to-cyan-50',
+            borderColor: 'border-blue-200',
+            textColor: 'text-blue-800',
+            iconColor: 'text-blue-500',
+            icon: 'fas fa-info-circle',
+            shadowColor: 'shadow-blue-200/50'
+        },
+        warning: {
+            bgColor: 'bg-gradient-to-r from-orange-50 to-amber-50',
+            borderColor: 'border-orange-200',
+            textColor: 'text-orange-800',
+            iconColor: 'text-orange-500',
+            icon: 'fas fa-exclamation-triangle',
+            shadowColor: 'shadow-orange-200/50'
+        },
+        error: {
+            bgColor: 'bg-gradient-to-r from-red-50 to-rose-50',
+            borderColor: 'border-red-200',
+            textColor: 'text-red-800',
+            iconColor: 'text-red-500',
+            icon: 'fas fa-times-circle',
+            shadowColor: 'shadow-red-200/50'
+        }
+    };
+    
+    const config = alertConfigs[type] || alertConfigs.info;
     
     const alert = document.createElement('div');
-    alert.className = `alert bg-${alertClass}-100 border border-${alertClass}-400 text-${alertClass}-700 px-4 py-3 rounded mb-4 opacity-0 transform translate-y-2 transition-all duration-300`;
-    alert.textContent = message;
+    alert.className = `fixed top-20 right-6 z-50 max-w-md ${config.bgColor} ${config.borderColor} ${config.textColor} border-l-4 rounded-lg shadow-lg ${config.shadowColor} opacity-0 transform translate-x-full transition-all duration-500 ease-out`;
     
-    alertContainer.appendChild(alert);
+    alert.innerHTML = `
+        <div class="flex items-start p-4">
+            <div class="flex-shrink-0 mr-3">
+                <i class="${config.icon} ${config.iconColor} text-xl"></i>
+            </div>
+            <div class="flex-1">
+                <p class="text-sm font-medium leading-5">${message}</p>
+            </div>
+            <button class="flex-shrink-0 ml-4 ${config.textColor} hover:${config.textColor.replace('800', '600')} focus:outline-none" onclick="this.closest('div').parentElement.remove()">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+        </div>
+    `;
     
-    // Trigger animation
+    container.appendChild(alert);
+    
+    // Trigger slide-in animation
     setTimeout(() => {
-        alert.classList.remove('opacity-0', 'translate-y-2');
+        alert.classList.remove('opacity-0', 'translate-x-full');
+        alert.classList.add('opacity-100', 'translate-x-0');
     }, 100);
     
-    // Auto-remove after 5 seconds
+    // Auto-remove after 7 seconds with slide-out animation
     setTimeout(() => {
-        alert.classList.add('opacity-0', 'translate-y-2');
+        alert.classList.add('opacity-0', 'translate-x-full');
         setTimeout(() => {
             if (alert.parentNode) {
                 alert.remove();
             }
-        }, 300);
-    }, 5000);
+        }, 500);
+    }, 7000);
 }
 
 function createAlertContainer() {
@@ -1283,9 +1327,105 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Include external assignment form handler for additional functionality
 </script>
 
-<!-- Include external assignment form handler -->
-<!-- <script src="{{ url_for('static', filename='assignment_form_handler.js') }}"></script> -->
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
+<script>
+// Real-time Socket.IO integration
+const socket = io();
+const schoolId = {% if session.school_id %}{{ session.school_id }}{% else %}null{% endif %};
+
+// Debug connection status
+socket.on('connect', function() {
+    console.log('Socket.IO connected successfully');
+    if (schoolId) {
+        console.log('Joining school room:', schoolId);
+        socket.emit('join_school_room', { school_id: schoolId });
+    }
+});
+
+socket.on('disconnect', function() {
+    console.log('Socket.IO disconnected');
+});
+
+socket.on('connect_error', function(error) {
+    console.error('Socket.IO connection error:', error);
+});
+
+if (schoolId) {
+    
+    // Real-time instructor creation
+    socket.on('instructor_created', function(data) {
+        console.log('Received instructor_created event:', data);
+        if (data.school_id == schoolId) {
+            addInstructorToGrid(data.instructor);
+            showAlert('🎉 Instructor Added Successfully! Welcome ' + data.instructor.name + ' to your teaching staff. Their account is now active and ready to use.', 'success');
+        }
+    });
+    
+    // Real-time instructor updates
+    socket.on('instructor_updated', function(data) {
+        console.log('Received instructor_updated event:', data);
+        if (data.school_id == schoolId) {
+            updateInstructorInGrid(data.instructor);
+            showAlert('✏️ Instructor Profile Updated! ' + data.instructor.name + '\'s information has been successfully modified and saved to the system.', 'info');
+        }
+    });
+    
+    // Real-time instructor deletion
+    socket.on('instructor_deleted', function(data) {
+        console.log('Received instructor_deleted event:', data);
+        if (data.school_id == schoolId) {
+            removeInstructorFromGrid(data.instructor.id);
+            showAlert('🗑️ Instructor Removed! ' + data.instructor.name + ' has been permanently removed from your teaching staff and their access has been revoked.', 'warning');
+        }
+    });
+}
+
+// Helper functions for real-time updates  
+function addInstructorToGrid(instructor) {
+    const container = document.getElementById('instructorsContainer');
+    const instructorCard = createInstructorCard(instructor);
+    container.appendChild(instructorCard);
+    
+    // Animate in
+    instructorCard.style.opacity = '0';
+    instructorCard.style.transform = 'scale(0.9)';
+    setTimeout(() => {
+        instructorCard.style.opacity = '1';
+        instructorCard.style.transform = 'scale(1)';
+        instructorCard.style.transition = 'all 0.3s ease';
+    }, 50);
+}
+
+function updateInstructorInGrid(instructor) {
+    const existingCard = document.querySelector(`[data-instructor-id="${instructor.id}"]`);
+    if (existingCard) {
+        // Replace the entire card with updated content
+        const newCard = createInstructorCard(instructor);
+        existingCard.parentNode.replaceChild(newCard, existingCard);
+        
+        // Flash animation
+        newCard.style.backgroundColor = '#e0f2fe';
+        setTimeout(() => {
+            newCard.style.backgroundColor = '';
+        }, 1000);
+    }
+}
+
+function removeInstructorFromGrid(instructorId) {
+    const card = document.querySelector(`[data-instructor-id="${instructorId}"]`);
+    if (card) {
+        card.style.transition = 'all 0.3s ease';
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            card.remove();
+        }, 300);
+    }
+}
+</script>
+
 {% endblock %}

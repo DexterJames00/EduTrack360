@@ -2,6 +2,9 @@
 {% block title %}Sections | School Admin{% endblock %}
 
 {% block content %}
+<!-- Alert Container for Success Messages -->
+<div id="alertContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+
 <div class="bg-white rounded-2xl shadow-xl p-10 mt-6">
     <!-- Header -->
     <div class="flex justify-between items-center mb-8">
@@ -71,6 +74,24 @@
                 </div>
             </form>
             <p id="modalMessage" class="mt-4 text-center text-sm"></p>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div id="deleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-md relative mx-4">
+        <h3 class="text-2xl font-bold text-red-600 mb-4 flex items-center gap-3">
+            <i class="fa-solid fa-exclamation-triangle"></i> Confirm Delete
+        </h3>
+        <p class="text-slate-600 mb-6">Are you sure you want to delete section <strong id="deleteSectionName"></strong>? This action cannot be undone and will affect all students in this section.</p>
+        <div class="flex gap-4">
+            <button onclick="closeDeleteModal()" class="flex-1 bg-slate-300 text-slate-700 py-3 rounded-xl font-semibold hover:bg-slate-400 transition-colors duration-200">
+                Cancel
+            </button>
+            <button id="confirmDeleteBtn" onclick="confirmDeleteSection()" class="flex-1 bg-red-600 text-white py-3 rounded-xl font-semibold hover:bg-red-700 transition-colors duration-200">
+                Delete Section
+            </button>
         </div>
     </div>
 </div>
@@ -218,23 +239,12 @@ async function saveSection(event) {
         });
         const data = await res.json();
 
-        message.textContent = data.message;
-        message.className = data.success
-            ? 'text-green-600 mt-3 text-center text-sm'
-            : 'text-red-600 mt-3 text-center text-sm';
-
         if (data.success) {
-            if (editingSectionId) {
-                // Update existing section in the grid
-                updateSectionInGrid(editingSectionId, { name, grade_level });
-            } else {
-                // Add new section to the grid
-                addSectionToGrid(data.section);
-            }
-            
-            setTimeout(() => {
-                closeSectionModal();
-            }, 1000);
+            // Socket.IO will handle the success message and UI update
+            closeSectionModal();
+        } else {
+            message.textContent = data.message;
+            message.className = 'text-red-600 mt-3 text-center text-sm';
         }
     } catch (err) {
         console.error(err);
@@ -243,22 +253,56 @@ async function saveSection(event) {
     }
 }
 
+let deletingSectionId = null;
+let deletingSectionName = '';
+
 async function deleteSection(id) {
-    if (!confirm('Are you sure you want to delete this section?')) return;
+    // Find section name for modal display
+    const sectionElement = document.querySelector(`[data-section-id="${id}"]`);
+    const sectionNameElement = sectionElement ? sectionElement.querySelector('h3') : null;
+    const sectionName = sectionNameElement ? sectionNameElement.textContent : 'Unknown Section';
+    
+    deletingSectionId = id;
+    deletingSectionName = sectionName;
+    
+    document.getElementById('deleteSectionName').textContent = sectionName;
+    document.getElementById('deleteModal').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteModal').classList.add('hidden');
+    document.body.style.overflow = 'auto';
+    deletingSectionId = null;
+    deletingSectionName = '';
+}
+
+async function confirmDeleteSection() {
+    if (!deletingSectionId) return;
+    
+    const confirmBtn = document.getElementById('confirmDeleteBtn');
+    const originalText = confirmBtn.innerHTML;
+    confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Deleting...';
+    confirmBtn.disabled = true;
+    
     try {
-        const res = await fetch(`/school_admin/delete/section/${id}`, { method: 'DELETE' });
+        const res = await fetch(`/school_admin/delete/section/${deletingSectionId}`, { method: 'DELETE' });
         const data = await res.json();
         
-        if (data.success) {
-            // Remove section from grid without refreshing
-            removeSectionFromGrid(id);
-        }
+        closeDeleteModal();
         
-        // Show message with appropriate styling
-        showMessage(data.message, data.success ? 'success' : 'error');
+        if (data.success) {
+            // Socket.IO will handle the UI update and show success message
+        } else {
+            showAlert(data.message, 'error');
+        }
     } catch (err) {
-        showMessage('Error deleting section.', 'error');
+        closeDeleteModal();
+        showAlert('Error deleting section. Please try again.', 'error');
         console.error(err);
+    } finally {
+        confirmBtn.innerHTML = originalText;
+        confirmBtn.disabled = false;
     }
 }
 
@@ -369,15 +413,22 @@ function addSectionToGrid(section) {
 function updateSectionInGrid(sectionId, sectionData) {
     const sectionElement = document.querySelector(`[data-section-id="${sectionId}"]`);
     if (sectionElement) {
-        const nameElement = sectionElement.querySelector('h2');
-        const gradeElement = sectionElement.querySelector('p b');
+        // Find the correct elements in the section card structure
+        const nameElement = sectionElement.querySelector('h3'); // Section name is in h3
+        const gradeElement = sectionElement.querySelector('p.text-sm'); // Grade level is in p.text-sm
         const editButton = sectionElement.querySelector('button[onclick*="editSection"]');
         
-        nameElement.textContent = sectionData.name;
-        gradeElement.textContent = sectionData.grade_level;
-        editButton.setAttribute('onclick', `editSection(${sectionId}, '${sectionData.name}', '${sectionData.grade_level}')`);
+        if (nameElement) {
+            nameElement.textContent = sectionData.name;
+        }
+        if (gradeElement) {
+            gradeElement.textContent = sectionData.grade_level;
+        }
+        if (editButton) {
+            editButton.setAttribute('onclick', `editSection(${sectionId}, '${sectionData.name}', '${sectionData.grade_level}')`);
+        }
         
-        // Add a brief highlight effect
+        // Add a brief highlight effect to show the update
         sectionElement.style.transform = 'scale(1.02)';
         sectionElement.style.boxShadow = '0 8px 25px rgba(59, 130, 246, 0.3)';
         setTimeout(() => {
@@ -407,28 +458,133 @@ function removeSectionFromGrid(sectionId) {
     }
 }
 
-// Helper function to show temporary messages
-function showMessage(message, type) {
-    const messageDiv = document.createElement('div');
-    messageDiv.className = `fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg z-50 transition-all duration-300 ${
-        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-    }`;
-    messageDiv.textContent = message;
+// Enhanced Alert System with Beautiful Styling
+function showAlert(message, type = 'info') {
+    const alertContainer = document.getElementById('alertContainer');
+    if (!alertContainer) {
+        console.error('Alert container not found');
+        return;
+    }
     
-    document.body.appendChild(messageDiv);
+    const alertTypes = {
+        success: {
+            bg: 'bg-gradient-to-r from-green-500 to-emerald-500',
+            text: 'text-white',
+            icon: 'fa-check-circle',
+            iconColor: 'text-green-100'
+        },
+        error: {
+            bg: 'bg-gradient-to-r from-red-500 to-pink-500',
+            text: 'text-white', 
+            icon: 'fa-exclamation-circle',
+            iconColor: 'text-red-100'
+        },
+        warning: {
+            bg: 'bg-gradient-to-r from-yellow-500 to-orange-500',
+            text: 'text-white',
+            icon: 'fa-exclamation-triangle',
+            iconColor: 'text-yellow-100'
+        },
+        info: {
+            bg: 'bg-gradient-to-r from-blue-500 to-indigo-500',
+            text: 'text-white',
+            icon: 'fa-info-circle',
+            iconColor: 'text-blue-100'
+        }
+    };
+    
+    const config = alertTypes[type] || alertTypes.info;
+    
+    const alert = document.createElement('div');
+    alert.className = `
+        ${config.bg} ${config.text} px-6 py-4 rounded-xl shadow-2xl 
+        border-l-4 border-white/30 backdrop-blur-sm
+        transform translate-x-full transition-all duration-500 ease-out
+        flex items-center gap-3 min-w-80 max-w-md
+    `.replace(/\s+/g, ' ').trim();
+    
+    alert.innerHTML = `
+        <i class="fas ${config.icon} ${config.iconColor} text-lg flex-shrink-0"></i>
+        <span class="flex-1 font-medium">${message}</span>
+        <button onclick="this.parentElement.remove()" class="text-white/70 hover:text-white transition-colors ml-2">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    alertContainer.appendChild(alert);
     
     // Slide in animation
     setTimeout(() => {
-        messageDiv.style.transform = 'translateX(0)';
-    }, 10);
+        alert.style.transform = 'translateX(0)';
+    }, 100);
     
-    // Remove after 3 seconds
+    // Auto remove after 5 seconds
     setTimeout(() => {
-        messageDiv.style.transform = 'translateX(100%)';
-        setTimeout(() => {
-            document.body.removeChild(messageDiv);
-        }, 300);
-    }, 3000);
+        if (alert.parentElement) {
+            alert.style.transform = 'translateX(100%)';
+            setTimeout(() => {
+                if (alert.parentElement) {
+                    alert.remove();
+                }
+            }, 500);
+        }
+    }, 5000);
 }
+
+// Modal event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    // Close modals when clicking outside
+    document.getElementById('deleteModal').addEventListener('click', function(e) {
+        if (e.target === this) {
+            closeDeleteModal();
+        }
+    });
+    
+    // Close modals on Escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+});
+
+// Real-time Socket.IO integration
+document.addEventListener('DOMContentLoaded', function() {
+    const socket = io();
+    const schoolId = {% if session.school_id %}{{ session.school_id }}{% else %}null{% endif %};
+    const currentUser = "{{ session.username or 'Administrator' }}";
+    
+    if (schoolId) {
+        socket.emit('join_school_room', { school_id: schoolId });
+        
+        // Real-time section creation
+        socket.on('section_created', function(data) {
+            if (data.school_id == schoolId) {
+                addSectionToGrid(data.section);
+                showAlert(`📂 Section "${data.section.name}" created by ${currentUser}!`, 'success');
+            }
+        });
+        
+        // Real-time section updates
+        socket.on('section_updated', function(data) {
+            if (data.school_id == schoolId) {
+                updateSectionInGrid(data.section.id, data.section);
+                showAlert(`📝 Section "${data.section.name}" updated by ${currentUser}!`, 'success');
+            }
+        });
+        
+        // Real-time section deletion
+        socket.on('section_deleted', function(data) {
+            if (data.school_id == schoolId) {
+                removeSectionFromGrid(data.section.id);
+                showAlert(`🗑️ Section "${data.section.name}" deleted by ${currentUser}!`, 'warning');
+            }
+        });
+    }
+});
 </script>
+
+<!-- Socket.IO for real-time updates -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+
 {% endblock %}

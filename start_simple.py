@@ -24,8 +24,8 @@ def main():
         python_cmd, '-c', '''
 import sys
 sys.path.append(".")
-from app_clean import app
-app.run(debug=False, host="0.0.0.0", port=5000, use_reloader=False)
+from app_realtime import app, socketio
+socketio.run(app, debug=False, host="0.0.0.0", port=5000, use_reloader=False)
 '''], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
     
     # Wait for Flask
@@ -82,7 +82,7 @@ app.run(debug=False, host="0.0.0.0", port=5000, use_reloader=False)
             python_cmd, '-c', f'''
 import sys
 sys.path.append(".")
-from app_clean import app
+from app_realtime import app
 from models import TelegramConfig
 import requests
 
