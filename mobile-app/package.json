@@ -1,0 +1,39 @@
+{
+  "name": "edutrack360-mobile",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.ts",
+  "scripts": {
+    "start": "expo start",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "type-check": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx,.js"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@react-navigation/bottom-tabs": "^6.5.11",
+    "@react-navigation/native": "^6.1.9",
+    "@react-navigation/stack": "^6.3.20",
+    "axios": "^1.6.0",
+    "date-fns": "^2.30.0",
+    "expo": "^54.0.21",
+    "react": "19.1.0",
+    "react-native": "0.81.5",
+    "react-native-gesture-handler": "~2.28.0",
+    "react-native-paper": "^5.14.5",
+    "react-native-safe-area-context": "~5.6.0",
+    "react-native-screens": "~4.16.0",
+    "socket.io-client": "^4.7.2"
+  },
+  "devDependencies": {
+    "@react-native/eslint-config": "^0.74.0",
+    "@types/react": "~19.1.10",
+    "babel-plugin-module-resolver": "^5.0.0",
+    "babel-preset-expo": "^54.0.6",
+    "eslint": "^8.57.0",
+    "typescript": "~5.9.2"
+  }
+}

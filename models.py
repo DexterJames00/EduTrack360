@@ -64,6 +64,16 @@ class Student(db.Model):
     attendances = db.relationship('Attendance', backref='student', lazy=True)
     notifications = db.relationship('Notification', backref='student', lazy=True)
 
+class ParentAccount(db.Model):
+    __tablename__ = 'parent_accounts'
+    id = db.Column(db.Integer, primary_key=True)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), unique=True, nullable=False)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    student = db.relationship('Student', backref=db.backref('parent_account', uselist=False))
+    school = db.relationship('School')
+
 class Section(db.Model):
     __tablename__ = 'sections'
 
@@ -193,6 +203,165 @@ class ActivityLog(db.Model):
             "timestamp": self.timestamp.isoformat() if self.timestamp else None
         }
 
+
+# Messaging Models for Mobile App
+class Conversation(db.Model):
+    __tablename__ = 'conversations'
     
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    participant1_id = db.Column(db.Integer, nullable=False)  # User ID from SchoolInstructorAccount or Student
+    participant1_type = db.Column(db.String(20), nullable=False)  # 'instructor', 'student', 'admin'
+    participant2_id = db.Column(db.Integer, nullable=False)
+    participant2_type = db.Column(db.String(20), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.datetime.utcnow, onupdate=datetime.datetime.utcnow)
+    
+    # Relationships
+    messages = db.relationship('Message', backref='conversation', lazy='dynamic', cascade='all, delete-orphan')
+    school = db.relationship('School', backref='conversations')
+    
+    def get_participant_info(self, participant_id, participant_type):
+        """Get participant name and details"""
+        if participant_type == 'instructor':
+            account = SchoolInstructorAccount.query.get(participant_id)
+            if account and account.instructor:
+                return {
+                    'id': account.id,
+                    'name': account.instructor.name,
+                    'role': 'instructor',
+                    'email': account.instructor.email
+                }
+        elif participant_type == 'parent':
+            from models import ParentAccount, Student as StudentModel
+            parent = ParentAccount.query.get(participant_id)
+            if parent:
+                s = StudentModel.query.get(parent.student_id)
+                display = f"Parent of {s.first_name} {s.last_name}" if s else 'Parent'
+                return {
+                    'id': parent.id,
+                    'name': display,
+                    'role': 'parent',
+                    'email': None
+                }
+        elif participant_type == 'student':
+            student = Student.query.get(participant_id)
+            if student:
+                return {
+                    'id': student.id,
+                    'name': student.name,
+                    'role': 'student',
+                    'email': student.email if hasattr(student, 'email') else None
+                }
+        elif participant_type == 'admin':
+            admin = SchoolAdmin.query.get(participant_id)
+            if admin:
+                return {
+                    'id': admin.id,
+                    'name': admin.username,
+                    'role': 'school_admin',
+                    'email': None
+                }
+        return None
+    
+    def to_dict(self, current_user_id, current_user_type):
+        """Convert to dictionary for API response"""
+        # Determine the other participant
+        if self.participant1_id == current_user_id and self.participant1_type == current_user_type:
+            other_id = self.participant2_id
+            other_type = self.participant2_type
+        else:
+            other_id = self.participant1_id
+            other_type = self.participant1_type
+        
+        other_participant = self.get_participant_info(other_id, other_type)
+        
+        # Get last message
+        last_msg = self.messages.order_by(Message.timestamp.desc()).first()
+        
+        # Count unread messages for current user
+        unread_count = self.messages.filter(
+            Message.receiver_id == current_user_id,
+            Message.receiver_type == current_user_type,
+            Message.is_read == False
+        ).count()
+        
+        return {
+            'id': self.id,
+            'participantId': other_participant['id'] if other_participant else 0,
+            'participantName': other_participant['name'] if other_participant else 'Unknown',
+            'participantRole': other_participant['role'] if other_participant else 'unknown',
+            'lastMessage': last_msg.content if last_msg else None,
+            'lastMessageTime': last_msg.timestamp.isoformat() if last_msg else None,
+            'unreadCount': unread_count,
+            'avatar': None
+        }
+
+
+class Message(db.Model):
+    __tablename__ = 'messages'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
+    sender_id = db.Column(db.Integer, nullable=False)
+    sender_type = db.Column(db.String(20), nullable=False)  # 'instructor', 'student', 'admin'
+    receiver_id = db.Column(db.Integer, nullable=False)
+    receiver_type = db.Column(db.String(20), nullable=False)
+    content = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+    is_read = db.Column(db.Boolean, default=False)
+    message_type = db.Column(db.String(50), default='text')  # 'text', 'announcement', 'notification'
+    
+    def get_sender_info(self):
+        """Get sender details"""
+        if self.sender_type == 'instructor':
+            account = SchoolInstructorAccount.query.get(self.sender_id)
+            if account and account.instructor:
+                return {
+                    'name': account.instructor.name,
+                    'role': 'instructor'
+                }
+        elif self.sender_type == 'parent':
+            from models import ParentAccount, Student as StudentModel
+            parent = ParentAccount.query.get(self.sender_id)
+            if parent:
+                s = StudentModel.query.get(parent.student_id)
+                display = f"Parent of {s.first_name} {s.last_name}" if s else 'Parent'
+                return {
+                    'name': display,
+                    'role': 'parent'
+                }
+        elif self.sender_type == 'student':
+            student = Student.query.get(self.sender_id)
+            if student:
+                return {
+                    'name': student.name,
+                    'role': 'student'
+                }
+        elif self.sender_type == 'admin':
+            admin = SchoolAdmin.query.get(self.sender_id)
+            if admin:
+                return {
+                    'name': admin.username,
+                    'role': 'school_admin'
+                }
+        return {'name': 'Unknown', 'role': 'unknown'}
+    
+    def to_dict(self):
+        """Convert to dictionary for API response"""
+        sender_info = self.get_sender_info()
+        
+        return {
+            'id': self.id,
+            'conversationId': self.conversation_id,
+            'senderId': self.sender_id,
+            'senderName': sender_info['name'],
+            'senderRole': sender_info['role'],
+            'receiverId': self.receiver_id,
+            'content': self.content,
+            'timestamp': self.timestamp.isoformat(),
+            'isRead': self.is_read,
+            'type': self.message_type
+        }
 
 

@@ -29,3 +29,13 @@ ngrok.log
 
 # Instance config
 instance/
+
+# Node / Expo
+mobile-app/node_modules/
+mobile-app/.expo/
+.expo/
+
+# Build artifacts
+build/
+dist/
+coverage/

@@ -36,6 +36,15 @@ from blueprints.school_admin.crud_assignment import assignment_bp as crud_assign
 from blueprints.school_admin.crud_telegram import telegram_bp
 from blueprints.school_admin.logs import logs_bp
 
+# Import mobile app API blueprints
+from blueprints.api.auth_api import auth_api
+from blueprints.api.messaging_api import messaging_api
+from blueprints.api.school_api import school_api
+try:
+    from blueprints.api.attendance_api import attendance_api
+except Exception as e:
+    attendance_api = None
+
 # Register blueprints
 app.register_blueprint(auth_bp)
 app.register_blueprint(main_admin_bp)
@@ -49,6 +58,13 @@ app.register_blueprint(crud_subject_bp)
 app.register_blueprint(crud_assignment_bp)
 app.register_blueprint(telegram_bp, url_prefix='/school_admin')
 app.register_blueprint(logs_bp)
+
+# Register mobile app API blueprints
+app.register_blueprint(auth_api)
+app.register_blueprint(messaging_api)
+app.register_blueprint(school_api)
+if attendance_api is not None:
+    app.register_blueprint(attendance_api)
 
 # Make socketio available to blueprints
 app.socketio = socketio
@@ -78,6 +94,41 @@ def handle_join_school_room(data):
         print(f"🏠 User joined school_{school_id} room")
         # Send confirmation to the client
         emit('status', {'message': f'Joined school_{school_id} room', 'type': 'success'})
+
+@socketio.on('join_school')
+def handle_join_school(data):
+    """Handle mobile app user joining their school room"""
+    school_id = data.get('schoolId')
+    if school_id:
+        room = f'school_{school_id}'
+        join_room(room)
+        print(f"📱 Mobile user joined {room}")
+        emit('joined', {'room': room})
+
+@socketio.on('send_message')
+def handle_send_message(data):
+    """Handle real-time message sending from mobile app"""
+    # This is optional - messages are primarily sent via REST API
+    # Can be used for typing indicators or other real-time features
+    pass
+
+@socketio.on('typing')
+def handle_typing(data):
+    """Relay typing indicator events to school room.
+    Expected payload: { schoolId, conversationId, userId, isTyping }
+    """
+    school_id = (data or {}).get('schoolId')
+    if not school_id:
+        return
+    try:
+        emit_payload = {
+            'conversationId': data.get('conversationId'),
+            'userId': data.get('userId'),
+            'isTyping': bool(data.get('isTyping')),
+        }
+        socketio.emit('typing', emit_payload, room=f'school_{school_id}')
+    except Exception as e:
+        print(f"typing relay error: {e}")
 
 @socketio.on('join')
 def handle_join():

@@ -3,7 +3,7 @@ from database import db
 from models import Attendance, Student, Subject, InstructorSchedule, Section, Instructor
 from datetime import datetime, date
 from sqlalchemy import func, case
-from telegram_bot import send_attendance_notification
+from models import Conversation, Message, SchoolInstructorAccount
 
 attendance_bp = Blueprint('instructor_attendance', __name__)
 
@@ -195,51 +195,93 @@ def record_attendance(sched_id):
             except Exception as e:
                 print(f"Socket.IO emit error: {e}")
             
-            # Send Telegram notifications to students
+            # Send app notifications to parents via messaging
             subject = Subject.query.get(schedule.subject_id)
-            
-            notification_count = 0
-            students_with_telegram = 0
-            students_without_telegram = 0
+            instructor_account = SchoolInstructorAccount.query.filter_by(instructor_id=instructor_id, school_id=school_id).first()
+            app_notifications = 0
             failed_notifications = 0
-            students_without_chat_list = []
-            
             for record in attendance_records:
                 try:
-                    # Check if student has telegram_chat_id
                     student = Student.query.get(record.student_id)
-                    if student and student.telegram_chat_id:
-                        students_with_telegram += 1
-                        success = send_attendance_notification(
-                            student_id=record.student_id,
-                            subject_name=subject.name if subject else 'Unknown Subject',
-                            date=attendance_date.strftime('%Y-%m-%d'),
-                            status=record.status,
-                            start_time=schedule.start_time,
-                            end_time=schedule.end_time,
-                            school_id=school_id
+                    if not student:
+                        continue
+                    # Ensure parent account exists
+                    from models import ParentAccount
+                    parent = ParentAccount.query.filter_by(student_id=student.id).first()
+                    if not parent:
+                        parent = ParentAccount(student_id=student.id, school_id=school_id)
+                        db.session.add(parent)
+                        db.session.commit()
+                    # Find or create conversation instructor <-> parent
+                    conv = Conversation.query.filter(
+                        Conversation.school_id == school_id,
+                        db.or_(
+                            db.and_(
+                                Conversation.participant1_id == (instructor_account.id if instructor_account else 0),
+                                Conversation.participant1_type == 'instructor',
+                                Conversation.participant2_id == parent.id,
+                                Conversation.participant2_type == 'parent'
+                            ),
+                            db.and_(
+                                Conversation.participant1_id == parent.id,
+                                Conversation.participant1_type == 'parent',
+                                Conversation.participant2_id == (instructor_account.id if instructor_account else 0),
+                                Conversation.participant2_type == 'instructor'
+                            )
                         )
-                        if success:
-                            notification_count += 1
-                        else:
-                            failed_notifications += 1
-                    else:
-                        students_without_telegram += 1
-                        if student:
-                            students_without_chat_list.append(f"{student.first_name} {student.last_name}")
-                        else:
-                            students_without_chat_list.append(f"Student ID {record.student_id}")
-                        
+                    ).first()
+                    if not conv:
+                        conv = Conversation(
+                            school_id=school_id,
+                            participant1_id=(instructor_account.id if instructor_account else 0),
+                            participant1_type='instructor',
+                            participant2_id=parent.id,
+                            participant2_type='parent'
+                        )
+                        db.session.add(conv)
+                        db.session.commit()
+                    # Compose message
+                    content = (
+                        f"Attendance for {student.first_name} {student.last_name} on {attendance_date.strftime('%Y-%m-%d')}\n"
+                        f"Subject: {subject.name if subject else 'Unknown'}\n"
+                        f"Status: {record.status}\n"
+                        f"Time: {schedule.start_time} - {schedule.end_time}"
+                    )
+                    msg = Message(
+                        conversation_id=conv.id,
+                        sender_id=(instructor_account.id if instructor_account else 0),
+                        sender_type='instructor',
+                        receiver_id=parent.id,
+                        receiver_type='parent',
+                        content=content,
+                        message_type='notification'
+                    )
+                    db.session.add(msg)
+                    conv.updated_at = datetime.now()
+                    db.session.commit()
+                    # Emit to school room
+                    try:
+                        from flask import current_app
+                        if hasattr(current_app, 'socketio'):
+                            current_app.socketio.emit('new_message', {
+                                'id': msg.id,
+                                'conversationId': conv.id,
+                                'senderId': msg.sender_id,
+                                'content': msg.content,
+                                'timestamp': msg.timestamp.isoformat(),
+                                'type': msg.message_type
+                            }, room=f'school_{school_id}')
+                    except Exception as e:
+                        print(f"Socket.IO emit error (attendance notify): {e}")
+                    app_notifications += 1
                 except Exception as e:
                     failed_notifications += 1
-                    print(f"Failed to send notification to student {record.student_id}: {str(e)}")
-            
+                    print(f"Failed to create app notification for student {record.student_id}: {str(e)}")
+
             # Create detailed success message
             success_message = f'Attendance recorded successfully for {len(attendance_records)} students'
-            if notification_count > 0:
-                success_message += f' and {notification_count} Telegram notifications sent'
-            if students_without_telegram > 0:
-                success_message += f' ({students_without_telegram} students without Telegram)'
+            if app_notifications > 0:
+                success_message += f' and {app_notifications} app notifications sent'
             
             # Return JSON response for AJAX requests
             if is_ajax:
@@ -247,11 +289,9 @@ def record_attendance(sched_id):
                     'success': True,
                     'message': success_message,
                     'students_recorded': len(attendance_records),
-                    'notifications_sent': notification_count,
-                    'students_with_telegram': students_with_telegram,
-                    'students_without_telegram': students_without_telegram,
+                    'notifications_sent': app_notifications,
                     'failed_notifications': failed_notifications,
-                    'students_without_chat_list': students_without_chat_list,
+                    'students_without_chat_list': [],
                     'date': attendance_date.strftime('%Y-%m-%d')
                 })
             

@@ -1,15 +1,14 @@
-from flask import Blueprint, request, jsonify, session, render_template, redirect, url_for, flash
+from flask import Blueprint, request, jsonify, session
 from database import db
-from models import Student, Notification, TelegramConfig
-import requests
+from models import Student, Notification, Conversation, Message, SchoolInstructorAccount, ParentAccount, Subject
 from datetime import datetime
-from sqlalchemy import func
+from sqlalchemy import func, or_, and_
 
 messaging_bp = Blueprint('instructor_messaging', __name__)
 
 @messaging_bp.route('/message/send', methods=['POST'])
 def send_message():
-    """Send message to student's parent via Telegram"""
+    """Send message to student's parent via in-app messaging"""
     if 'instructor_id' not in session:
         return jsonify({'error': 'Not authorized'}), 401
     
@@ -30,83 +29,117 @@ def send_message():
         if not student:
             return jsonify({'error': 'Student not found'}), 404
         
-        # Check if student has Telegram connected
-        if not student.telegram_chat_id:
-            return jsonify({
-                'error': f'{student.first_name} {student.last_name} does not have Telegram connected',
-                'student_name': f'{student.first_name} {student.last_name}',
-                'no_telegram': True
-            }), 400
-        
-        # Get global bot configuration (active bot)
-        telegram_config = TelegramConfig.query.filter_by(is_active=True).first()
-        if not telegram_config:
-            return jsonify({'error': 'No active telegram bot configuration found'}), 400
-        
-        # Format message with student, instructor, and subject details
+        # Ensure a ParentAccount exists for this student
+        parent = ParentAccount.query.filter_by(student_id=student.id).first()
+        if not parent:
+            parent = ParentAccount(student_id=student.id, school_id=student.school_id)
+            db.session.add(parent)
+            db.session.commit()
+
+        # Find instructor account
+        instructor_id = session['instructor_id']
+        school_id = session['school_id']
+        instructor_account = SchoolInstructorAccount.query.filter_by(instructor_id=instructor_id, school_id=school_id).first()
+
+        # Find or create a conversation between instructor and parent
+        conversation = Conversation.query.filter(
+            Conversation.school_id == school_id,
+            or_(
+                and_(
+                    Conversation.participant1_id == (instructor_account.id if instructor_account else 0),
+                    Conversation.participant1_type == 'instructor',
+                    Conversation.participant2_id == parent.id,
+                    Conversation.participant2_type == 'parent'
+                ),
+                and_(
+                    Conversation.participant1_id == parent.id,
+                    Conversation.participant1_type == 'parent',
+                    Conversation.participant2_id == (instructor_account.id if instructor_account else 0),
+                    Conversation.participant2_type == 'instructor'
+                )
+            )
+        ).first()
+
+        if not conversation:
+            conversation = Conversation(
+                school_id=school_id,
+                participant1_id=(instructor_account.id if instructor_account else 0),
+                participant1_type='instructor',
+                participant2_id=parent.id,
+                participant2_type='parent'
+            )
+            db.session.add(conversation)
+            db.session.commit()
+
+        # Build a nicely formatted message body
         instructor_name = session.get('instructor_name', 'Instructor')
-        formatted_message = f"""📚 *ACADEMIC NOTIFICATION*
-
-👤 **Student:** {student.first_name} {student.last_name}
-📖 **Subject:** {subject_name}
-👨‍🏫 **From:** {instructor_name}
-🏫 **School:** {student.school.name if student.school else 'School'}
-📅 **Date:** {datetime.now().strftime('%B %d, %Y at %I:%M %p')}
-
-💬 **Message:**
-{message}
-
----
-*This is an automated message from your school's attendance system. Please contact your instructor if you have any questions.*"""
-        
-        # Send message via Telegram
-        success = send_telegram_message(
-            telegram_config.bot_token,
-            student.telegram_chat_id,
-            formatted_message
+        if not subject_name:
+            # Try resolve subject name if possible
+            subj = Subject.query.filter_by(school_id=school_id).first()
+            subject_name = subj.name if subj else 'Subject'
+        formatted_message = (
+            f"📚 Academic Notification\n\n"
+            f"👤 Student: {student.first_name} {student.last_name}\n"
+            f"📖 Subject: {subject_name}\n"
+            f"👨‍🏫 From: {instructor_name}\n"
+            f"🏫 School: {student.school.name if student.school else 'School'}\n"
+            f"📅 Date: {datetime.now().strftime('%B %d, %Y at %I:%M %p')}\n\n"
+            f"💬 Message:\n{message}"
         )
-        
-        # Create notification record
+
+        # Create Message
+        msg = Message(
+            conversation_id=conversation.id,
+            sender_id=(instructor_account.id if instructor_account else 0),
+            sender_type='instructor',
+            receiver_id=parent.id,
+            receiver_type='parent',
+            content=formatted_message,
+            message_type='text'
+        )
+        db.session.add(msg)
+        conversation.updated_at = datetime.now()
+        db.session.commit()
+
+        # Emit socket event to the school's room
+        try:
+            from flask import current_app
+            if hasattr(current_app, 'socketio'):
+                current_app.socketio.emit('new_message', {
+                    'id': msg.id,
+                    'conversationId': conversation.id,
+                    'senderId': msg.sender_id,
+                    'content': msg.content,
+                    'timestamp': msg.timestamp.isoformat(),
+                    'type': msg.message_type
+                }, room=f'school_{school_id}')
+        except Exception as e:
+            # Non-fatal
+            print(f"Socket emit failed: {e}")
+
+        # Record a notification log for history
         notification = Notification(
             student_id=student_id,
-            type='SMS',  # Using SMS type for Telegram messages
+            type='SMS',
             message=message,
-            status='Sent' if success else 'Failed'
+            status='Sent'
         )
         db.session.add(notification)
         db.session.commit()
-        
-        if success:
-            return jsonify({
-                'success': True,
-                'message': f'Message sent successfully to {student.first_name} {student.last_name}',
-                'student_name': f'{student.first_name} {student.last_name}',
-                'subject_name': subject_name,
-                'sent_at': datetime.now().strftime('%B %d, %Y at %I:%M %p')
-            })
-        else:
-            return jsonify({'error': 'Failed to send message'}), 500
+
+        return jsonify({
+            'success': True,
+            'message': f'Message sent successfully to {student.first_name} {student.last_name}',
+            'student_name': f'{student.first_name} {student.last_name}',
+            'subject_name': subject_name,
+            'sent_at': datetime.now().strftime('%B %d, %Y at %I:%M %p')
+        })
             
     except Exception as e:
         db.session.rollback()
         return jsonify({'error': f'Error sending message: {str(e)}'}), 500
 
-def send_telegram_message(bot_token, chat_id, message):
-    """Send message via Telegram Bot API"""
-    try:
-        url = f"https://api.telegram.org/bot{bot_token}/sendMessage"
-        payload = {
-            'chat_id': chat_id,
-            'text': message,
-            'parse_mode': 'Markdown'
-        }
-        
-        response = requests.post(url, json=payload, timeout=10)
-        return response.status_code == 200
-        
-    except Exception as e:
-        print(f"Error sending Telegram message: {e}")
-        return False
+## Telegram helper removed: messaging now delivered in-app via Socket.IO and Message model
 
 @messaging_bp.route('/message/templates', methods=['GET'])
 def get_message_templates():
