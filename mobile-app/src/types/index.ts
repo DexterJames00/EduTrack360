@@ -2,9 +2,13 @@ export type UserRole = 'instructor' | 'school_admin' | 'student' | 'admin' | 'pa
 
 export interface User {
   id: number;
-  username: string;
+  username: string; // may be student ID for parent
   role: UserRole;
-  school_id: number;
+  school_id?: number;
+  schoolId?: number;
+  firstName?: string;
+  lastName?: string;
+  email?: string | null;
 }
 
 export interface Conversation {
@@ -23,6 +27,8 @@ export interface Message {
   content: string;
   created_at: string;
   is_read?: boolean;
+  type?: string;
 }
 
 export * from './attendance';
+export * from './meetings';

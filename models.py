@@ -123,6 +123,22 @@ class Notification(db.Model):
     status = db.Column(db.Enum('Sent','Failed','Pending'), default='Pending')
     timestamp = db.Column(db.DateTime, server_default=db.func.current_timestamp())
 
+class Meeting(db.Model):
+    __tablename__ = 'meetings'
+    id = db.Column(db.Integer, primary_key=True)
+    school_id = db.Column(db.Integer, db.ForeignKey('schools.id'), nullable=False)
+    instructor_id = db.Column(db.Integer, db.ForeignKey('instructors.id'), nullable=False)
+    student_id = db.Column(db.Integer, db.ForeignKey('students.id'), nullable=False)
+    subject_id = db.Column(db.Integer, db.ForeignKey('subjects.id'), nullable=True)
+    title = db.Column(db.String(150), nullable=False)
+    description = db.Column(db.Text, nullable=True)
+    meeting_date = db.Column(db.Date, nullable=False)
+    start_time = db.Column(db.String(5), nullable=False)  # HH:MM
+    end_time = db.Column(db.String(5), nullable=False)
+    location = db.Column(db.String(255), nullable=True)
+    status = db.Column(db.Enum('scheduled', 'cancelled', 'completed'), default='scheduled', nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
 class InstructorSchedule(db.Model):
     __tablename__ = 'instructor_sched'
     id = db.Column(db.Integer, primary_key=True)
@@ -363,5 +379,9 @@ class Message(db.Model):
             'isRead': self.is_read,
             'type': self.message_type
         }
+
+
+
+ 
 
 

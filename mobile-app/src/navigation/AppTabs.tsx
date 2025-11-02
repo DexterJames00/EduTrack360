@@ -4,10 +4,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import SchoolScreen from '@screens/SchoolScreen';
 import ChatListScreen from '@screens/ChatListScreen';
 import ProfileScreen from '@screens/ProfileScreen';
+import MeetingsScreen from '@screens/MeetingsScreen';
 import { useAuth } from '@context/AuthContext';
 
 export type TabParamList = {
   Home: undefined;
+  Meetings: undefined;
   Chats: undefined;
   Profile: undefined;
 };
@@ -22,12 +24,19 @@ export default function AppTabs() {
       screenOptions={({ route }: { route: { name: keyof TabParamList } }): BottomTabNavigationOptions => ({
         headerShown: false,
         tabBarIcon: ({ color, size }: { color: string; size: number }) => {
-          const icon = route.name === 'Home' ? 'home-variant' : route.name === 'Chats' ? 'message-text' : 'account-circle';
+          const icon = route.name === 'Home'
+            ? 'home-variant'
+            : route.name === 'Meetings'
+            ? 'calendar-clock'
+            : route.name === 'Chats'
+            ? 'message-text'
+            : 'account-circle';
           return <MaterialCommunityIcons name={icon} color={color} size={size} />;
         }
       })}
     >
       <Tab.Screen name="Home" component={SchoolScreen} options={{ title: 'Home' }} />
+      <Tab.Screen name="Meetings" component={MeetingsScreen} options={{ title: 'Meetings' }} />
       <Tab.Screen name="Chats" component={ChatListScreen} options={{ title: user?.role === 'parent' ? 'Notifications' : 'Chats' }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: 'Profile' }} />
     </Tab.Navigator>

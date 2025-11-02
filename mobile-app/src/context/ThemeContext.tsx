@@ -32,15 +32,30 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({ children 
   };
 
   const theme = useMemo(() => {
-    const base = (mode === 'dark' || (mode === 'system' && system === 'dark')) ? MD3DarkTheme : MD3LightTheme;
-    return {
-      ...base,
-      colors: {
-        ...base.colors,
-        primary: '#2563eb',
-        secondary: '#10b981',
-      }
-    } as MD3Theme;
+    const isDark = (mode === 'dark' || (mode === 'system' && system === 'dark'));
+    const base = isDark ? MD3DarkTheme : MD3LightTheme;
+    // Brand palette (blue + white)
+  const brandPrimary = '#2563eb'; // blue-600
+  const brandPrimaryDark = '#2563eb'; // use same strong blue in dark mode
+  const bgLight = '#ffffff';
+  const bgDark = '#000000'; // pure black for dark mode background
+  const surfaceDark = '#0a0a0a'; // near-black surface
+
+    const colors = {
+      ...base.colors,
+  primary: isDark ? brandPrimaryDark : brandPrimary,
+      secondary: isDark ? '#38bdf8' : '#0ea5e9',
+      background: isDark ? bgDark : bgLight,
+      surface: isDark ? surfaceDark : bgLight,
+      elevation: base.colors.elevation,
+      onPrimary: '#ffffff',
+      error: '#d32f2f',
+      onError: '#ffffff',
+      onSurface: isDark ? '#e5e7eb' : '#111827',
+      onBackground: isDark ? '#e5e7eb' : '#111827',
+      outline: isDark ? '#334155' : '#e5e7eb',
+    } as MD3Theme['colors'];
+    return { ...base, colors } as MD3Theme;
   }, [mode, system]);
 
   // Create a matching navigation theme using Paper's adapter
@@ -48,9 +63,22 @@ export const ThemeProvider: React.FC<{children: React.ReactNode}> = ({ children 
     reactNavigationLight: NavigationLightTheme,
     reactNavigationDark: NavigationDarkTheme,
   });
-  const navTheme: NavigationTheme = useMemo(() => (
-    (mode === 'dark' || (mode === 'system' && system === 'dark')) ? AdaptedDark : AdaptedLight
-  ), [mode, system, AdaptedDark, AdaptedLight]);
+  const navTheme: NavigationTheme = useMemo(() => {
+    const isDark = (mode === 'dark' || (mode === 'system' && system === 'dark'));
+    const adapted = isDark ? AdaptedDark : AdaptedLight;
+    const primary = theme.colors.primary;
+    return {
+      ...adapted,
+      colors: {
+        ...adapted.colors,
+        primary,
+        background: theme.colors.background,
+        card: theme.colors.surface,
+        text: theme.colors.onBackground,
+        border: theme.colors.outline,
+      }
+    } as NavigationTheme;
+  }, [mode, system, AdaptedDark, AdaptedLight, theme]);
 
   const value = useMemo(() => ({ theme, navTheme, mode, setMode }), [theme, navTheme, mode]);
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;

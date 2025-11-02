@@ -33,7 +33,6 @@ from blueprints.school_admin.crud_section import sections_bp as crud_section_bp
 from blueprints.school_admin.crud_student import school_admin_bp as crud_student_bp
 from blueprints.school_admin.crud_subject import subjects_bp as crud_subject_bp
 from blueprints.school_admin.crud_assignment import assignment_bp as crud_assignment_bp
-from blueprints.school_admin.crud_telegram import telegram_bp
 from blueprints.school_admin.logs import logs_bp
 
 # Import mobile app API blueprints
@@ -44,6 +43,10 @@ try:
     from blueprints.api.attendance_api import attendance_api
 except Exception as e:
     attendance_api = None
+try:
+    from blueprints.api.meetings_api import meetings_api
+except Exception as e:
+    meetings_api = None
 
 # Register blueprints
 app.register_blueprint(auth_bp)
@@ -56,7 +59,6 @@ app.register_blueprint(crud_section_bp)
 app.register_blueprint(crud_student_bp)
 app.register_blueprint(crud_subject_bp)
 app.register_blueprint(crud_assignment_bp)
-app.register_blueprint(telegram_bp, url_prefix='/school_admin')
 app.register_blueprint(logs_bp)
 
 # Register mobile app API blueprints
@@ -65,6 +67,8 @@ app.register_blueprint(messaging_api)
 app.register_blueprint(school_api)
 if attendance_api is not None:
     app.register_blueprint(attendance_api)
+if meetings_api is not None:
+    app.register_blueprint(meetings_api)
 
 # Make socketio available to blueprints
 app.socketio = socketio

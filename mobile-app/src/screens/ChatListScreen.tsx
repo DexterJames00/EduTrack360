@@ -6,15 +6,21 @@ import { List, Divider, Badge, Text, Avatar } from 'react-native-paper';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { format, isToday, isThisYear } from 'date-fns';
+import SchoolAppbar from '@components/SchoolAppbar';
+import { useAuth } from '@context/AuthContext';
 
 export default function ChatListScreen() {
   const navigation = useNavigation<any>();
   const { conversations, refreshConversations } = useMessaging();
   const insets = useSafeAreaInsets();
+  const { user } = useAuth();
+  const theme = require('react-native-paper').useTheme();
 
   useEffect(() => {
     refreshConversations();
   }, []);
+
+  // Header will show school name via SchoolAppbar (same as Home)
 
   const formatWhen = (iso?: string) => {
     if (!iso) return '';
@@ -46,17 +52,19 @@ export default function ChatListScreen() {
     const lower = t.toLowerCase();
     if (lower.includes('academic')) return { icon: 'book-open-variant' as const, text: t };
     if (lower.includes('attendance')) return { icon: 'calendar-check' as const, text: t };
+    if (lower.includes('meeting')) return { text: t } as { text: string; icon?: any }; // no icon for meetings
     if (lower.includes('notification')) return { icon: 'bell-outline' as const, text: t };
     return { icon: 'message-text-outline' as const, text: t };
   };
 
   return (
-    <View style={{ flex: 1 }}>
-      <FlatList
-        contentContainerStyle={[styles.container, { paddingTop: insets.top + 8, paddingBottom: 8 }]}
+  <View style={{ flex: 1, backgroundColor: theme.colors.background }}>
+  <FlatList
+    contentContainerStyle={[styles.container, { paddingTop: 0, paddingBottom: 8 }]}
         data={conversations}
         keyExtractor={(item) => String(item.id)}
         refreshControl={<RefreshControl refreshing={false} onRefresh={refreshConversations} />}
+  ListHeaderComponent={<SchoolAppbar />}
         renderItem={({ item }) => (
           <>
             <List.Item
@@ -66,7 +74,9 @@ export default function ChatListScreen() {
                 const meta = getDescMeta(item.last_message);
                 return (
                   <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                    <MaterialCommunityIcons name={meta.icon} size={16} color="#6b7280" />
+                    {'icon' in meta && meta.icon ? (
+                      <MaterialCommunityIcons name={meta.icon as any} size={16} color="#6b7280" />
+                    ) : null}
                     <Text numberOfLines={1} style={{ marginLeft: 6, color: '#4b5563' }}>{meta.text || ' '}</Text>
                   </View>
                 );

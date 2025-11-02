@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, session
 from models import SchoolInstructorAccount, Student, SchoolAdmin, Instructor, ParentAccount, db
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
 import jwt
 import datetime
 from functools import wraps
@@ -188,3 +188,65 @@ def logout():
 def verify():
     """Verify token validity"""
     return jsonify({'valid': True}), 200
+
+@auth_api.route('/change-password', methods=['POST'])
+@token_required
+def change_password():
+    """Change password for instructor/admin accounts.
+    Parents use student codes and cannot change passwords here.
+    """
+    data = request.get_json() or {}
+    current_password = (data.get('current_password') or '').strip()
+    new_password = (data.get('new_password') or '').strip()
+    confirm_password = (data.get('confirm_password') or '').strip()
+
+    if not new_password or len(new_password) < 6:
+        return jsonify({'success': False, 'message': 'New password must be at least 6 characters'}), 400
+    if new_password != confirm_password:
+        return jsonify({'success': False, 'message': 'Password confirmation does not match'}), 400
+
+    # Parents do not have changeable passwords in this model
+    if request.user_type == 'parent':
+        return jsonify({'success': False, 'message': 'Parents use student codes; password change is not available.'}), 400
+
+    try:
+        if request.user_type == 'instructor':
+            acct = SchoolInstructorAccount.query.filter_by(id=request.user_id, school_id=request.school_id).first()
+            if not acct:
+                return jsonify({'success': False, 'message': 'Account not found'}), 404
+            stored = acct.password
+            if stored:
+                is_hashed = stored.startswith(('scrypt:', 'pbkdf2:'))
+                ok = check_password_hash(stored, current_password) if is_hashed else (stored == current_password)
+                if not ok:
+                    return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+            else:
+                # If no password set previously, require current_password to be empty
+                if current_password:
+                    return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+            acct.password = generate_password_hash(new_password)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Password updated successfully'}), 200
+
+        if request.user_type == 'admin':
+            admin = SchoolAdmin.query.filter_by(id=request.user_id).first()
+            if not admin:
+                return jsonify({'success': False, 'message': 'Account not found'}), 404
+            stored = admin.password
+            if stored:
+                is_hashed = stored.startswith(('scrypt:', 'pbkdf2:'))
+                ok = check_password_hash(stored, current_password) if is_hashed else (stored == current_password)
+                if not ok:
+                    return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+            else:
+                if current_password:
+                    return jsonify({'success': False, 'message': 'Current password is incorrect'}), 400
+            admin.password = generate_password_hash(new_password)
+            db.session.commit()
+            return jsonify({'success': True, 'message': 'Password updated successfully'}), 200
+
+        return jsonify({'success': False, 'message': 'This account type cannot change password here'}), 400
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'success': False, 'message': f'Failed to change password: {e}'}), 500

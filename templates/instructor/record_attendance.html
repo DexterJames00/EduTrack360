@@ -53,6 +53,9 @@
                 <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
                     <thead class="bg-blue-700 text-white">
                         <tr>
+                            <th class="py-3 px-4 text-left">
+                                <input type="checkbox" id="selectAll" class="h-4 w-4" />
+                            </th>
                             <th class="py-3 px-4 text-left">#</th>
                             <th class="py-3 px-4 text-left">Student Name</th>
                             <th class="py-3 px-4 text-center">Status</th>
@@ -61,6 +64,9 @@
                     <tbody class="bg-white divide-y divide-gray-100">
                         {% for student in students %}
                         <tr class="hover:bg-blue-50 transition">
+                            <td class="py-3 px-4">
+                                <input type="checkbox" class="student-select h-4 w-4" value="{{ student.id }}" data-name="{{ student.name }}" />
+                            </td>
                             <td class="py-3 px-4">{{ loop.index }}</td>
                             <td class="py-3 px-4 font-medium">{{ student.name }}</td>
                             <td class="py-3 px-4 text-center">
@@ -81,7 +87,12 @@
                 </table>
             </div>
 
-            <div class="mt-8 text-right">
+            <div class="mt-8 flex items-center justify-between">
+                <a href="/instructor/meetings" class="text-blue-700 hover:underline text-sm flex items-center gap-2"><i class="fa-solid fa-list"></i> View My Meetings</a>
+                <div class="text-right">
+                <button type="button" onclick="openMeetingModal()" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-xl transition shadow mr-3 disabled:opacity-50 disabled:cursor-not-allowed">
+                    <i class="fa-solid fa-calendar-check mr-2"></i> Call a Meeting
+                </button>
                 <button type="submit" id="submitBtn"
                     class="bg-blue-700 hover:bg-blue-800 text-white font-bold py-3 px-8 rounded-xl transition shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed">
                     <span id="submitText">
@@ -91,6 +102,7 @@
                         <i class="fa-solid fa-spinner fa-spin mr-2"></i> Submitting...
                     </span>
                 </button>
+                </div>
             </div>
         </form>
     </div>
@@ -295,7 +307,7 @@
             <!-- Success Message -->
             <h3 class="text-2xl font-bold text-gray-900 mb-2">Message Sent Successfully!</h3>
             <p id="messageSuccessText" class="text-gray-600 mb-4">
-                Your message has been sent to the parent via Telegram.
+                Your message has been sent to the parent via the mobile app.
             </p>
             
             <!-- Message Details -->
@@ -330,6 +342,74 @@
         </div>
     </div>
 </div>
+
+<!-- Meeting Modal -->
+<div id="meetingModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div class="bg-white rounded-2xl shadow-2xl p-8 w-full max-w-2xl mx-4 transform transition-all duration-300 scale-95">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-2xl font-bold text-blue-800 flex items-center gap-3">
+                <i class="fa-solid fa-calendar-check text-blue-600"></i>
+                Call a Meeting
+            </h2>
+            <button class="text-gray-400 hover:text-gray-600 transition-colors" onclick="closeMeetingModal()">
+                <i class="fa-solid fa-times text-xl"></i>
+            </button>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Title</label>
+                <input type="text" id="meetingTitle" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Parent-Teacher Meeting" value="Parent-Teacher Meeting" />
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Subject</label>
+                <input type="text" id="meetingSubject" class="w-full px-4 py-3 border border-blue-300 rounded-lg bg-gray-50" value="{{ schedule.subject if schedule else '' }}" placeholder="Subject (optional)" />
+            </div>
+            <div>
+                <label class="block text-gray-700 font-semibold mb-2">Date</label>
+                <input type="date" id="meetingDate" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">Start Time</label>
+                    <input type="time" id="meetingStart" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+                <div>
+                    <label class="block text-gray-700 font-semibold mb-2">End Time</label>
+                    <input type="time" id="meetingEnd" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                </div>
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-700 font-semibold mb-2">Location</label>
+                <input type="text" id="meetingLocation" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="e.g., Room 201 or Google Meet link" />
+            </div>
+            <div class="md:col-span-2">
+                <label class="block text-gray-700 font-semibold mb-2">Description</label>
+                <textarea id="meetingDesc" rows="3" class="w-full px-4 py-3 border border-blue-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="Agenda or details (optional)"></textarea>
+            </div>
+        </div>
+
+        <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-6">
+            <div class="flex items-center justify-between">
+                <div class="font-semibold text-gray-800">
+                    Selected attendees: <span id="selectedCount">0</span>
+                </div>
+                <button class="text-blue-700 hover:underline text-sm" onclick="toggleSelectAllFromModal()">Toggle all</button>
+            </div>
+            <div id="selectedList" class="mt-3 text-sm text-gray-700 max-h-32 overflow-auto"></div>
+        </div>
+
+        <div class="flex gap-3">
+            <button onclick="closeMeetingModal()" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold py-3 px-4 rounded-xl transition">
+                <i class="fa-solid fa-times mr-2"></i> Cancel
+            </button>
+            <button onclick="submitMeeting()" id="createMeetingBtn" class="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-4 rounded-xl transition shadow-lg disabled:opacity-50">
+                <span id="createMeetingText"><i class="fa-solid fa-check mr-2"></i> Create Meeting</span>
+                <span id="creatingMeetingText" class="hidden"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Creating...</span>
+            </button>
+        </div>
+    </div>
+ </div>
 
 <!-- Message Error Modal -->
 <div id="messageErrorModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
@@ -377,6 +457,110 @@
     </div>
 </div>
 <script>
+// Selection handling for meeting attendees
+const selectAllEl = document.getElementById('selectAll');
+const studentCheckboxes = () => Array.from(document.querySelectorAll('.student-select'));
+
+if (selectAllEl) {
+    selectAllEl.addEventListener('change', (e) => {
+        const checked = selectAllEl.checked;
+        studentCheckboxes().forEach(cb => cb.checked = checked);
+    });
+}
+
+function getSelectedStudents() {
+    return studentCheckboxes()
+        .filter(cb => cb.checked)
+        .map(cb => ({ id: parseInt(cb.value), name: cb.getAttribute('data-name') || 'Student' }));
+}
+
+function openMeetingModal() {
+    const selected = getSelectedStudents();
+    if (selected.length === 0) {
+        alert('Please select at least one student to invite to the meeting.');
+        return;
+    }
+    const modal = document.getElementById('meetingModal');
+    // preset date to today
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('meetingDate').value = today;
+
+    // render list
+    renderSelectedList();
+
+    modal.classList.remove('hidden');
+    setTimeout(() => {
+        modal.querySelector('.transform').classList.remove('scale-95');
+        modal.querySelector('.transform').classList.add('scale-100');
+    }, 10);
+}
+
+function closeMeetingModal() {
+    const modal = document.getElementById('meetingModal');
+    modal.querySelector('.transform').classList.remove('scale-100');
+    modal.querySelector('.transform').classList.add('scale-95');
+    setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+function renderSelectedList() {
+    const list = document.getElementById('selectedList');
+    const countEl = document.getElementById('selectedCount');
+    const selected = getSelectedStudents();
+    countEl.textContent = String(selected.length);
+    list.innerHTML = selected.map(s => `<div class="flex items-center justify-between py-1"><span>${s.name}</span><button class="text-xs text-red-600 hover:underline" onclick="removeSelected(${s.id})">remove</button></div>`).join('');
+}
+
+function removeSelected(id) {
+    const cb = studentCheckboxes().find(c => parseInt(c.value) === id);
+    if (cb) cb.checked = false;
+    renderSelectedList();
+}
+
+function toggleSelectAllFromModal() {
+    const all = studentCheckboxes();
+    const someUnchecked = all.some(cb => !cb.checked);
+    all.forEach(cb => cb.checked = someUnchecked);
+    renderSelectedList();
+}
+
+async function submitMeeting() {
+    const btn = document.getElementById('createMeetingBtn');
+    const t1 = document.getElementById('createMeetingText');
+    const t2 = document.getElementById('creatingMeetingText');
+    btn.disabled = true; t1.classList.add('hidden'); t2.classList.remove('hidden');
+
+    const attendees = getSelectedStudents();
+    const payload = {
+        title: document.getElementById('meetingTitle').value.trim() || 'Parent-Teacher Meeting',
+        subject_name: document.getElementById('meetingSubject').value.trim() || null,
+        meeting_date: document.getElementById('meetingDate').value,
+        start_time: document.getElementById('meetingStart').value,
+        end_time: document.getElementById('meetingEnd').value,
+        location: document.getElementById('meetingLocation').value.trim() || null,
+        description: document.getElementById('meetingDesc').value.trim() || null,
+        student_ids: attendees.map(a => a.id),
+    };
+
+    try {
+        const res = await fetch('/instructor/meetings/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) {
+            throw new Error(data.error || 'Failed to create meetings');
+        }
+        closeMeetingModal();
+        alert(`✅ ${data.message}`);
+    } catch (err) {
+        console.error('Create meeting error:', err);
+        alert('❌ ' + (err.message || 'Error creating meeting'));
+    } finally {
+        btn.disabled = false; t1.classList.remove('hidden'); t2.classList.add('hidden');
+    }
+}
+
 // Attendance Form Submission
 document.getElementById('attendanceForm').addEventListener('submit', function(e) {
     e.preventDefault();

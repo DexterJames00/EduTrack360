@@ -84,9 +84,7 @@ def record_attendance(sched_id):
     # Get students in the section
     students = db.session.query(
         Student.id,
-        func.concat(Student.first_name, ' ', Student.last_name).label('name'),
-        Student.telegram_chat_id,
-        Student.telegram_status
+        func.concat(Student.first_name, ' ', Student.last_name).label('name')
     ).filter(Student.section_id == schedule.section_id)\
      .filter(Student.school_id == school_id)\
      .order_by(Student.first_name, Student.last_name)\
@@ -291,7 +289,6 @@ def record_attendance(sched_id):
                     'students_recorded': len(attendance_records),
                     'notifications_sent': app_notifications,
                     'failed_notifications': failed_notifications,
-                    'students_without_chat_list': [],
                     'date': attendance_date.strftime('%Y-%m-%d')
                 })
             

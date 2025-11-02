@@ -5,9 +5,15 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
-    "assetBundlePatterns": ["**/*"],
-    "android": {},
-    "ios": {"supportsTablet": true},
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "android": {
+      "package": "com.anonymous.edutrack360mobile"
+    },
+    "ios": {
+      "supportsTablet": true
+    },
     "web": {}
   }
 }

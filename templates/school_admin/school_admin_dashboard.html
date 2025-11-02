@@ -571,15 +571,7 @@
         }
     });
     
-    // Real-time Telegram connection updates
-    socket.on('telegram_connected', function(data) {
-        console.log('📱 Telegram connected:', data);
-        if (data.school_id == schoolId) {
-            addActivityToFeed(`📱 Student connected to Telegram: ${data.student_name}`, 'now');
-            // Request fresh dashboard stats
-            socket.emit('request_dashboard_update', { school_id: schoolId });
-        }
-    });
+    // Telegram features removed in 360 app
     
     // Connection status indicators
     socket.on('connect', function() {

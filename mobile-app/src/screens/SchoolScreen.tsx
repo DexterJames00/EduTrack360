@@ -1,6 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet } from 'react-native';
-import { Text, Button, Card, ActivityIndicator, MD3Colors, Appbar, List, Divider } from 'react-native-paper';
+import { Text, Button, Card, ActivityIndicator, MD3Colors, Appbar, List, Divider, useTheme } from 'react-native-paper';
+import SchoolAppbar from '@components/SchoolAppbar';
 import { useNavigation } from '@react-navigation/native';
 import api from '@services/api.service';
 import { useAuth } from '@context/AuthContext';
@@ -8,8 +9,11 @@ import { useAuth } from '@context/AuthContext';
 export default function SchoolScreen() {
   const navigation = useNavigation<any>();
   const { user, logout } = useAuth();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [school, setSchool] = useState<any>(null);
+  const [subjectsCount, setSubjectsCount] = useState<number | null>(null);
+  const [instructorsCount, setInstructorsCount] = useState<number | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -19,10 +23,33 @@ export default function SchoolScreen() {
           const data = await api.get(`/api/schools/${sid}`);
           setSchool(data);
         }
+        // Derive student info from attendance history (unique subjects and instructors)
+        try {
+          const history: any = await api.getAttendanceHistory<any>(100);
+          const items: any[] = Array.isArray(history?.items) ? history.items : [];
+          const subj = new Set<string>();
+          const inst = new Set<string>();
+          for (const it of items) {
+            if (it?.subject) subj.add(String(it.subject));
+            if (it?.instructor) inst.add(String(it.instructor));
+          }
+          setSubjectsCount(subj.size || 0);
+          setInstructorsCount(inst.size || 0);
+        } catch {
+          setSubjectsCount(null);
+          setInstructorsCount(null);
+        }
       } finally {
         setLoading(false);
       }
     })();
+  }, [user]);
+
+  const displayName = useMemo(() => {
+    const first = (user as any)?.firstName;
+    const last = (user as any)?.lastName;
+    const full = [first, last].filter(Boolean).join(' ').trim();
+    return full || (user as any)?.username || '—';
   }, [user]);
 
   if (loading) {
@@ -34,11 +61,8 @@ export default function SchoolScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Appbar.Header mode="small" elevated>
-        <Appbar.Content title={school?.name || 'Your School'} subtitle={school?.schoolCode ? `Code: ${school.schoolCode}` : undefined} />
-        <Appbar.Action icon="logout" onPress={logout} />
-      </Appbar.Header>
+  <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+  <SchoolAppbar rightActions={<Appbar.Action icon="logout" onPress={logout} color={theme.dark ? theme.colors.error : '#fff'} />} />
 
       <View style={styles.content}>
         <Card style={styles.card}>
@@ -62,26 +86,24 @@ export default function SchoolScreen() {
         </Card>
 
         <Card style={styles.card}>
-          <Card.Title title="School Stats" subtitle="Overview" left={(props) => <List.Icon {...props} icon="chart-bar" />} />
+          <Card.Title title="Student Info" subtitle="Overview" left={(props) => <List.Icon {...props} icon="account" />} />
           <Card.Content>
-            <List.Item title={`Students: ${school?.stats?.students ?? '-'}`} left={(p) => <List.Icon {...p} icon="account-school" />} />
+            <List.Item title={`Name: ${displayName}`} left={(p) => <List.Icon {...p} icon="account-circle" />} />
             <Divider />
-            <List.Item title={`Instructors: ${school?.stats?.instructors ?? '-'}`} left={(p) => <List.Icon {...p} icon="teach" />} />
+            <List.Item title={`School: ${school?.name ?? '—'}`} left={(p) => <List.Icon {...p} icon="office-building" />} />
             <Divider />
-            <List.Item title={`Subjects: ${school?.stats?.subjects ?? '-'}`} left={(p) => <List.Icon {...p} icon="book-open-variant" />} />
+            <List.Item title={`Subjects enrolled: ${subjectsCount ?? '—'}`} left={(p) => <List.Icon {...p} icon="book-open-variant" />} />
             <Divider />
-            <List.Item title={`Sections: ${school?.stats?.sections ?? '-'}`} left={(p) => <List.Icon {...p} icon="view-list" />} />
+            <List.Item title={`Instructors: ${instructorsCount ?? '—'}`} left={(p) => <List.Icon {...p} icon="teach" />} />
           </Card.Content>
         </Card>
-
-        <Button style={{ marginTop: 16 }} icon="logout" textColor={MD3Colors.error50} onPress={logout}>Logout</Button>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f6f7fb' },
+  container: { flex: 1 },
   content: { padding: 16 },
   card: { marginBottom: 12 },
   center: { flex: 1, alignItems: 'center', justifyContent: 'center' }

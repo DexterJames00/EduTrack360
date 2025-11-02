@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, StyleSheet, FlatList } from 'react-native';
-import { Appbar, ActivityIndicator, Card, Text, List, Divider, Chip, MD3Colors } from 'react-native-paper';
+import { Appbar, ActivityIndicator, Card, Text, List, Divider, Chip, MD3Colors, useTheme } from 'react-native-paper';
+import ScreenHeader from '@components/ScreenHeader';
 import { useNavigation } from '@react-navigation/native';
 import api from '@services/api.service';
 import type { AttendanceHistoryResult, AttendanceItem, AttendanceSummary } from '@types';
@@ -28,6 +29,7 @@ function StatusChip({ status }: { status: string }) {
 
 export default function AttendanceScreen() {
   const navigation = useNavigation<any>();
+  const theme = useTheme();
   const [loading, setLoading] = useState(true);
   const [summary, setSummary] = useState<AttendanceSummary | null>(null);
   const [history, setHistory] = useState<AttendanceHistoryResult | null>(null);
@@ -55,13 +57,19 @@ export default function AttendanceScreen() {
   }, []);
 
   return (
-    <View style={styles.container}>
-      <Appbar.Header mode="small" elevated>
-        <Appbar.BackAction onPress={() => navigation.goBack()} />
-        <Appbar.Content title="Attendance" subtitle="Summary & History" />
-        <Appbar.Action icon="refresh" onPress={load} />
+  <View style={[styles.container, { backgroundColor: theme.colors.background }]}>
+      <Appbar.Header mode="small" elevated style={{ backgroundColor: theme.colors.primary }}>
+        <Appbar.BackAction onPress={() => navigation.goBack()} color={theme.colors.onPrimary} />
+        <Appbar.Content
+          title="Attendance"
+          subtitle="Summary & History"
+          titleStyle={{ color: theme.colors.onPrimary }}
+          subtitleStyle={{ color: theme.colors.onPrimary, opacity: 0.8 }}
+        />
+        <Appbar.Action icon="refresh" onPress={load} color={theme.colors.onPrimary} />
       </Appbar.Header>
 
+      <ScreenHeader title="Attendance" subtitle="Summary & history" icon="calendar-check" />
       {loading ? (
         <View style={styles.center}><ActivityIndicator /></View>
       ) : error ? (

@@ -3,6 +3,7 @@ from database import db
 from models import Instructor, Subject, Section, InstructorSchedule, SchoolAdmin
 from sqlalchemy import func
 import hashlib
+from datetime import datetime
 
 assignment_bp = Blueprint('instructor_assignment', __name__, url_prefix='/school_admin')
 
@@ -20,6 +21,28 @@ def create_assignment():
         day = data.get('day')
         start_time = data.get('start_time')
         end_time = data.get('end_time')
+
+        # Normalize day and time inputs
+        VALID_DAYS = {'Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'}
+
+        def normalize_time(value: str | None) -> str | None:
+            if not value:
+                return None
+            v = value.strip()
+            # Try 24h first (HH:MM)
+            for fmt in ('%H:%M', '%H:%M:%S'):
+                try:
+                    return datetime.strptime(v, fmt).strftime('%H:%M')
+                except Exception:
+                    pass
+            # Try 12h with AM/PM
+            v_up = v.upper().replace('.', '')
+            for fmt in ('%I:%M %p', '%I:%M%p'):
+                try:
+                    return datetime.strptime(v_up, fmt).strftime('%H:%M')
+                except Exception:
+                    pass
+            return None
         
         # Validate required fields
         if not all([instructor_id, subject_id, section_id, day, start_time, end_time]):
@@ -28,8 +51,18 @@ def create_assignment():
                 'message': 'All fields are required'
             }), 400
         
+        # Validate day
+        if day not in VALID_DAYS:
+            return jsonify({'success': False, 'message': 'Invalid day provided'}), 400
+
+        # Normalize times
+        n_start = normalize_time(start_time)
+        n_end = normalize_time(end_time)
+        if not n_start or not n_end:
+            return jsonify({'success': False, 'message': 'Invalid time format. Use HH:MM or h:MM AM/PM'}), 400
+
         # Validate time range
-        if start_time >= end_time:
+        if n_start >= n_end:
             return jsonify({
                 'success': False,
                 'message': 'End time must be after start time'
@@ -89,31 +122,34 @@ def create_assignment():
         section_conflicts = InstructorSchedule.query.filter(
             InstructorSchedule.section_id == section_id,
             InstructorSchedule.day == day,
-            InstructorSchedule.start_time < end_time,
-            InstructorSchedule.end_time > start_time
+            InstructorSchedule.start_time < n_end,
+            InstructorSchedule.end_time > n_start
         ).first()
         
         if section_conflicts:
             conflict_subject = Subject.query.get(section_conflicts.subject_id)
+            conflict_subject_name = conflict_subject.name if conflict_subject else 'another subject'
             return jsonify({
                 'success': False,
-                'message': f'Time conflict! {section.grade_level}-{section.name} already has {conflict_subject.name} scheduled on {day} from {section_conflicts.start_time} to {section_conflicts.end_time}'
+                'message': f'Time conflict! {section.grade_level}-{section.name} already has {conflict_subject_name} scheduled on {day} from {section_conflicts.start_time} to {section_conflicts.end_time}'
             }), 400
         
         # Check for instructor time conflicts (same instructor can't teach two classes at the same time)
         instructor_conflicts = InstructorSchedule.query.filter(
             InstructorSchedule.instructor_id == instructor_id,
             InstructorSchedule.day == day,
-            InstructorSchedule.start_time < end_time,
-            InstructorSchedule.end_time > start_time
+            InstructorSchedule.start_time < n_end,
+            InstructorSchedule.end_time > n_start
         ).first()
         
         if instructor_conflicts:
             conflict_subject = Subject.query.get(instructor_conflicts.subject_id)
             conflict_section = Section.query.get(instructor_conflicts.section_id)
+            conflict_subject_name = conflict_subject.name if conflict_subject else 'another subject'
+            conflict_section_name = f"{conflict_section.grade_level}-{conflict_section.name}" if conflict_section else 'another section'
             return jsonify({
                 'success': False,
-                'message': f'Time conflict! {instructor.name} is already teaching {conflict_subject.name} to {conflict_section.grade_level}-{conflict_section.name} on {day} from {instructor_conflicts.start_time} to {instructor_conflicts.end_time}'
+                'message': f'Time conflict! {instructor.name} is already teaching {conflict_subject_name} to {conflict_section_name} on {day} from {instructor_conflicts.start_time} to {instructor_conflicts.end_time}'
             }), 400
         
         # Create new assignment
@@ -122,8 +158,8 @@ def create_assignment():
             subject_id=subject_id,
             section_id=section_id,
             day=day,
-            start_time=start_time,
-            end_time=end_time
+            start_time=n_start,
+            end_time=n_end
         )
         
         db.session.add(new_assignment)

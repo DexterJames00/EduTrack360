@@ -52,6 +52,7 @@ export const MessagingProvider: React.FC<{children: React.ReactNode}> = ({ child
         content: payload.content,
         created_at: payload.timestamp,
         is_read: false,
+        type: payload.type || payload.message_type,
       };
       setMessages(prev => ({
         ...prev,
@@ -59,6 +60,7 @@ export const MessagingProvider: React.FC<{children: React.ReactNode}> = ({ child
       }));
       // Refresh chat list to bump last message/time
       fetchConversations().catch(() => {});
+      // Local sound notifications removed per request
     });
     s.on('messages_read', (payload: any) => {
       // Any read update should refresh the conversations list for unread counts
@@ -85,6 +87,7 @@ export const MessagingProvider: React.FC<{children: React.ReactNode}> = ({ child
         content: m.content,
         created_at: m.timestamp,
         is_read: m.isRead,
+        type: m.type,
       }));
       setMessages(prev => ({ ...prev, [conversationId]: msgs }));
     },

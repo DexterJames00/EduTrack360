@@ -87,9 +87,7 @@ def add_student():
                         'section_id': section_id,
                         'section_name': section_name,
                         'parent_contact': parent_contact,
-                        'code': code,
-                        'telegram_chat_id': new_student.telegram_chat_id,
-                        'telegram_status': new_student.telegram_status
+                        'code': code
                     }
                 }, room=f'school_{school_id}')
                 print(f"📢 Emitting student_created event: {{'school_id': {school_id}, 'student': {{'id': {new_student.id}, 'name': '{first_name} {last_name}'}}}}")
@@ -111,9 +109,7 @@ def add_student():
                     'section_id': section_id,
                     'section_name': section_name,
                     'parent_contact': parent_contact,
-                    'code': code,
-                    'telegram_chat_id': new_student.telegram_chat_id,
-                    'telegram_status': new_student.telegram_status
+                    'code': code
                 }
             })
         
@@ -187,9 +183,7 @@ def edit_student(student_id):
                         'section_id': student.section_id,
                         'section_name': section_name,
                         'parent_contact': student.parent_contact,
-                        'code': student.code,
-                        'telegram_chat_id': student.telegram_chat_id,
-                        'telegram_status': student.telegram_status
+                        'code': student.code
                     }
                 }, room=f'school_{school_id}')
                 print(f"📢 Emitting student_updated event: {{'school_id': {school_id}, 'student': {{'id': {student.id}, 'name': '{student.first_name} {student.last_name}'}}}}")
@@ -215,9 +209,7 @@ def edit_student(student_id):
                     'section_id': student.section_id,
                     'section_name': section_name,
                     'parent_contact': student.parent_contact,
-                    'code': student.code,
-                    'telegram_chat_id': student.telegram_chat_id,
-                    'telegram_status': student.telegram_status
+                    'code': student.code
                 }
             })
         

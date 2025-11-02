@@ -91,6 +91,11 @@ class ApiService {
   async getAttendanceHistory<T = any>(limit: number = 50): Promise<T> {
     return this.get<T>('/api/attendance/history', { limit });
   }
+
+  // Meetings endpoints
+  async getMeetings<T = any>(): Promise<T> {
+    return this.get<T>('/api/meetings');
+  }
 }
 
 export default new ApiService();
